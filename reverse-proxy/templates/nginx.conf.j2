@@ -1,0 +1,51 @@
+server {
+
+  listen      {{ reverse_proxy.listen_ip }}:80;
+  server_name {{ site.server_name }};
+
+  access_log /var/log/nginx/{{ site.server_name }}-access.log;
+  error_log /var/log/nginx/{{ site.server_name }}-error.log;
+
+{% if reverse_proxy.ssl %}
+
+  location /.well-known/acme-challenge/ {
+    root      /var/www/{{ site.server_name }}/html;
+    try_files $uri =404;
+    break;
+  }
+
+  location / {
+    return 301 https://{{ site.server_name }}$request_uri;
+  }
+
+}
+
+server {
+
+  listen      {{ reverse_proxy.listen_ip }}:443 ssl;
+  server_name {{ site.server_name }};
+
+  ssl_certificate /etc/letsencrypt/live/{{ site.server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/{{ site.server_name }}/privkey.pem;
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_redirect ~(http|https)://{{ site.server_name }}:{{ site.proxy_pass_port }}/ /;
+    proxy_pass http://{{ site.proxy_pass_host }}:{{ site.proxy_pass_port }};
+    proxy_set_header X-Forwarded-Proto "https" ;
+    proxy_set_header X-Forwarded-Port "443" ;
+  }
+
+{% else %}
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_redirect ~(http|https)://{{ site.server_name }}:{{ site.proxy_pass_port }}/ /;
+    proxy_pass http://{{ site.proxy_pass_host }}:{{ site.proxy_pass_port }};
+  }
+
+{% endif %}
+
+}

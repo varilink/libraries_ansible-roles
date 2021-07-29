@@ -1,0 +1,11 @@
+- name: Populate service facts
+  service_facts:
+  listen: "Reload nginx configuration"
+
+- name: Reload nginx configuration if nginx is running
+  become: yes
+  service:
+    name: nginx
+    state: reloaded
+  when: ansible_facts['services']['nginx']['state'] == 'running'
+  listen: "Reload nginx configuration"

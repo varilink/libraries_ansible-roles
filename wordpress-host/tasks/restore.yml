@@ -1,0 +1,19 @@
+- name: Restore WordPress website from a backup
+  become: yes
+  block:
+
+  - name: Restore files backup
+    synchronize:
+      src: files/html/
+      dest: /var/www/{{ site.server_name }}/html
+      recursive: yes
+      rsync_opts:
+        - "--exclude=wp-config.php"
+        - "--chown=www-data:www-data"
+
+  - name: Search and replace
+    command: >
+      wp --allow-root --path=/var/www/{{ site.server_name }}/html
+      search-replace
+      {{ backup_url }}
+      {{ site.url }}

@@ -1,0 +1,11 @@
+- name: Populate service facts
+  service_facts:
+  listen: "Reload apache2 configuration"
+
+- name: Reload apache2 configuration if apache is running
+  become: yes
+  service:
+    name: apache2
+    state: reloaded
+  when: ansible_facts['services']['apache2']['state'] == 'running'
+  listen: "Reload apache2 configuration"

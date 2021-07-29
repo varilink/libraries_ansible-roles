@@ -1,0 +1,86 @@
+- name: Deploy wordpress-host role for a WordPress site
+  become: yes
+  block:
+
+  - name: Make site apache2 configuration available
+    template:
+      src: apache2.conf.j2
+      dest: /etc/apache2/sites-available/{{ site.server_name }}.conf
+    notify:
+      - Reload apache2 configuration
+
+  - name: Enable site apache2 configuration
+    file:
+      src: /etc/apache2/sites-available/{{ site.server_name }}.conf
+      dest: /etc/apache2/sites-enabled/{{ site.server_name }}.conf
+      state: link
+    notify:
+      - Reload apache2 configuration
+
+  - name: Create direcotry to hold site WordPress files
+    file:
+      path: /var/www/{{ site.server_name }}/html
+      state: directory
+
+  - name: Download WordPress files
+    command:
+      cmd: >
+        wp --allow-root --path=/var/www/{{ site.server_name }}/html
+        core download --locale=en_GB
+      creates: /var/www/{{ site.server_name }}/html/index.php
+
+  - name: Set correct ownership of  WordPress files
+    file:
+      path: /var/www/{{ site.server_name }}/html
+      owner: www-data
+      group: www-data
+      recurse: yes
+      state: directory
+
+  - name: Create the Wordpress config file
+    command:
+      cmd: >
+        wp --allow-root --path=/var/www/{{ site.server_name }}/html
+        config create
+        --dbhost=services_database
+        --dbname={{ site.server_name | regex_replace ('\.', '_') }}
+        --dbuser={{ site.server_name | regex_replace ('\.', '_') }}
+        --dbpass={{ site.database_password }}
+        --skip-check
+      creates: /var/www/{{ site.server_name }}/html/wp-config.php
+
+  - name: Install WordPress
+    # Note shows changed if WordPress was already installed
+    # Can I change it to look first for WordPress installed and skip if it is?
+    command:
+      cmd: >
+        wp --allow-root --path=/var/www/{{ site.server_name }}/html
+        core install
+        --url={{ site.server_name }}
+        --title="{{ site.title }}"
+        --admin_user=admin
+        --admin_password=admin
+        --admin_email=admin@{{ site.server_name }}
+
+  - name: Activate the wordpress-importer plugin
+    command: >
+      wp --allow-root --path=/var/www/{{ site.server_name }}/html
+      plugin install wordpress-importer --activate
+
+  - name: Copy theme
+    synchronize:
+      src: fobv.web/theme/
+      dest: /var/www/{{ site.server_name }}/html/wp-content/themes/wp-bootstrap-starter-child
+      recursive: yes
+      rsync_opts:
+        - "--chown=www-data:www-data"
+
+  - name: Copy migration
+    copy:
+      src: files/migrate
+      dest: /tmp/
+
+  - name: Process migrations
+    shell: |
+      export WP_PATH=/var/www/{{ site.server_name }}/html
+      sh /tmp/migrate/wp-cli

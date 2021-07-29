@@ -1,0 +1,21 @@
+- name: Restore WordPress database from a backup
+  become: yes
+  block:
+
+    - name: Copy sql dump to target
+      copy:
+        src: "{{ item }}"
+        dest: /tmp/
+      with_fileglob:
+        - "files/*.sql"
+      register: dump_copy
+
+    - debug:
+        var: dump_copy.results[0].dest
+
+    - name: Import database dump
+      mysql_db:
+        name: "{{ site.server_name | regex_replace ('\\.', '_') }}"
+        state: import
+        target: "{{ dump_copy.results[0].dest }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock

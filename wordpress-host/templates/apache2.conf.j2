@@ -1,0 +1,13 @@
+<VirtualHost {{ wordpress_host.listen_ip }}:{{ site.proxy_pass_port }}>
+
+  ServerName {{ site.server_name }}
+  ServerAdmin david.williamson@varilink.co.uk
+  DocumentRoot /var/www/{{ site.server_name }}/html
+  ErrorLog ${APACHE_LOG_DIR}/{{ site.server_name }}-error.log
+  CustomLog ${APACHE_LOG_DIR}/{{ site.server_name }}-access.log combined
+
+  <Directory "/var/www/{{ site.server_name }}/html">
+    AllowOverride All
+  </Directory>
+
+</VirtualHost>
