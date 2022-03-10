@@ -1,0 +1,17 @@
+- name: Deploy the backup client role
+  become: yes
+  block:
+
+  - name: Install apt package(s) required by the backup client role
+    apt:
+      name: bacula-fd
+      install_recommends: no
+
+  - name: Configure the bacula file daemon
+    template:
+      dest: /etc/bacula/bacula-fd.conf
+      group: bacula
+      mode: 0640
+      owner: root
+      src: templates/bacula-fd.conf.j2
+    notify: Restart bacula file daemon

@@ -1,0 +1,50 @@
+{# This template file is based on a copy of a bacula-fd.conf file generated as a
+result of installing the bacula-fd package in Debian Buster. #}
+#
+# Default  Bacula File Daemon Configuration file
+#
+#  For Bacula release 9.4.2 (04 February 2019) -- debian 10.5
+#
+# There is not much to change here except perhaps the
+# File daemon Name to
+#
+#
+# Copyright (C) 2000-2015 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+# List Directors who are permitted to contact this File daemon
+#
+Director {
+  Name = {{ backup_director_name }}
+  Password = "{{ backup_client_director_password }}"
+}
+
+#
+# Restricted Director, used by tray-monitor to get the
+#   status of the file daemon
+#
+Director {
+  Name = {{ backup_monitor_name }}
+  Password = "{{ backup_client_monitor_password }}"
+  Monitor = yes
+}
+
+#
+# "Global" File daemon configuration specifications
+#
+FileDaemon {                          # this is me
+  Name = {{ inventory_hostname }}-fd
+  FDport = 9102                  # where we listen for the director
+  WorkingDirectory = /var/lib/bacula
+  Pid Directory = /run/bacula
+  Maximum Concurrent Jobs = 20
+  Plugin Directory = /usr/lib/bacula
+}
+
+# Send all messages except skipped files back to Director
+Messages {
+  Name = Standard
+  director = {{ backup_director_name }} = all, !skipped, !restored
+}
