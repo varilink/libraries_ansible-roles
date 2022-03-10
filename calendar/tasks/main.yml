@@ -1,0 +1,43 @@
+- name: Deploy the calendar role
+  become: yes
+  block:
+
+    # NOTE: Version 2 of Radicale installed on Debian Buster
+    # Version 3 has been released. To access the version 2 documentation:
+    # https://radicale.org/v2.html
+    - name: Install apt package(s) required by the calendar role
+      apt:
+        name:
+          - radicale
+        install_recommends: no
+
+    - name: Expose calendar service on the network
+      lineinfile:
+        path: /etc/radicale/config
+        # Original line is '#hosts = 127.0.0.1:5232'
+        # Regex matches both original and replacement to ensure idempotence
+        regexp: '^#?hosts = (?:\d{1,3}\.){3}\d{1,3}:5232$'
+        line: hosts = 0.0.0.0:5232
+      notify: Restart radicale
+
+    # TODO: Configure user authentication for access
+    # We currently use Radicale only on the internal network for shared
+    # calendars, so we disable user authentication. This means that any access
+    # credentials will work. We might want to implement user authentication for
+    # our calendar service at some point.
+    - name: Disable user authentication
+      lineinfile:
+        path: /etc/radicale/config
+        # TODO: Improve approach to generalise matching reliability
+        # The hosts setting appears to be unique but the type setting occurs in
+        # multiple config sections. Our approach only works because none of the
+        # occurrences has none as the default setting though it is a valid
+        # option for more than one of them. See if there is a way to get these
+        # steps that currently use lineinfile so that we can target a specific
+        # config section?
+        #
+        # Original line is 'type = remote_user'
+        # Regex matches both original and replacement to ensure idempotence
+        regexp: '^type = (?:remote_user|none)$'
+        line: type = none
+      notify: Restart radicale

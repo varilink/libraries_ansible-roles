@@ -1,0 +1,13 @@
+# Restart the radicale service to reflect a change to its configuration.
+# NOTE: There is no systemd reload option for the radicale service.
+- name: Populate service facts
+  service_facts:
+  listen: "Restart radicale"
+
+- name: Restart radicale if it is running
+  become: yes
+  service:
+    name: radicale
+    state: restarted
+  when: ansible_facts['services']['radicale']['state'] == 'running'
+  listen: "Restart radicale"
