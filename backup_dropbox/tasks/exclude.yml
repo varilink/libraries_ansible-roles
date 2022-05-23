@@ -1,0 +1,42 @@
+- name: Apply Dropbox synchronisation exclusions
+  become: yes
+  block:
+
+  - name: Determine the current status of the Dropbox daemon
+    shell: gosu bacula bash -c '~/dropbox.py status'
+    register: dropbox_daemon_status
+    changed_when: false
+
+  - debug:
+      msg: Dropbox status={{ dropbox_daemon_status.stdout }}
+
+  - name: Start Dropbox daemon and wait a little
+    shell: |
+      gosu bacula bash -c '~/dropbox.py start'
+      sleep 60
+    when: dropbox_daemon_status.stdout == "Dropbox isn't running!"
+
+  - name: Find what we need to exclude
+    find:
+      paths: /var/lib/bacula/Dropbox
+      file_type: directory
+    register: to_exclude
+
+  - name: Exclude directories
+    shell: gosu bacula bash -c '~/dropbox.py exclude add "{{ item.path }}"'
+    loop: "{{ to_exclude['files'] }}"
+    loop_control:
+      label: "{{ item.path }}"
+    when: item.path != '/var/lib/bacula/Dropbox/bacula-test'
+    register: exclusions
+
+  - debug:
+      msg: "{{ item.stdout }}"
+    loop: "{{ exclusions['results'] }}"
+    loop_control:
+      label: "{{ item.item.path }}"
+    when: item.skipped is not defined
+
+  - name: Stop Dropbox daemon
+    shell: gosu bacula bash -c '~/dropbox.py stop'
+    when: dropbox_daemon_status.stdout == "Dropbox isn't running!"

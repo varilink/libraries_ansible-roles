@@ -1,0 +1,30 @@
+- name: Install apt package(s) required for the backup dropbox role
+  apt:
+    name:
+      - ca-certificates
+      - gosu
+      - python3
+      - wget
+
+- name: Install Dropbox Headless
+  shell:
+    cmd: >
+      gosu bacula bash -c
+      'cd /var/lib/bacula &&
+      wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64"
+      | tar xzf -'
+    creates: /var/lib/bacula/.dropbox-dist
+
+- name: Install Dropbox python helper script
+  get_url:
+    url: https://www.dropbox.com/download?dl=packages/dropbox.py
+    dest: /var/lib/bacula
+    owner: bacula
+    group: bacula
+    mode: 0755
+
+# NOTE: There is no point configuring Dropbox to autostart at login.
+# This step is present in the Dropbox install instructions but then we're not
+# using it in an interactive account here so it's irrelevant.
+#- name: Configure Dropbox to autostart at login
+#  shell: gosu bacula bash -c '~/dropbox.py autostart y'
