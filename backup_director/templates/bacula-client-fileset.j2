@@ -1,0 +1,66 @@
+FileSet {
+
+  # Client specific fileset for {{ hostname }}
+  Name = {{ hostname }}
+
+  Include {
+
+    Options {
+      signature = MD5
+    }
+
+    # Any customisation of apt sources
+    File = /etc/apt/sources.list
+    File = /etc/apt/sources.list.d
+
+  }
+
+{#
+Groups is an Ansible special variable containing "A dictionary/map with all the
+groups in inventory and each group has the list of hosts that belong to it"
+https://docs.ansible.com/ansible/latest/reference_appendices/special_variables.html
+#}
+
+{%- for group in groups %}
+
+  {%- for host in groups[group] %}
+
+    {%- if host == hostname %}
+{#
+Rolemaps is a varible passed to this template from the backup-director role's
+main task list. It is derived from the deploy.yml playbook. It gives us the
+mapping between groups or individual hosts and the roles assigned to them.
+#}
+
+      {%- for rolemap in rolemaps %}
+
+        {%- if rolemap['hosts'] == group %}
+
+          {%- for role in rolemap['roles'] %}
+  @/etc/bacula/inc/role-fs/{{ role }}.conf
+          {%- endfor %}
+
+        {%- endif %}
+
+      {%- endfor %}
+
+    {%- endif %}
+
+  {%- endfor %}
+
+{%- endfor %}
+
+{%- for rolemap in rolemaps %}
+
+  {%- if rolemap['hosts'] == hostname %}
+
+    {%- for role in rolemap['roles'] %}
+
+  @/etc/bacula/inc/role-fs/{{ role }}.conf
+    {%- endfor %}
+
+  {%- endif %}
+
+{%- endfor %}
+
+}

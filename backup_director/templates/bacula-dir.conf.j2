@@ -1,0 +1,578 @@
+Director {
+  Name = {{ backup_director_name }}
+  DIRport = 9101
+  QueryFile = "/etc/bacula/scripts/query.sql"
+  WorkingDirectory = "/var/lib/bacula"
+  PidDirectory = "/run/bacula"
+  Maximum Concurrent Jobs = 20
+  Password = "{{ backup_director_console_password }}"
+  Messages = Daemon
+}
+
+#-------------------------------------------------------------------------------
+# JobDefs Directives
+# - BackupJob = self explanatory
+# - CopyJob = copy media to Dropbox for disaster recovery
+# - AdminJob = jobs that are neither a BackupJob, nor a CopyJob
+#-------------------------------------------------------------------------------
+
+JobDefs {
+  Name = BackupJob
+  Type = Backup
+  Storage = File # default for all backup jobs, overriden for external clients
+  Messages = Standard
+  Priority = 10
+  Maximum Concurrent Jobs = 20
+}
+
+JobDefs {
+  Name = CopyJob
+  Type = Copy
+  Storage = FileCopy
+  Messages = Standard
+  # lower priority than BackupJob so that backups complete before copying media
+  Priority = 20
+  Pool = DailyOnSite
+  FileSet = "Full Set"
+  Selection Type = PoolUncopiedJobs
+  # stop Dropbox synchronisation before copying
+  RunBeforeJob = "/etc/bacula/scripts/stop-dropbox.sh"
+  RunAfterJob = "/etc/bacula/scripts/start-dropbox.sh"
+  Maximum Concurrent Jobs = 20
+}
+
+JobDefs {
+  Name = AdminJob
+  Type = Admin
+  Messages = Standard
+  Priority = 10
+  # Attributes that are mandatory for a Job but irrelevant for this Job Type
+  Client = {{ inventory_hostname }}
+  FileSet = "Full Set"
+  Pool = DailyOnSite
+  Storage = File
+}
+
+#-------------------------------------------------------------------------------
+# Job Directives
+# - Backup jobs for each indivdual server
+# - Backup job for the catalog
+# - Copy job to copy catalog backup media to Dropbox
+# - Copy job to copy server backup media to Dropbox for on-site servers
+# - Backup job for files in Dropbox, which is "belt and braces" of course
+# - Admin job that reports the status of Dropbox synchronisation on the director
+# - Standard restore template provided by the vendor
+#-------------------------------------------------------------------------------
+{% for hostname in hostnames %}
+
+Job {
+  Name = {{ hostname }}
+  JobDefs = BackupJob
+  Client = {{ hostname }}
+  Write Bootstrap = "/var/lib/bacula/Dropbox/bacula-test/%n.bsr"
+{#-
+Use a FileSet that is specific to each server to be backed up and is in fact
+derived from the Ansible roles that are deployed to each server.
+#}
+
+  FileSet = {{ hostname }}
+{%-
+if hostvars[hostname]['backup_client_location'] is defined
+and hostvars[hostname]['backup_client_location'] == 'off-site'
+%}
+
+{#-
+If the server is off-site then we use the schedule and default pool for backups
+of off-site servers instead. We also use the Storage directive that is
+configured to accept connections from outside of the office network for the
+storage director that is located on the office network.
+#}
+
+  Storage = FileFromExt
+{% if  backup_director_schedules_active %}
+  Schedule = DailyOffSite
+{% else %}
+  #Schedule = DailyOffSite
+{% endif %}
+  Pool = DailyOffSite
+
+{%- else %}
+
+{#-
+If the server is on-site then use the schedule and default pool for backups of
+on-site servers. The schedule overrides the default pool for full backups weekly
+and monthly. We can use the default Storage directive for the BackupJob JobDefs
+directive, since both the server being backed up and the storage director are
+both on the office network.
+#}
+
+{% if  backup_director_schedules_active %}
+  Schedule = DailyOnSite
+{% else %}
+  #Schedule = DailyOnSite
+{% endif %}
+  Pool = DailyOnSite
+
+{%- endif %}
+
+}
+{% endfor %}
+
+Job {
+  Name = BackupCatalog
+  JobDefs = BackupJob
+  Client = {{ inventory_hostname }}
+  FileSet = Catalog
+  Level = Full
+  Pool = Catalog
+{% if  backup_director_schedules_active %}
+  Schedule = Catalog
+{% else %}
+  #Schedule = Catalog
+{% endif %}
+  # This script provided by the vendor creates an ASCII copy of the catalog
+  # Arguments to make_catalog_backup.pl are:
+  #  make_catalog_backup.pl <catalog-name>
+  RunBeforeJob = "/etc/bacula/scripts/make_catalog_backup.pl MyCatalog"
+  # Script provided by vendor that deletes the copy of the catalog
+  RunAfterJob  = "/etc/bacula/scripts/delete_catalog_backup"
+  # Run after the other backup jobs but before the copy jobs
+  Priority = 15
+}
+
+Job {
+  Name = DailyCatalogCopy
+  JobDefs = CopyJob
+  # Has no effect for this job but Client is mandatory for Job directives
+  Client = {{ inventory_hostname }}
+  Pool = Catalog
+{% if  backup_director_schedules_active %}
+  Schedule = DailyCatalogCopy
+{% else %}
+  #Schedule = DailyCatalogCopy
+{% endif %}
+}
+
+Job {
+  Name = DailyCopy
+  JobDefs = CopyJob
+  # Has no effect for this job but Client is mandatory for Job directives
+  Client = {{ inventory_hostname }}
+  Pool = DailyCopy
+{% if  backup_director_schedules_active %}
+  Schedule = DailyCopy
+{% else %}
+  #Schedule = DailyCopy
+{% endif %}
+}
+
+Job {
+  Name = Dropbox
+  JobDefs = BackupJob
+  # Has no effect for this job but Client is mandatory for Job directives
+  Client = {{ inventory_hostname }}
+  Pool = DailyOffSite
+  FileSet = Dropbox
+{% if  backup_director_schedules_active %}
+  Schedule = DailyOffSite
+{% else %}
+  #Schedule = DailyOffSite
+{% endif %}
+}
+
+Job {
+  Name = DropboxStatus
+  JobDefs = AdminJob
+  RunAfterJob = "/etc/bacula/scripts/dropbox-status.sh"
+}
+
+#
+# Standard Restore template, to be changed by Console program
+#  Only one such job is needed for all Jobs/Clients/Storage ...
+#
+#Job {
+#  Name = "Restore Files"
+#  Type = Restore
+#  Client={{ inventory_hostname }}
+#  Storage = File
+# The FileSet and Pool directives are not used by Restore Jobs
+# but must not be removed
+#  FileSet="Full Set"
+#  Pool = File
+#  Messages = Standard
+#  Where = /tmp/bacula-restores
+#}
+
+#-------------------------------------------------------------------------------
+# FileSet Directives
+# - FileSet directives for each individual server generated by Ansible.
+# - Vendor provided FileSet for the catalog backup.
+# - FileSet directive for Dropbox content.
+# - Vendor provided standard "Full Set" FileSet, which we use as a default
+#   entry where we have to specify a default FileSet but we never actually use
+#   it.
+#-------------------------------------------------------------------------------
+{% for hostname in hostnames %}
+@/etc/bacula/inc/client-fs/{{ hostname }}.conf
+{% endfor %}
+
+FileSet {
+  Name = Catalog
+  Include {
+    Options {
+      signature = MD5
+    }
+    File = "/var/lib/bacula/bacula.sql"
+  }
+}
+
+FileSet {
+  Name = Dropbox
+  Include {
+    Options {
+      signature = MD5
+    }
+    # Location that Dropbox is synchronised to on the director
+    File = /var/local/bacula/Dropbox
+  }
+  Exclude {
+    # Where backup media for on-site servers is copied to for disaster recovery.
+    # We don't want to back up these as then we would be backing up on-site an
+    # off-site copy of the backups of on-site servers - DUPLICATION!
+    File = /var/local/bacula/Dropbox/bacula
+  }
+}
+
+FileSet {
+  Name = "Full Set"
+  Include {
+    Options {
+      signature = MD5
+    }
+#
+#  Put your list of files here, preceded by 'File =', one per line
+#    or include an external list with:
+#
+#    File = <file-name
+#
+#  Note: / backs up everything on the root partition.
+#    if you have other partitions such as /usr or /home
+#    you will probably want to add them too.
+#
+#  By default this is defined to point to the Bacula binary
+#    directory to give a reasonable FileSet to backup to
+#    disk storage during initial testing.
+#
+    File = /usr/sbin
+  }
+
+#
+# If you backup the root directory, the following two excluded
+#   files can be useful
+#
+  Exclude {
+    File = /var/lib/bacula
+    File = /nonexistant/path/to/file/archive/dir
+    File = /proc
+    File = /tmp
+    File = /sys
+    File = /.journal
+    File = /.fsck
+  }
+}
+
+#-------------------------------------------------------------------------------
+# Schedules
+# - Daily backup of the catalog.
+# - Daily copy of the catalog backup media to Dropbox.
+# - Daily backup of off-site servers, with media drawn from pools for
+#   incremental normal backup and full backups weekly and monthly.
+# - Daily backup of on-site servers, with media drawn from pools for incremental
+#   normal backup and full backups weekly and monthly.
+#-------------------------------------------------------------------------------
+
+Schedule {
+  Name = Catalog
+  Run = at 01:10
+}
+
+Schedule {
+  Name = DailyCatalogCopy
+  Run = at 07:05
+}
+
+Schedule {
+  Name = DailyOffSite
+  Run = Level=Full Pool=MonthlyOffSite 1st sat at 01:05
+  Run = Level=Full Pool=WeeklyOffSite 2nd-5th sat at 01:05
+  Run = Level=Incremental Pool=DailyOffSite sun-fri at 01:05
+}
+
+# Daily backup of servers located on the internal office network
+Schedule {
+  Name = DailyOnSite
+  Run = Level=Full Pool=MonthlyOnSite 1st sat at 01:05
+  Run = Level=Full Pool=WeeklyOnSite 2nd-5th sat at 01:05
+  Run = Level=Incremental Pool=DailyOnSite sun-fri at 01:05
+}
+
+Schedule {
+  Name = DailyCopy
+  Run = Pool= DailyOnSite sun-fri at 02:35
+}
+
+#-------------------------------------------------------------------------------
+# Client Directives
+#-------------------------------------------------------------------------------
+
+{% for hostname in hostnames %}
+Client {
+  Name = {{ hostname }}
+  Address = {{ hostname }}
+  FDPort = 9102
+  Catalog = MyCatalog
+  Password = "{{ hostvars[hostname]['backup_client_director_password'] }}"
+  File Retention = 60 days
+  Job Retention = 6 months
+  AutoPrune = yes
+}
+
+{% endfor %}
+#-------------------------------------------------------------------------------
+# Storage Directives
+#-------------------------------------------------------------------------------
+
+Storage {
+  Name = File
+  Address = "{{ backup_storage_host }}"
+  SDPort = 9103
+  Password = "{{ backup_storage_password }}"
+  Device = FileStorage
+  Maximum Concurrent Jobs = 20
+  Media Type = File
+}
+
+Storage {
+  Name = FileFromExt
+  Address = "{{ backup_storage_host }}"
+  FD Storage Address = "{{ backup_storage_host }}"
+  SDPort = 9103
+  Password = "{{ backup_storage_password }}"
+  Device = FileStorage
+  Maximum Concurrent Jobs = 20
+  Media Type = File
+}
+
+Storage {
+   Name = FileCopy
+   Address = "{{ backup_storage_host }}"
+   SDPort = 9103
+   Password = "{{ backup_storage_password }}"
+   Device = FileStorageCopy
+   Media Type = File
+   Maximum Concurrent Jobs = 20
+}
+
+# Generic catalog service
+Catalog {
+  Name = MyCatalog
+  dbname = "bacula";
+  DB Address = "{{ backup_database_host }}";
+  dbuser = "{{ backup_database_user }}";
+  dbpassword = "{{ backup_database_password }}"
+}
+
+# Reasonable message delivery -- send most everything to email address
+#  and to the console
+Messages {
+  Name = Standard
+#
+# NOTE! If you send to two email or more email addresses, you will need
+#  to replace the %r in the from field (-f part) with a single valid
+#  email address in both the mailcommand and the operatorcommand.
+#  What this does is, it sets the email address that emails would display
+#  in the FROM field, which is by default the same email as they're being
+#  sent to.  However, if you send email to more than one address, then
+#  you'll have to set the FROM address manually, to a single address.
+#  for example, a 'no-reply@mydomain.com', is better since that tends to
+#  tell (most) people that its coming from an automated source.
+
+#
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: %t %e of %c %l\" %r"
+  operatorcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: Intervention needed for %j\" %r"
+  mail = root = all, !skipped
+  operator = root = mount
+  console = all, !skipped, !saved
+#
+# WARNING! the following will create a file that you must cycle from
+#          time to time as it will grow indefinitely. However, it will
+#          also keep all your messages if they scroll off the console.
+#
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+  catalog = all
+}
+
+
+#
+# Message delivery for daemon messages (no job).
+Messages {
+  Name = Daemon
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula daemon message\" %r"
+  mail = root = all, !skipped
+  console = all, !skipped, !saved
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+}
+
+#-------------------------------------------------------------------------------
+# Pool Directives
+#-------------------------------------------------------------------------------
+
+Pool {
+  # Pool for daily catalog backup files
+  # Storage set in JobDefs/Job and NOT here.
+  Name = Catalog
+  Pool Type = Backup
+  Label Format = Catalog
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  VolumeRetention = 3d
+}
+
+Pool {
+  # Pool for daily backup files for on-site (office network) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Name = DailyOnSite
+  Pool Type = Backup
+  Label Format = DailyOnSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  Volume Retention = 10d
+  Next Pool = DailyCopy
+}
+
+Pool {
+  # Pool for weekly backup files for on-site (office network) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Name = WeeklyOnSite
+  Pool Type = Backup
+  Label Format = WeeklyOnSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  VolumeRetention = 30d
+  Next Pool = WeeklyCopy
+}
+
+Pool {
+  # Pool for daily backup files for off-site (Internet) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Name = DailyOffSite
+  Pool Type = Backup
+  Label Format = DailyOffSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  Volume Retention = 10d
+}
+
+Pool {
+  # Pool for weekly backup files for off-site (Internet) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Name = WeeklyOffSite
+  Pool Type = Backup
+  Label Format = WeeklyOffSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  VolumeRetention = 30d
+}
+
+Pool {
+  # Pool for monthly backup files for off-site (Internet) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Pool Type = Backup
+  Name = MonthlyOffSite
+  Label Format = MonthlyOffSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  # We make a monthly backup on the 1st Saturday of every month.
+  # We want to retain the last three monthly backups.
+  #
+  # Consider this scenario:
+  # 1. Monthly backup runs on Saturday 2nd February;
+  # 2. Monthly backup runs on Saturday 2nd March;
+  # 3. Monthly backup runs on Saturday 6th April;
+  # 4. Monthly backup runs on Saturday 4th May.
+  #
+  # The run on the 4th May should reuse the volumes written on 2nd February,
+  # which was 31 weeks or 91 days previous.
+  # Volume retention period is set to 90 days.
+  VolumeRetention = 90d
+}
+
+Pool {
+  # Pool for monthly backup files for on-site (office network) clients.
+  # Storage set in JobDefs/Job and NOT here.
+  Pool Type = Backup
+  Name = MonthlyOnSite
+  Label Format = MonthlyOnSite
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  # We make a monthly backup on the 1st Saturday of every month.
+  # We want to retain the last three monthly backups.
+  #
+  # Consider this scenario:
+  # 1. Monthly backup runs on Saturday 2nd February;
+  # 2. Monthly backup runs on Saturday 2nd March;
+  # 3. Monthly backup runs on Saturday 6th April;
+  # 4. Monthly backup runs on Saturday 4th May.
+  #
+  # The run on the 4th May should reuse the volumes written on 2nd February,
+  # which was 31 weeks or 91 days previous.
+  # Volume retention period is set to 90 days.
+  VolumeRetention = 90d
+  Next Pool = WeeklyCopy
+}
+
+Pool {
+  # Pool for off-site copies of daily backups of on-site servers
+  Name = DailyCopy
+  Pool Type = Copy
+  Label Format = DailyCopy
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  Volume Retention = 10d
+}
+
+Pool {
+  # Pool for off-site copies of weekly backups of on-site servers
+  Name = WeeklyCopy
+  Pool Type = Copy
+  Label Format = WeeklyCopy
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  VolumeRetention = 6d
+}
+
+#
+# Restricted console used by tray-monitor to get the status of the director
+#
+Console {
+  Name = 85fb96d441ae-mon
+  Password = "9TeMVHXY5hJLsnS9XISVyMuI4uEr_twar"
+  CommandACL = status, .status
+}
