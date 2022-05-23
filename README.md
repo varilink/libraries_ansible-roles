@@ -4,10 +4,6 @@ David Williamson @ Varilink Computing Ltd
 
 ------
 
-## Table of Contents
-
-[TOC]
-
 ## Overview
 
 A library of Ansible roles maintained and used by Varilink. These fall into two categories, which are used in two different places in the Varilink GitHub repositories:
