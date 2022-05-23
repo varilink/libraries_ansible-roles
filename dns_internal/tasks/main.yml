@@ -1,0 +1,57 @@
+- name: Deploy the DNS internal role
+  become: yes
+  block:
+
+    - name: Install apt package(s) required by the DNS internal role
+      apt:
+        name:
+          - dnsmasq
+        install_recommends: no
+
+    - name: Copy resolv.conf file
+      copy:
+        src: files/resolv.conf
+        dest: /etc/resolv.conf
+        # Because we are in a container, parameterise this
+        unsafe_writes: yes
+
+    - name: Copy upstream-resolve.conf
+      copy:
+        src: files/upstream-resolv.conf
+        dest: /etc/upstream-resolv.conf
+
+    - name: Template out dnsmasq.conf
+      template:
+        src: templates/dnsmasq.conf.j2
+        dest: /etc/dnsmasq.conf
+
+    - debug:
+        var: ansible_hosts
+      vars:
+        ansible_hosts: "{{ groups['all'] }}"
+#          "{{
+#          groups['all']
+#          | map('extract', hostvars, 'ansible_host')
+#          | list | sort
+#          }}"
+
+    - debug:
+        var: hostvars
+      vars:
+        ansible_hosts: "{{ hostvars }}"
+
+    - debug:
+       var: rolemaps
+      vars:
+        # Load the contents of deploy.yml into the variable "rolemaps"
+        rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
+
+
+    - name: Template out hosts file
+      template:
+        src: templates/hosts.j2
+        dest: /etc/hosts
+        unsafe_writes: yes
+      vars:
+        # Load the contents of deploy.yml into the variable "rolemaps"
+        rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"

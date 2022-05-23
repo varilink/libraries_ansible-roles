@@ -1,0 +1,33 @@
+- name: Install reverse proxy role
+  become: yes
+  block:
+
+    - name: Install apt package(s) for reverse proxy role
+      apt:
+        name: nginx
+
+    # Any host fulfiling a reverse proxy role that is external to the Varilink
+    # Computing Ltd office network must be enabled to support SSL connections.
+    - name: Setup Let's Encrypt if SSL is required for this host
+      when: "'external' in groups and inventory_hostname in groups['external']"
+      block:
+
+        # If systemd is available, installing the certbot apt package creates
+        # and activates a systemd timer unit called certbot.timer to "Run cerbot
+        # twice daily". The associated systemd service unit (certbot.service),
+        # executes certbot's renew subcommand. The equivalent CRON setup is
+        # disabled since the CRON job on executes certbot's renew subcommand if
+        # it does NOT find /run/systemd/system to be present.
+        - name: Install certbot apt package
+          apt:
+            name: certbot
+
+        # On the successful deployment of a renewed certificate, we must reload
+        # the nginx configuration for it to take effect.
+        - name: Automate reload of nginx configuration on certificate renewal
+          copy:
+            src: files/reload-nginx-config.sh
+            dest: /etc/letsencrypt/renewal-hooks/deploy/
+            owner: root
+            group: root
+            mode: '755'

@@ -1,0 +1,56 @@
+#!/usr/bin/perl
+
+use strict ;
+use warnings ;
+
+use Data::Dumper ;
+use JSON qw / decode_json / ;
+use LWP::UserAgent ;
+
+{% for domain in domains %}
+
+{% for resource in domain.resources %}
+
+{
+
+  # resource {{ resource.name }} in domain {{ domain.name }}
+
+  my %form = (
+    api_key     => '{{ api_key }}'          ,
+    api_action  => 'domain.resource.update' ,
+    domainid    => '{{ domain.id }}'        ,
+    resourceid  => '{{ resource.id }}'      ,
+    target      => '[remote_addr]'
+  ) ;
+
+  my $user_agent = new LWP::UserAgent (
+    ssl_opts => { verify_hostname => 1 }
+  );
+
+  my $response = $user_agent -> post (
+    '{{ api_url }}' ,
+    \%form
+  ) ;
+
+  if ( $response -> is_success ) {
+
+    my $json = decode_json ( $response -> content ) ;
+
+    print Dumper $json if @{ $json -> { ERRORARRAY } } ;
+
+  } else {
+
+    print '/usr/local/sbin/dynamic_dns returned ' .
+      $response -> status_line if $response -> is_error ;
+
+  }
+
+}
+
+{% endfor %}
+
+{% endfor %}
+
+1 ;
+
+__END__

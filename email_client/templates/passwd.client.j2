@@ -1,0 +1,8 @@
+# password file used when the local exim is authenticating to a remote
+# host as a client.
+#
+# see exim4_passwd_client(5) for more documentation
+#
+# Example:
+### target.mail.server.example:login:password
+{{ email_client_smarthost }}:{{ email_client_smarthost_user }}:{{ email_client_smarthost_password }}
