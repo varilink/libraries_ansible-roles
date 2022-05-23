@@ -1,0 +1,38 @@
+Storage {                             # definition of myself
+  Name = {{ backup_storage_name }}
+  SDPort = 9103                  # Director's port
+  WorkingDirectory = "/var/lib/bacula"
+  Pid Directory = "/run/bacula"
+  Plugin Directory = "/usr/lib/bacula"
+  Maximum Concurrent Jobs = 20
+}
+
+#
+# List Directors who are permitted to contact Storage daemon
+#
+Director {
+  Name = {{ backup_director_name }}
+  Password = "{{ backup_storage_password }}"
+}
+
+#
+# Devices supported by this Storage daemon
+# To connect, the Director's bacula-dir.conf must have the
+#  same Name and MediaType.
+#
+
+Device {
+  Name = FileStorage
+  Media Type = File
+  Archive Device = /var/local/bacula
+  LabelMedia = yes
+  Random Access = yes
+  AutomaticMount = yes
+  RemovableMedia = no
+  AlwaysOpen = no
+}
+
+Messages {
+  Name = Standard
+  director = {{ backup_director_name }} = all
+}

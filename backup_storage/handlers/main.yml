@@ -1,0 +1,16 @@
+# Restart the bacula storage daemon to reflect a change to its configuration.
+# Note that setting a status of reloaded does not appear to work for this
+# service. However, restarting it is no issue as it doesn't result in any loss
+# of service to customers.
+
+- name: Populate service facts
+  service_facts:
+  listen: bacula storage daemon configuration changed
+
+- name: Restart bacula storage daemon
+  when: ansible_facts['services']['bacula-sd']['state'] == 'running'
+  become: yes
+  service:
+    name: bacula-sd
+    state: restarted
+  listen: bacula storage daemon configuration changed

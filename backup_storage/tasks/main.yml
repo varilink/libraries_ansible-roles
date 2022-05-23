@@ -1,0 +1,45 @@
+- name: Deploy the backup storage role
+  become: yes
+  block:
+
+    # NOTE: This step will fail due to bug in bacula-sd package
+    # See https://www.mail-archive.com/ubuntu-bugs@lists.ubuntu.com/msg5751342.html
+    - name: Install apt package(s) required for the backup storage role
+      apt:
+        install_recommends: no
+        name:
+          - bacula-bscan
+          - bacula-common-mysql
+          - bacula-sd
+      # Ignore the bug referred to above
+      ignore_errors: yes
+
+    - name: Copy replacement bacula-sd.postinst script that fixes above bug
+      copy:
+        src: files/bacula-sd.postinst
+        dest: /var/lib/dpkg/info/bacula-sd.postinst
+        mode: '0755'
+
+    - name: Reinstall now that fix for bug in bacula-sd package has been applied
+      apt:
+        state: fixed
+
+    - name: Create folder for storage archive
+      file:
+        group: bacula
+        owner: bacula
+        path: /var/local/bacula
+        state: directory
+
+    - name: Template out the bacula-sd.conf for the backup server
+      template:
+        src: "templates/bacula-sd.conf.j2"
+        dest: /etc/bacula/bacula-sd.conf
+        mode: '0640'
+        owner: root
+        group: bacula
+      notify: bacula storage daemon configuration changed
+
+    - name: Install and setup Dropbox for backup use
+      include_role:
+        name: backup_dropbox
