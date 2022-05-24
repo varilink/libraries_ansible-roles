@@ -7,7 +7,7 @@ use Data::Dumper ;
 use JSON qw / decode_json / ;
 use LWP::UserAgent ;
 
-{% for domain in domains %}
+{% for domain in dns_external_domains %}
 
 {% for resource in domain.resources %}
 
@@ -16,7 +16,7 @@ use LWP::UserAgent ;
   # resource {{ resource.name }} in domain {{ domain.name }}
 
   my %form = (
-    api_key     => '{{ api_key }}'          ,
+    api_key     => '{{ dns_external_api.key }}'          ,
     api_action  => 'domain.resource.update' ,
     domainid    => '{{ domain.id }}'        ,
     resourceid  => '{{ resource.id }}'      ,
@@ -28,7 +28,7 @@ use LWP::UserAgent ;
   );
 
   my $response = $user_agent -> post (
-    '{{ api_url }}' ,
+    '{{ dns_external_api.url }}' ,
     \%form
   ) ;
 

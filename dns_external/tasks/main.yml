@@ -1,27 +1,28 @@
-- name: Enable dynamic DNS service on gateway server
+- name: Enable Dynamic DNS service on the DNS gateway server
   become: yes
   block:
 
     - name: Install Perl packages used by the dynamic-dns script
       apt:
         name:
+          - cron
           - libjson-perl
           - libperl5.28
           - libwww-perl
 
-    - name: deploy the dynamic-dns script
+    - name: Deploy the dynamic-dns script
       template:
         src: dynamic-dns.j2
         dest: /usr/local/sbin/dynamic-dns
         mode: 0755
 
-    - name: add crontab entries
+    - name: Add crontab entries
       cron:
         job: /usr/local/sbin/dynamic-dns
         minute: "{{ item }}"
         name: "Dynamic DNS {{ item }}"
       with_items:
-        - 0
-        - 15
-        - 30
-        - 45
+        - "0"
+        - "15"
+        - "30"
+        - "45"
