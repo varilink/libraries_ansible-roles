@@ -2,56 +2,49 @@
   become: yes
   block:
 
-    - name: Install apt package(s) required by the DNS internal role
+    - name: Install APT package(s) required by the DNS internal role
       apt:
         name:
           - dnsmasq
         install_recommends: no
 
-    - name: Copy resolv.conf file
-      copy:
-        src: files/resolv.conf
-        dest: /etc/resolv.conf
-        # Because we are in a container, parameterise this
-        unsafe_writes: yes
-
-    - name: Copy upstream-resolve.conf
-      copy:
-        src: files/upstream-resolv.conf
+    - name: Template out upstream-resolv.conf
+      template:
+        src: upstream-resolv.conf.j2
         dest: /etc/upstream-resolv.conf
 
-    - name: Template out dnsmasq.conf
+    - name: Template out resolv.conf
       template:
-        src: templates/dnsmasq.conf.j2
-        dest: /etc/dnsmasq.conf
+        src: resolv.conf.j2
+        dest: /etc/resolv.conf
+        unsafe_writes: "{{ unsafe_writes }}"
 
-    - debug:
-        var: ansible_hosts
-      vars:
-        ansible_hosts: "{{ groups['all'] }}"
-#          "{{
-#          groups['all']
-#          | map('extract', hostvars, 'ansible_host')
-#          | list | sort
-#          }}"
+    - name: Set resolv-file to /etc/upstream-resolv.conf in /etc/dnsmasq.conf
+      lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?resolv-file='
+        line: resolv-file=/etc/upstream-resolv.conf
 
-    - debug:
-        var: hostvars
-      vars:
-        ansible_hosts: "{{ hostvars }}"
+    - name: Enable expand-hosts in /etc/dnsmasq.conf
+      lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?expand-hosts'
+        line: expand-hosts
 
-    - debug:
-       var: rolemaps
-      vars:
-        # Load the contents of deploy.yml into the variable "rolemaps"
-        rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
+    - name: Set domain to required value in /etc/dnsmasq.conf
+      lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ dns_internal_domain }})"
+        line: domain={{ dns_internal_domain }}
 
-
+    # TODO: See if we can use something like blockinfile
+    # I'm thinking can we remove the need to use a template that's modelled on
+    # the default hosts file of the Debian install.
     - name: Template out hosts file
       template:
         src: templates/hosts.j2
         dest: /etc/hosts
-        unsafe_writes: yes
+        unsafe_writes: "{{ unsafe_writes }}"
       vars:
         # Load the contents of deploy.yml into the variable "rolemaps"
         rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
