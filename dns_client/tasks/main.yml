@@ -1,0 +1,23 @@
+- name: Deploy the DNS client role
+  become: yes
+  block:
+
+    - name: Ensure domain name is in /etc/hosts file
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regex: "^\
+          {{ ansible_host.replace('.', '\\.') }}\\s+\
+          (?:{{ inventory_hostname }}\\.varilink\\.co\\.uk\\s+)?\
+          {{ inventory_hostname }}\
+          $"
+        line: "\
+          {{ ansible_host }}\
+          \t\
+          {{ inventory_hostname }}.varilink.co.uk {{ inventory_hostname }}"
+        unsafe_writes: "{{ unsafe_writes }}"
+
+    - name: Template out resolv.conf
+      ansible.builtin.template:
+        src: resolv.conf.j2
+        dest: /etc/resolv.conf
+        unsafe_writes: "{{ unsafe_writes }}"
