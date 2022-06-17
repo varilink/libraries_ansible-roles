@@ -1,0 +1,32 @@
+# Deploy the email role
+
+---
+
+- block:
+
+    - name: Install APT package(s) required by the email role
+      ansible.builtin.apt:
+        name:
+          - dovecot-imapd
+          - exim4
+        install_recommends: no
+
+    - name: Set Dovecot mail location to Maildir
+      lineinfile:
+        path: /etc/dovecot/conf.d/10-mail.conf
+        regexp: '^mail_location = '
+        line: mail_location = maildir:~/Maildir
+
+    - name: Template out the EXIM4 mailname file
+      ansible.builtin.template:
+        src: mailname.j2
+        dest: /etc/exim4/mailname
+
+    # TODO: Move to the dns_client role renamed to more generic "base host" role
+    - name: Create accounts for all the office users
+      user:
+        name: "{{ item.username }}"
+        password: "{{ item.userpass_encrypted }}"
+      loop: "[ {{ admin_user }} ] + {{ other_users }}"
+
+  become: yes

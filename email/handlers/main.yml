@@ -1,0 +1,10 @@
+# Run update-exim4.conf
+
+---
+
+  - name: Run update-exim4.conf
+    command: update-exim4.conf
+    become: yes
+
+  # TODO: Add the restart exim4 step and add handlers for dovecot restart
+  # TODO: Ensure that run update-exim3.conf happens on change of exim4.conf.template too
