@@ -4,7 +4,7 @@ David Williamson @ Varilink Computing Ltd
 
 ------
 
-## DNS External
+## Dynamic DNS
 
 ### Description
 

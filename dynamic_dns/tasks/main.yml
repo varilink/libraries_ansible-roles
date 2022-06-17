@@ -1,23 +1,23 @@
-- name: Enable Dynamic DNS service on the DNS gateway server
+- name: Deploy dynamic DNS role
   become: yes
   block:
 
-    - name: Install Perl packages used by the dynamic-dns script
-      apt:
+    - name: Install APT packages used by the dynamic DNS role
+      ansible.builtin.apt:
         name:
           - cron
           - libjson-perl
-          - libperl5.28
+          - libperl5.32
           - libwww-perl
 
     - name: Deploy the dynamic-dns script
-      template:
+      ansible.builtin.template:
         src: dynamic-dns.j2
         dest: /usr/local/sbin/dynamic-dns
         mode: 0755
 
-    - name: Add crontab entries
-      cron:
+    - name: Add crontab entries for the dynamic-dns script
+      ansible.builtin.cron:
         job: /usr/local/sbin/dynamic-dns
         minute: "{{ item }}"
         name: "Dynamic DNS {{ item }}"
