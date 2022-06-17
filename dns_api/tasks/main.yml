@@ -1,0 +1,9 @@
+- name: Enable DNS API role
+  become: yes
+  block:
+
+    - name: Template out the dns-linode-credentials.ini file
+      ansible.builtin.template:
+        src: dns-linode-credentials.ini.j2
+        dest: /usr/local/etc/dns-linode-credentials.ini
+        mode: 0600
