@@ -1,0 +1,35 @@
+
+# Deploy the email certificates role
+
+---
+
+- block:
+
+    - name: Install APT packages used by the email certificates role
+      ansible.builtin.apt:
+        name:
+          - certbot
+          - python3-certbot-dns-linode
+
+    - name: Create an ACME account
+      ansible.builtin.command:
+        cmd: certbot register --agree-tos --email {{ email_admin_address }}
+        creates: /etc/letsencrypt/accounts
+
+    - name: Create folder for self-signed certificates
+      ansible.builtin.file:
+        path: /usr/local/etc/certs
+        state: directory
+
+  become: yes
+
+- name: Generate keys for copying certificates to external email server host
+  ansible.builtin.command:
+    cmd: ssh-keygen -f ~/.ssh/id_rsa -N ""
+    creates: ~/.ssh/id_rsa
+
+- name: Fetch the id_rsa.pub file
+  ansible.builtin.fetch:
+    src: ~/.ssh/id_rsa.pub
+    dest: roles/email_external/files/id_rsa.pub
+    flat: yes
