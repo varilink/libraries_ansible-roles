@@ -1,0 +1,70 @@
+- name: Generate domain email certificates
+  block:
+
+    - name: Self-signed
+      block:
+
+        - name: Create domain folder to hold certificates
+          ansible.builtin.file:
+            path: /usr/local/etc/certs/{{ email_domain }}
+            state: directory
+
+        - name: Template out openssl config file
+          ansible.builtin.template:
+            src: openssl.cnf.j2
+            dest: /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
+
+        - name: Generate SSL certificate key
+          ansible.builtin.shell:
+            cmd: >-
+              openssl genrsa -out
+              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+              2048
+              && chgrp Debian-exim
+              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+              && chmod g+r
+              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.key
+
+        - name: Generate self-signed certificate
+          ansible.builtin.command:
+            cmd: >
+              openssl req
+              -config /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
+              -x509 -sha256
+              -new -key /usr/local/etc/certs/{{ email_domain }}/ssl.key
+              -out /usr/local/etc/certs/{{ email_domain }}/ssl.crt
+            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.crt
+
+        # TODO: Automate the derivation of the target host
+        - name: Deploy certificates to external email host
+          ansible.builtin.command:
+            cmd: >-
+              rsync -r -g
+              -e 'ssh -i /home/{{ ansible_user }}/.ssh/id_rsa
+              -o StrictHostKeyChecking=no'
+              --rsync-path='sudo rsync'
+              /usr/local/etc/certs
+              {{ ansible_user }}@email-external:/usr/local/etc
+
+      when: not email_domain_uses_ca
+
+    - name: Certification authority
+      block:
+
+        - name: Obtain certificates that the email service requires
+          ansible.builtin.command:
+            cmd: >
+              /usr/bin/certbot certonly
+              --non-interactive
+              --dns-linode
+              --dns-linode-credentials /usr/local/etc/dns-linode-credentials.ini
+              --domain imap.{{ email_domain }}
+              --domain smtp.{{ email_domain }}
+            creates: /etc/letsencrypt/live/{{ email_domain }}
+
+        # TODO: Add initial deployment and putting in place of renewal hook
+
+      when: email_domain_uses_ca
+
+  become: yes
