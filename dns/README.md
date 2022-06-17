@@ -4,7 +4,7 @@ David Williamson @ Varilink Computing Ltd
 
 ------
 
-## DNS Internal
+## DNS
 
 ### Description
 
@@ -12,8 +12,7 @@ This service uses [Dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) to provi
 
 ### Variables
 
-```yaml
-unsafe_writes: ...
-dns_internal_domain: ...
-dns_internal_upstream_nameservers: ...
-```
+- dns_group
+- domain
+- unsafe_writes
+- dns_internal_upstream_nameservers

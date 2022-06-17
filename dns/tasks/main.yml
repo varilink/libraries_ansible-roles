@@ -3,48 +3,44 @@
   block:
 
     - name: Install APT package(s) required by the DNS internal role
-      apt:
+      ansible.builtin.apt:
         name:
           - dnsmasq
         install_recommends: no
 
     - name: Template out upstream-resolv.conf
-      template:
+      ansible.builtin.template:
         src: upstream-resolv.conf.j2
         dest: /etc/upstream-resolv.conf
 
-    - name: Template out resolv.conf
-      template:
-        src: resolv.conf.j2
-        dest: /etc/resolv.conf
-        unsafe_writes: "{{ unsafe_writes }}"
-
     - name: Set resolv-file to /etc/upstream-resolv.conf in /etc/dnsmasq.conf
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?resolv-file='
         line: resolv-file=/etc/upstream-resolv.conf
 
     - name: Enable expand-hosts in /etc/dnsmasq.conf
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?expand-hosts'
         line: expand-hosts
 
-    - name: Set domain to required value in /etc/dnsmasq.conf
-      lineinfile:
+    - name: Enable read of additional hosts file in /etc/dnsmasq.conf
+      ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
-        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ dns_internal_domain }})"
-        line: domain={{ dns_internal_domain }}
+        regexp: '^#?addn-hosts='
+        line: addn-hosts=/etc/addn-hosts
 
-    # TODO: See if we can use something like blockinfile
-    # I'm thinking can we remove the need to use a template that's modelled on
-    # the default hosts file of the Debian install.
-    - name: Template out hosts file
-      template:
-        src: templates/hosts.j2
-        dest: /etc/hosts
-        unsafe_writes: "{{ unsafe_writes }}"
+    - name: Set domain to required value in /etc/dnsmasq.conf
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ home_domain }})"
+        line: domain={{ home_domain }}
+
+    - name: Template out additional hosts file
+      ansible.builtin.template:
+        src: addn-hosts.j2
+        dest: /etc/addn-hosts
       vars:
-        # Load the contents of deploy.yml into the variable "rolemaps"
-        rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
+        # Load the contents of deploy.yml into the variable "playbook"
+        playbook: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"

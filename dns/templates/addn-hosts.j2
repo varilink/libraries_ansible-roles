@@ -1,0 +1,63 @@
+{#
+Each DNS server provides DNS resolution for a group of hosts. The name of that
+group is provided in the dns_group variable.
+#}
+{% for hostname in groups[dns_group] | sort %}{# hostname loop #}
+
+{#-
+See if an IP address is provided for the host via the ansible_host setting. If
+it is then we can include a line to resolve the hostname to that IP address.
+#}
+{% if hostvars[hostname].ansible_host is defined %}
+{{ hostvars[hostname].ansible_host }} {{ hostname }}
+
+{#-
+The playbook contains an array of dictionary objects, each of which contains a
+hosts key. The hosts key could be a group name or an individual host name. We
+need to match on the current hostname in our hostnames loop only.
+#}
+{% for dict_obj in playbook %}{# dict_obj loop #}
+
+{%- if dict_obj['hosts'] == hostname %}
+
+{#-
+The hosts entry could either defined a list of roles to be deployed to the host
+or hosts or a list of tasks to run for the host or hosts. We are interested here
+only in the roles entries.
+#}
+{% if 'roles' in dict_obj %}
+
+{%- for role in dict_obj['roles'] %}{# role loop #}
+
+{#-
+The roles entry can either be an array of strings or, if further detail is to be
+included for each role such as vars, a dictionary object. We need to find the
+name of the role in either scenario.
+#}
+{% if role is string %}
+{% set role_name = role %}
+{% else %}
+{% set role_name = role['role'] %}
+{% endif %}
+
+{%- if role_name == 'backup_director' %}
+ bacula-dir
+{%- elif role_name == 'backup_storage' %}
+ bacula-sd
+{%- elif role_name == 'calendar' %}
+ caldav
+{%- elif role | regex_search('^email') %}
+ imap smtp
+{%- endif %}
+
+{%- endfor %}{# role loop #}
+
+{%- endif %}
+
+{%- endif %}
+
+{%- endfor %}{# dict_obj loop #}
+
+{% endif %}
+
+{%- endfor %}{# hostnames loop #}
