@@ -1,55 +1,166 @@
 #!/usr/bin/perl
 
-use strict ;
-use warnings ;
+=head1 Dynamic DNS Record Updater
 
-use Data::Dumper ;
-use JSON qw / decode_json / ;
-use LWP::UserAgent ;
+=prod
+This script uses the Linode API to update DNS records for domains whose DNS zone
+is hosted by Linode. It runs on our office network, which is not allocated a
+fixed IP address by our ISP. Therefore the external IP address for any services
+that we run on our office network and expose externally will periodically
+change. This script recognises when that has happened and updates the DNS
+records corresponding to those services accordingly.
+=cut
 
-{% for domain in dns_external_domains %}
+use strict;
+use warnings;
 
-{% for resource in domain.resources %}
+use Config::Tiny;
+use Data::Dumper;
+use HTTP::Headers;
+use JSON qw(encode_json decode_json);
+use LWP::UserAgent;
+use Sys::Syslog qw(:standard :macros);
 
-{
+# Script expects no arguments. Error and exit if any are provided.
+if ( @ARGV > 0 ) {
+  print STDERR "This script should be run with no arguments\n";
+  exit;
+}
 
-  # resource {{ resource.name }} in domain {{ domain.name }}
+# Read the Linode API personal access token. This should be scoped for domain
+# updates only. The format of the file that the token is stored in is as
+# required by the DNS Linode plugin to certbot, since the token is shared with
+# the process that obtains SSL certificates for imap and smtp connections to our
+# client email service.
+my $config = Config::Tiny->read( '/usr/local/etc/dns-linode-credentials.ini' );
+my $dns_linode_key = $config->{_}->{dns_linode_key};
 
-  my %form = (
-    api_key     => '{{ dns_external_api.key }}'          ,
-    api_action  => 'domain.resource.update' ,
-    domainid    => '{{ domain.id }}'        ,
-    resourceid  => '{{ resource.id }}'      ,
-    target      => '[remote_addr]'
-  ) ;
+# Create a user agents and set some defaults for every request that will use it.
+my $headers = new HTTP::Headers;
+$headers->header( 'Authorization' => "Bearer $dns_linode_key" );
+my $user_agent = new LWP::UserAgent( ssl_opts => { verify_hostname => 1 } );
+$user_agent->default_headers( $headers );
 
-  my $user_agent = new LWP::UserAgent (
-    ssl_opts => { verify_hostname => 1 }
+# Variable to receive responses to API requests.
+my $response;
+
+# Open the syslog for informational reporting.
+openlog(
+  'dynamic-dns', # identify for log messages
+  'ndelay,pid',  # open immediately (ndelay) and include PID with each message
+  LOG_LOCAL0
+);
+
+# Report to the syslog that we've started a scheduled run of this script.
+syslog( LOG_INFO, 'Started check for Dynamic DNS updates' );
+
+# Variable that holds an array of domain ids (Linode domain identifier) and an
+# array of domain record ids (Linode domain record identifier) for each domain
+# that correspond to services on our office network that we're exposing
+# externally to clients.
+my @domains = (
+{% for domain in dynamic_dns_domains %}
+  {
+    id => '{{ domain.id }}',
+    records => [
+{% for record in domain.records %}
+      { id => '{{ record.id }}' },
+{% endfor %}
+    ]
+  },
+{% endfor %}
+);
+
+foreach my $domain ( @domains ) {
+
+  # Variable to hold the current domain name.
+  my $domain_name = '';
+
+  # Invoke the Domain View API for the current domain id.
+  $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+    $domain->{ id }
   );
 
-  my $response = $user_agent -> post (
-    '{{ dns_external_api.url }}' ,
-    \%form
-  ) ;
+  if ( $response->is_success ) {
 
-  if ( $response -> is_success ) {
-
-    my $json = decode_json ( $response -> content ) ;
-
-    print Dumper $json if @{ $json -> { ERRORARRAY } } ;
+    # Capture the name of this domain.
+    $domain_name = decode_json( $response->content )->{ domain };
 
   } else {
 
-    print '/usr/local/sbin/dynamic_dns returned ' .
-      $response -> status_line if $response -> is_error ;
+    # Report error executing the Domain View API for the current domain.
+    print STDERR $response->status_line,
+      ' viewing domain ', $domain->{ id },
+      "\n";
+
+  }
+
+  foreach my $record ( @{ $domain->{records} } ) {
+
+    # Invoke the Domain Record View API for the current domain record.
+    $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+      $domain->{ id } . '/records/' . $record->{ id }
+    );
+
+    if ( $response->is_success ) {
+
+      # Capture the current domain record name and target IP address.
+      my $record_name = decode_json( $response->content )->{ name };
+      my $record_target = decode_json( $response->content )->{ target };
+
+      # Set the content for the Domain Record Update. The special variable
+      # remote_addr will correspond to the current IP address provided to our
+      # office network by our ISP.
+      my $content = encode_json( { target => '[remote_addr]' } );
+
+      # Invoke the Domain Record Update API for the current domain record.
+      $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
+        $domain->{ id } . '/records/' . $record->{ id } ,
+        'Content-Type' => 'application/json',
+        'Content' => $content
+      );
+
+      if ( $response->is_success ) {
+
+        if ( decode_json( $response->content )->{ target } ne $record_target ) {
+
+          # The domain record target was changed by the Domain Record Update API
+          # call. Report this at LOG_NOTICE level, "normal, but significant,
+          # condition".
+          syslog( LOG_NOTICE,
+            'The target was changed from %s to %s for record %s in domain %s',
+            (
+              $record_target,
+              decode_json( $response->content )->{ target },
+              $record_name,
+              $domain_name
+            )
+          );
+
+        }
+
+      } else {
+
+        print STDERR $response->status_line,
+          ' updating record ', $record->{ id }, ' in domain ', $domain->{ id },
+          "\n";
+
+      }
+
+    } else {
+
+      print STDERR $response->status_line,
+        ' viewing record ', $record->{ id }, ' in domain ', $domain->{ id },
+        "\n";
+
+    }
 
   }
 
 }
 
-{% endfor %}
-
-{% endfor %}
+syslog( LOG_INFO, 'Finished check for Dynamic DNS updates' );
+closelog();
 
 1 ;
 

@@ -1,3 +1,7 @@
+
+
+---
+
 - name: Deploy dynamic DNS role
   become: yes
   block:
@@ -6,23 +10,32 @@
       ansible.builtin.apt:
         name:
           - cron
+          - libconfig-tiny-perl
           - libjson-perl
           - libperl5.32
           - libwww-perl
+          # Ensure that an editor is present in case we want to `crontab -e` if
+          # only to conveniently inspect the crontab.
+          - nano
 
     - name: Deploy the dynamic-dns script
       ansible.builtin.template:
-        src: dynamic-dns.j2
-        dest: /usr/local/sbin/dynamic-dns
+        src: dynamic-dns.pl.j2
+        dest: /usr/local/sbin/dynamic-dns.pl
         mode: 0755
+
+    - name: Clear the existing crontab entries
+      ansible.builtin.cron:
+        name: "Dynamic DNS update at {{ item }} minutes past the hour"
+        state: absent
+      with_sequence: start=0 end=59 stride=1
 
     - name: Add crontab entries for the dynamic-dns script
       ansible.builtin.cron:
-        job: /usr/local/sbin/dynamic-dns
+        job: /usr/local/sbin/dynamic-dns.pl error
         minute: "{{ item }}"
-        name: "Dynamic DNS {{ item }}"
-      with_items:
-        - "0"
-        - "15"
-        - "30"
-        - "45"
+        name: "Dynamic DNS update at {{ item }} minutes past the hour"
+      with_sequence: >-
+        start=0
+        end={{ 60 - dynamic_dns_crontab_stride }}
+        stride={{ dynamic_dns_crontab_stride }}
