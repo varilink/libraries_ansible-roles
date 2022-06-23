@@ -32,11 +32,11 @@ main task list. It is derived from the deploy.yml playbook. It gives us the
 mapping between groups or individual hosts and the roles assigned to them.
 #}
 
-      {%- for rolemap in rolemaps %}
+      {%- for play in playbook %}
 
-        {%- if rolemap['hosts'] == group %}
+        {%- if play['hosts'] == group %}
 
-          {%- for role in rolemap['roles'] %}
+          {%- for role in play['roles'] %}
   @/etc/bacula/inc/role-fs/{{ role }}.conf
           {%- endfor %}
 
@@ -50,14 +50,27 @@ mapping between groups or individual hosts and the roles assigned to them.
 
 {%- endfor %}
 
-{%- for rolemap in rolemaps %}
+{%- for play in playbook %}
 
-  {%- if rolemap['hosts'] == hostname %}
+  {%- if play['hosts'] == hostname %}
 
-    {%- for role in rolemap['roles'] %}
+    {%- if 'roles' in play %}
+
+      {%- for role in play['roles'] %}
+
+        {%- if role is string %}
 
   @/etc/bacula/inc/role-fs/{{ role }}.conf
-    {%- endfor %}
+
+        {%- else %}
+
+  @/etc/bacula/inc/role-fs/{{ role['role'] }}.conf
+
+        {%- endif %}
+
+      {%- endfor %}
+
+    {%- endif %}
 
   {%- endif %}
 

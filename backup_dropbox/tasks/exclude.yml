@@ -27,7 +27,7 @@
     loop: "{{ to_exclude['files'] }}"
     loop_control:
       label: "{{ item.path }}"
-    when: item.path != '/var/lib/bacula/Dropbox/bacula-test'
+    when: item.path != "/var/lib/bacula/Dropbox/{{ backup_copy_folder }}"
     register: exclusions
 
   - debug:

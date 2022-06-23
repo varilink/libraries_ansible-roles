@@ -1,0 +1,3 @@
+# By default ruh scheduled jobs but allow this to be overridden in testing
+# scenarios when we might not want jobs to be run automatically.
+backup_director_schedules_active: true

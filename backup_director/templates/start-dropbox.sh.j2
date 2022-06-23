@@ -7,7 +7,7 @@
 # Sort out ownership of any boostrap files. By default these are owned by
 # root:root but since Dropbox is installed for the bacula user they won't
 # synchronise to Dropbox if we change their ownership to bacula:bacula
-chown bacula:bacula /var/lib/bacula/Dropbox/bacula-test/*.bsr
+chown bacula:bacula /var/lib/bacula/Dropbox/{{ backup_copy_folder }}/*.bsr
 
 echo "Reporting Dropbox status at end of job:"
 gosu bacula bash -c '~/dropbox.py status'

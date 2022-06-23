@@ -1,0 +1,9 @@
+# Restart the bacula director to reflect a change to its configuration.
+# Note that setting a status of reloaded does not appear to work for this
+# service. However, restarting it is no issue as it doesn't result in any loss
+# of service to customers.
+- name: restart bacula director
+  become: yes
+  service:
+    name: bacula-director.service
+    state: restarted

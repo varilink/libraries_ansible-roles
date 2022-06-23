@@ -2,6 +2,15 @@
   become: yes
   block:
 
+    - name: Add buster backports to the sources list
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: deb http://deb.debian.org/debian buster-backports main
+
+    - name: Update the APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
     # BUG: ERROR 1044 and 1064 messages on creation of Bacula MySQL tables
     # When we test this role using the Docker container approach defined in the
     # varilink/services-docker repository, at the point of creation of the
@@ -12,14 +21,15 @@
     # varilink/services-docker repository and observe whether this same bug is
     # present for a server install or not.
     - name: Install apt package(s) required by the backup director role
-      apt:
+      ansible.builtin.apt:
         name:
           - bacula-director
           - bacula-director-mysql
         install_recommends: no
+        default_release: buster-backports
 
     - name: Template bacula-dir.conf
-      template:
+      ansible.builtin.template:
         src: bacula-dir.conf.j2
         dest: /etc/bacula/bacula-dir.conf
         owner: root
@@ -31,7 +41,7 @@
         hostnames: "{{ query('inventory_hostnames', 'all') }}"
 
     - name: Create folders to hold filesets for clients and roles
-      file:
+      ansible.builtin.file:
         path: /etc/bacula/inc/{{ item }}-fs
         state: directory
         owner: root
@@ -42,7 +52,7 @@
         - role
 
     - name: Template client specific filesets to filesets
-      template:
+      ansible.builtin.template:
         src: bacula-client-fileset.j2
         dest: /etc/bacula/inc/client-fs/{{ hostname }}.conf
         owner: root
@@ -52,14 +62,11 @@
       loop_control:
         loop_var: hostname
       vars:
-        # Load the contents of deploy.yml into the variable "rolemaps"
-        rolemaps: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
-
-    - debug:
-        var: role_path
+        # Load the contents of hosts.yml into the variable "playbook"
+        playbook: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
 
     - name: Copy role snippets for inclusion in client specific filesets
-      copy:
+      ansible.builtin.copy:
         src: "{{ role_path + '/../' + item.path }}"
         dest: "{{ '/etc/bacula/inc/role-fs/' + item.path|regex_search('^[\\w-]+') + '.conf' }}"
       # if files/bacula-fileset is in a role capture its path relative to roles
@@ -69,18 +76,25 @@
       loop_control:
         label: "{{ item.path }}"
 
-    - name: Deploy additional bacula helper scripts
-      copy:
-        src: files/{{ item }}
+    - name: Deploy dropbox-status.sh and stop-dropbox.sh helper scripts
+      ansible.builtin.copy:
+        src: "{{ item }}"
         dest: /etc/bacula/scripts/
         owner: bacula
         group: bacula
         mode: u=rwx,g=rx,o=rx
       loop:
         - dropbox-status.sh
-        - start-dropbox.sh
         - stop-dropbox.sh
 
+    - name: Deploy start-dropbox.sh helper script
+      ansible.builtin.template:
+        src: start-dropbox.sh.j2
+        dest: /etc/bacula/scripts/
+        owner: bacula
+        group: bacula
+        mode: u=rwx,g=rx,o=rx
+
     - name: Install and setup Dropbox for backup use
-      include_role:
+      ansible.builtin.import_role:
         name: backup_dropbox

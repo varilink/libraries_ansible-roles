@@ -2,37 +2,33 @@
   become: yes
   block:
 
-    # NOTE: This step will fail due to bug in bacula-sd package
-    # See https://www.mail-archive.com/ubuntu-bugs@lists.ubuntu.com/msg5751342.html
+    - name: Add buster backports to the sources list
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        line: deb http://deb.debian.org/debian buster-backports main
+
+    - name: Update the APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
     - name: Install apt package(s) required for the backup storage role
-      apt:
-        install_recommends: no
+      ansible.builtin.apt:
         name:
           - bacula-bscan
           - bacula-common-mysql
           - bacula-sd
-      # Ignore the bug referred to above
-      ignore_errors: yes
-
-    - name: Copy replacement bacula-sd.postinst script that fixes above bug
-      copy:
-        src: files/bacula-sd.postinst
-        dest: /var/lib/dpkg/info/bacula-sd.postinst
-        mode: '0755'
-
-    - name: Reinstall now that fix for bug in bacula-sd package has been applied
-      apt:
-        state: fixed
+        install_recommends: no
+        default_release: buster-backports
 
     - name: Create folder for storage archive
-      file:
+      ansible.builtin.file:
         group: bacula
         owner: bacula
         path: /var/local/bacula
         state: directory
 
     - name: Template out the bacula-sd.conf for the backup server
-      template:
+      ansible.builtin.template:
         src: "templates/bacula-sd.conf.j2"
         dest: /etc/bacula/bacula-sd.conf
         mode: '0640'
@@ -41,5 +37,5 @@
       notify: bacula storage daemon configuration changed
 
     - name: Install and setup Dropbox for backup use
-      include_role:
+      ansible.builtin.import_role:
         name: backup_dropbox
