@@ -42,5 +42,5 @@
         src: addn-hosts.j2
         dest: /etc/addn-hosts
       vars:
-        # Load the contents of deploy.yml into the variable "playbook"
-        playbook: "{{ lookup('file', playbook_dir + '/deploy.yml') | from_yaml }}"
+        # Load the contents of hosts.yml into the variable "playbook"
+        playbook: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
