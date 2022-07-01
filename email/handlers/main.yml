@@ -1,10 +1,23 @@
-# Run update-exim4.conf
+# Update the exim configuration and restart the service if any aspect of the
+# exim configuration has been changed.
 
 ---
 
-  - name: Run update-exim4.conf
-    command: update-exim4.conf
-    become: yes
+- name: Determine the status of the exim service
+  ansible.builtin.service_facts:
+  listen: exim configuration changed
 
-  # TODO: Add the restart exim4 step and add handlers for dovecot restart
-  # TODO: Ensure that run update-exim3.conf happens on change of exim4.conf.template too
+- block:
+
+    - name: Run update-exim4.conf on any change affecting the exim configuration
+      ansible.builtin.command: update-exim4.conf
+      listen: exim configuration changed
+
+    - name: Restart the exim service if it is running
+      ansible.builtin.service:
+        name: exim4
+        state: restarted
+      when: ansible_facts['services']['exim4']['state'] == 'running'
+      listen: exim configuration changed
+
+  become: yes

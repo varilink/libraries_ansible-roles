@@ -1,0 +1,18 @@
+# Restart the dovecot service if its configuration has been changed.
+
+---
+
+- name: Determine the status of the dovecot service
+  ansible.builtin.service_facts:
+  listen: dovecot configuration changed
+
+- block:
+
+    - name: Restart the dovecot service if it is running
+      ansible.builtin.service:
+        name: dovecot
+        state: restarted
+      when: ansible_facts['services']['dovecot']['state'] == 'running'
+      listen: dovecot configuration changed
+
+  become: yes

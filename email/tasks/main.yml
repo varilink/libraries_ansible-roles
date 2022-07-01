@@ -7,26 +7,35 @@
     - name: Install APT package(s) required by the email role
       ansible.builtin.apt:
         name:
-          - dovecot-imapd
-          - exim4
+          # If any role that has a dependency on this role requires the
+          # exim4-daemon-heavy package then it must install it itself. That will
+          # replace the exim4-daemon-light package.
+          - exim4-daemon-light
         install_recommends: no
 
-    - name: Set Dovecot mail location to Maildir
-      lineinfile:
-        path: /etc/dovecot/conf.d/10-mail.conf
-        regexp: '^mail_location = '
-        line: mail_location = maildir:~/Maildir
+    - name: Template out the Exim4 update-exim4.conf.conf file
+      template:
+        src: update-exim4.conf.conf.j2
+        dest: /etc/exim4/update-exim4.conf.conf
+      notify:
+        - exim configuration changed
 
-    - name: Template out the EXIM4 mailname file
+    - name: Template out the Exim4 mailname file
       ansible.builtin.template:
         src: mailname.j2
         dest: /etc/exim4/mailname
 
-    # TODO: Move to the dns_client role renamed to more generic "base host" role
-    - name: Create accounts for all the office users
-      user:
-        name: "{{ item.username }}"
-        password: "{{ item.userpass_encrypted }}"
-      loop: "[ {{ admin_user }} ] + {{ other_users }}"
+    - name: Create the /etc/exim4/passwd.client file if using a single smarthost
+      ansible.builtin.template:
+        src: passwd.client.j2
+        dest: /etc/exim4/passwd.client
+        group: Debian-exim
+        mode: '0640'
+      when: exim_smarthosts | length == 1
+
+    - name: Redirect emails to root to myself
+      ansible.builtin.lineinfile:
+        path: /etc/aliases
+        line: "root: {{ admin_user }}@{{ home_domain }}"
 
   become: yes

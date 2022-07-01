@@ -1,0 +1,24 @@
+---
+
+- block:
+
+    - name: Install APT package(s) required by Dovecot
+      ansible.builtin.apt:
+        name:
+          - dovecot-imapd
+        install_recommends: no
+
+    - name: Set Dovecot mail location to Maildir
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-mail.conf
+        regexp: '^mail_location = '
+        line: mail_location = maildir:~/Maildir
+
+    # TODO: Move creation of the admin user to somewhere generic to all hosts
+    - name: Create accounts for all the office users
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        password: "{{ item.userpass_encrypted }}"
+      loop: "[ {{ admin_user }} ] + {{ other_users }}"
+
+  become: yes
