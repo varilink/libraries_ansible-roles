@@ -1,0 +1,9 @@
+---
+dependencies:
+  - role: email
+    vars:
+      exim_configtype: smarthost
+      exim_other_hostnames: "{{ home_domain }}"
+      exim_local_interfaces: ''
+      exim_hide_mailname: 'false'
+      exim_localdelivery: 'maildir_home'

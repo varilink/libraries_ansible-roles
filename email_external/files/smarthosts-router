@@ -1,0 +1,16 @@
+#
+# Send all non-local mail to a smarthost determined by the sending domain
+#
+
+smarthosts:
+  debug_print = "R: smarthost for $local_part@$domain from $sender_address_domain"
+  driver = manualroute
+  domains = ! +local_domains
+  # Check that the sending domain is present in /etc/exim4/smarthosts
+  condition = "${if eq{${lookup{$sender_address_domain}partial-lsearch{/etc/exim4/smarthosts}{$value}}}{}{false}{true}}"
+  transport = remote_smtp_smarthosts
+  # Set the route_list
+  route_list = * ${extract{hostname}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}
+  host_find_failed = ignore
+  same_domain_copy_routing = yes
+  no_more

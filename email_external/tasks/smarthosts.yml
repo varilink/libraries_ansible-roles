@@ -1,0 +1,22 @@
+---
+
+- name: Copy the smarthosts router configuration
+  ansible.builtin.copy:
+    src: smarthosts-router
+    dest: /etc/exim4/conf.d/router/175_exim4-config_smarthosts
+  notify:
+    - exim configuration changed
+
+- name: Copy the smarthosts transport configuration
+  ansible.builtin.copy:
+    src: smarthosts-transport
+    dest: /etc/exim4/conf.d/transport/30_exim4-config_remote_smtp_smarthosts
+  notify:
+    - exim configuration changed
+
+- name: Template out the smarthosts connection details file
+  ansible.builtin.template:
+    src: smarthosts.j2
+    dest: /etc/exim4/smarthosts
+    group: Debian-exim
+    mode: '0640'

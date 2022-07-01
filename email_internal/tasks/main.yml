@@ -1,60 +1,73 @@
-- name: Deploy the email internal role
-  become: yes
-  block:
+# Deploy the email internal role
 
-    - name: Install apt package(s) required by the email internal role
-      apt:
+---
+
+- block:
+
+    # TODO: Make a note somewhere about whether we should have an email server
+    # role. In face I probably should have one.
+    - name: Import the Dovecot aspects of the email role
+      ansible.builtin.import_role:
+        name: email
+        handlers_from: dovecot
+        tasks_from: dovecot
+
+    - name: Install APT package(s) required by the email internal role
+      # In addition to the packages installed by the base email role, the
+      # internal email server also requires fetchmail to get emails for our home
+      # domain from hte external email server.
+      ansible.builtin.apt:
         name:
-          - dovecot-imapd
-          - exim4
           - fetchmail
         install_recommends: no
 
-    # Boolean values are provided as strings to mitigate this issue:
-    # https://github.com/ansible/ansible/issues/25481
-    # Not sure that the vtype specified has any effect?
-    # Only options where a value is needed that is different to the default are
-    # set.
-    - name:
-      debconf:
-        name: exim4-config
-        question: "{{ item.question }}"
-        value: "{{ item.value }}"
-        vtype: "{{ item.vtype }}"
-      loop:
-        # Use our own external email gateway server to send.
-        # Receive via SMTP from clients on the office network.
-        - question: exim4/dc_eximconfig_configtype
-          value: mail sent by smarthost; received via SMTP or fetchmail
-          vtype: select
-        # Prefer Maildir rather than mbox for local delivery.
-        - question: exim4/dc_localdelivery
-          value: Maildir format in home directory
-          vtype: select
-        # Set the system mail name to the domain of the host.
-        - question: exim4/mailname
-          value: varilink.co.uk
-          vtype: string
-        # Listen on external interface for incoming SMTP connections.
-        - question: exim4/dc_local_interfaces
-          value:
-          vtype: string
-        # Identify of our external email gateway server.
-        - question: exim4/dc_smarthost
-          value: services_email-external::587
-          vtype: string
-        # Don't hide local mail name in outgoing mail.
-        - question: exim4/hide_mailname
-          value: "false"
-          vtype: boolean
-        # Use split configuration files.
-        - question: exim4/use_split_config
-          value: "true"
-          vtype: boolean
-        # Set the postmaster email address.
-        - question: exim4/dc_postmaster
-          # TODO: Parameterise
-          # This email address is public knowledge however it should be
-          # parameterised.
-          value: david.williamson@varilink.co.uk
-          vtype: string
+    - name: Make fetchmail run in daemon mode
+      ansible.builtin.lineinfile:
+        path: /etc/default/fetchmail
+        regexp: '^START_DAEMON=(?:yes|no)$'
+        line: START_DAEMON=yes
+
+    - name: Add the interval option for fetchmail
+      ansible.builtin.lineinfile:
+        path: /etc/default/fetchmail
+        regexp: '^(?:# )?OPTIONS=(?:...|-d 10)$'
+        line: OPTIONS=-d 10
+
+    - name: Deploy fetchmailrc file
+      ansible.builtin.template:
+        src: fetchmailrc.j2
+        dest: /etc/fetchmailrc
+        owner: fetchmail
+        mode: 0600
+
+    - name: Trust the IMAP connections from clients on the office network
+      # Where we have users on clients on the office network we choose to trust
+      # this client connections without authentication.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/dovecot.conf
+        regexp: '^#?login_trusted_networks ='
+        line: login_trusted_networks = {{ office_subnet }}
+      notify:
+        - dovecot configuration changed
+
+    - name: Copy the Exim localmacros file
+      # The Exim localmacros file sets values that tweak our Exim configuration
+      # to our exact needs.
+      ansible.builtin.copy:
+        src: exim-localmacros
+        dest: /etc/exim4/exim4.conf.localmacros
+      notify:
+        - exim configuration changed
+
+    - name: Add REQUIRE_PROTOCOL section to config template
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/exim4.conf.template
+        insertbefore: '^\.ifdef REMOTE_SMTP_HEADERS_REWRITE$'
+        block: |-
+          .ifdef REQUIRE_PROTOCOL
+            protocol = REQUIRE_PROTOCOL
+          .endif
+      notify:
+        - exim configuration changed
+
+  become: yes

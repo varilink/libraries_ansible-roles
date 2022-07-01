@@ -1,59 +1,64 @@
-- name: Deploy the email external role
-  become: yes
-  block:
+# Deploy email external role
 
-    - name: Install apt package(s) required by the email external role
-      apt:
+---
+
+- name: Copy id_rsa.pub from dns-api host to authorized_keys
+  ansible.builtin.lineinfile:
+    path: ~/.ssh/authorized_keys
+    line: "{{ lookup('file', 'files/id_rsa.pub') }}"
+    create: yes
+
+- block:
+
+    - name: Import the Dovecot aspects of the email role
+      ansible.builtin.import_role:
+        name: email
+        handlers_from: dovecot
+        tasks_from: dovecot
+
+    - name: Install APT package(s) required by the email external role
+      # The base email role installs the dovecot-imapd and exim4 pacakges but
+      # the email external role requires additional/different packages as
+      # follows:
+      #  - The dovecot-lmtpd package is required so that we can use the sieve
+      #    mail plugin to filter spam messages automatically.
+      #  - The dovecot-sieve package provides the Dovecot Sieve plugin to
+      #    provide mail filtering facilities at the time of final message
+      #    delivery, which we use to filter spam.
+      #  - The exim4-daemon-heavy package replaces the exim4 package for access
+      #    to the Dovecot authentication drivers.
+      ansible.builtin.apt:
         name:
-          - dovecot-imapd
-          - exim4
+          - dovecot-lmtpd
+          - dovecot-sieve
+          - exim4-daemon-heavy
         install_recommends: no
 
-    # Boolean values are provided as strings to mitigate this issue:
-    # https://github.com/ansible/ansible/issues/25481
-    # Not sure that the vtype specified has any effect?
-    # Only options where a value is needed that is different to the default are
-    # set.
-    - name:
-      debconf:
-        name: exim4-config
-        question: "{{ item.question }}"
-        value: "{{ item.value }}"
-        vtype: "{{ item.vtype }}"
-      loop:
-        # Use chosen email gateway provider to send.
-        # Receive via SMTP as externally facing MX host.
-        - question: exim4/dc_eximconfig_configtype
-          value: mail sent by smarthost; received via SMTP or fetchmail
-          vtype: select
-        # Prefer Maildir rather than mbox for local delivery.
-        - question: exim4/dc_localdelivery
-          value: Maildir format in home directory
-          vtype: select
-        # Set the system mail name to the domain of the host.
-        - question: exim4/mailname
-          value: varilink.co.uk
-          vtype: string
-        # Listen on external interface for incoming SMTP connections.
-        - question: exim4/dc_local_interfaces
-          value:
-          vtype: string
-        # Identify of external email gateway provider.
-        - question: exim4/dc_smarthost
-          value: "{{ email_external_gateway }}"
-          vtype: string
-        # Don't hide local mail name in outgoing mail.
-        - question: exim4/hide_mailname
-          value: "false"
-          vtype: boolean
-        # Use split configuration files.
-        - question: exim4/use_split_config
-          value: "true"
-          vtype: boolean
-        # Set the postmaster email address.
-        # TODO: Parameterise
-        # This email address is public knowledge however it should be
-        # parameterised.
-        - question: exim4/dc_postmaster
-          value: david.williamson@varilink.co.uk
-          vtype: string
+    - name: Configure email authentication to our specific needs
+      ansible.builtin.import_tasks: auth.yml
+
+    - name: Configure sieve email filtering to our specific needs
+      ansible.builtin.import_tasks: sieve.yml
+
+    - name: Modify Exim to use different smarthosts depending on sender domain
+      ansible.builtin.import_tasks: smarthosts.yml
+
+    - name: Copy the config header
+      ansible.builtin.copy:
+        src: config-header
+        dest: /etc/exim4/conf.d/main/00_exim4-config_header
+      notify:
+        - exim configuration changed
+
+    - name: Add TLS_ON_CONNECT_PORTS section to config template
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/conf.d/main/03_exim4-config_tlsoptions
+        insertafter: '^\.ifdef MAIN_TLS_ENABLE$'
+        block: |-
+          .ifdef TLS_ON_CONNECT_PORTS
+            tls_on_connect_ports = TLS_ON_CONNECT_PORTS
+          .endif
+      notify:
+        - exim configuration changed
+
+  become: yes

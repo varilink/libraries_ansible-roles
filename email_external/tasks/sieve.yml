@@ -1,0 +1,34 @@
+# These tasks implement spam filtering of incoming emails using sieve.
+# TODO: Look into the benefit of using the Dovecot ManageSieve server
+
+---
+
+- name: Put Ansible managed block markers around the lmtp unix listener config
+  ansible.builtin.replace:
+    path: /etc/dovecot/conf.d/10-master.conf
+    # Matches these lines in the file with whitespace flexibility built in:
+    #   unix_listener lmtp {
+    #     #mode = 0666
+    #   }
+    # but NOT if immediately followed by the '# END' block marker to ensure
+    # idempotency.
+    regexp: "\
+      (^\\s*unix_listener\\s+lmtp\\s+{[^\\S\n]*\n\
+      \\s*#mode\\s*=\\s*0666[^\\S\n]*\n\
+      \\s*}[^\\S\n]*$)\
+      (?!# END)\
+      "
+    replace: |-2
+        # BEGIN ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+      \1
+        # END ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+
+- name: Set the required mode and user for the lmtp unix listener
+  ansible.builtin.blockinfile:
+    path: /etc/dovecot/conf.d/10-master.conf
+    block: |-2
+        unix_listener lmtp {
+          user = Debian-exim
+          mode = 0666
+        }
+    marker: "  # {mark} ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK"

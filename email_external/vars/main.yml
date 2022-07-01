@@ -1,0 +1,3 @@
+# Use an exim split configuration since this role inserts individual auth,
+# router and transport configuration files.
+email_use_split_config: 'true'

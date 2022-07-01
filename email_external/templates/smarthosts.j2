@@ -1,0 +1,12 @@
+# Sending via smarthosts
+
+{%- for smarthost in exim_smarthosts %}
+
+{{ smarthost.domain }}: domain=
+{{- smarthost.domain }} username=
+{{- smarthost.username }} userpass=
+{{- smarthost.userpass }} hostname=
+{{- smarthost.hostname }} port=
+{{- smarthost.port }}
+
+{%- endfor %}

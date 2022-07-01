@@ -1,0 +1,19 @@
+dovecot_login:
+  driver = dovecot
+  public_name = LOGIN
+  server_socket = /var/run/dovecot/auth-client
+  # Setting server_set_id might break several headers in mails sent by
+  # authenticated smtp. So be careful.
+  server_set_id = $auth1
+
+dovecot_plain:
+  driver = dovecot
+  public_name = PLAIN
+  server_socket = /var/run/dovecot/auth-client
+  # Setting server_set_id might break several headers in mails sent by
+  # authenticated smtp. So be careful.
+  server_set_id = $auth1
+
+login:
+  driver = plaintext
+  hide client_send = : ${extract{username}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}: ${extract{userpass}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}

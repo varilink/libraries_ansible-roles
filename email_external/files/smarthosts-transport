@@ -1,0 +1,33 @@
+remote_smtp_smarthosts:
+  debug_print = "T: mailgun for $local_part@$domain from $sender_address_domain"
+  driver = smtp
+  multi_domain
+.ifndef IGNORE_SMTP_LINE_LENGTH_LIMIT
+  message_size_limit = ${if > {$max_received_linelength}{998} {1}{0}}
+.endif
+  # Get the port to use for the connection by looking up the sending domain in
+  # the /etc/exim4/smarthosts file.
+  port = ${extract{port}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}
+  hosts_require_auth = $host_address
+  hosts_require_tls = $host_address
+.ifdef REMOTE_SMTP_SMARTHOST_HOSTS_AVOID_TLS
+  hosts_avoid_tls = REMOTE_SMTP_SMARTHOST_HOSTS_AVOID_TLS
+.endif
+.ifdef REMOTE_SMTP_HEADERS_REWRITE
+  headers_rewrite = REMOTE_SMTP_HEADERS_REWRITE
+.endif
+.ifdef REMOTE_SMTP_RETURN_PATH
+  return_path = REMOTE_SMTP_RETURN_PATH
+.endif
+.ifdef REMOTE_SMTP_HELO_DATA
+  helo_data=REMOTE_SMTP_HELO_DATA
+.endif
+.ifdef TLS_DH_MIN_BITS
+tls_dh_min_bits = TLS_DH_MIN_BITS
+.endif
+.ifdef REMOTE_SMTP_SMARTHOST_TLS_CERTIFICATE
+tls_certificate = REMOTE_SMTP_SMARTHOST_TLS_CERTIFICATE
+.endif
+.ifdef REMOTE_SMTP_SMARTHOST_PRIVATEKEY
+tls_privatekey = REMOTE_SMTP_SMARTHOST_PRIVATEKEY
+.endif
