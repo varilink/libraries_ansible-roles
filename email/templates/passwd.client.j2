@@ -5,4 +5,5 @@
 #
 # Example:
 ### target.mail.server.example:login:password
-{{ email_client_smarthost }}:{{ email_client_smarthost_user }}:{{ email_client_smarthost_password }}
+{{ exim_smarthosts[0].hostname }}:
+{{- exim_smarthosts[0].username }}:{{ exim_smarthosts[0].userpass }}
