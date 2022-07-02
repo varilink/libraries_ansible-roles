@@ -1,12 +1,15 @@
+
+
+---
+
 - name: Deploy the database role
-  become: yes
   block:
 
     - name: Install apt package(s) for the database role
-      apt:
+      ansible.builtin.apt:
         name:
           - mariadb-server
-          - python-pymysql
+          - python3-pymysql
 
     # TODO: Add MySQL hardening measures
     # There are plenty of published articles that describe steps that can be
@@ -16,37 +19,15 @@
     # to implement in this role, immediately after the database is installed.
 
     - name: Expose the database externally if required
-      replace:
+      ansible.builtin.replace:
         path: /etc/mysql/mariadb.conf.d/50-server.cnf
         regexp: '^(bind-address\s*=\s*)127\.0\.0\.1$'
         replace: '\g<1>0.0.0.0'
       when: database_expose_externally
 
-    - name: Populate service facts
-      service_facts:
+  become: yes
 
-    - name: Setup for store of bacula catalog if required
-      block:
-
-        - name: Create a database for bacula to use
-          mysql_db:
-            login_unix_socket: /var/run/mysqld/mysqld.sock
-            name: bacula
-            state: present
-
-        - name: Create a user for bacula to use
-          mysql_user:
-            host: "{{ backup_director_host }}"
-            login_unix_socket: /var/run/mysqld/mysqld.sock
-            name: "{{ backup_database_user }}"
-            password: "{{ backup_database_password }}"
-            priv: 'bacula.*:ALL'
-            state: present
-          # BUG: On subsequent executions of this task an exception occurs:
-          # https://github.com/ansible/ansible/issues/51356
-          # We are using ignore_errors as a workaround for this issue.
-          ignore_errors: yes
-
-      when:
-        - ansible_facts['services']['mysql']['state'] == 'running'
-        - "'backup' in group_names"
+- name: Import the tasks for storing a bacula catalog if required
+  ansible.builtin.import_tasks: bacula.yml
+  when:
+    - "'backup' in group_names"
