@@ -15,6 +15,7 @@
       ansible.builtin.command:
         cmd: certbot register --agree-tos --email {{ email_admin_address }}
         creates: /etc/letsencrypt/accounts
+      when: email_uses_ca
 
     - name: Create folder for self-signed certificates
       ansible.builtin.file:

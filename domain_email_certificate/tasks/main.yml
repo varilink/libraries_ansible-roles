@@ -9,34 +9,63 @@
             path: /usr/local/etc/certs/{{ email_domain }}
             state: directory
 
-        - name: Template out openssl config file
-          ansible.builtin.template:
-            src: openssl.cnf.j2
-            dest: /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
+#        - name: Template out openssl config file
+#          ansible.builtin.template:
+#            src: openssl.cnf.j2
+#            dest: /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
 
-        - name: Generate SSL certificate key
-          ansible.builtin.shell:
-            cmd: >-
-              openssl genrsa -out
-              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-              2048
-              && chgrp Debian-exim
-              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-              && chmod g+r
-              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.key
+#        - name: Generate SSL certificate key
+#          ansible.builtin.shell:
+#            cmd: >-
+#              openssl genrsa -out
+#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+#              2048
+#              && chgrp Debian-exim
+#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+#              && chmod g+r
+#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
+#            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.key
+
+#        - name: Generate self-signed certificate
+#          ansible.builtin.command:
+#            cmd: >
+#              openssl req
+#              -config /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
+#              -x509 -sha256
+#              -new -key /usr/local/etc/certs/{{ email_domain }}/ssl.key
+#              -out /usr/local/etc/certs/{{ email_domain }}/ssl.crt
+#            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.crt
 
         - name: Generate self-signed certificate
-          ansible.builtin.command:
-            cmd: >
-              openssl req
-              -config /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
-              -x509 -sha256
-              -new -key /usr/local/etc/certs/{{ email_domain }}/ssl.key
-              -out /usr/local/etc/certs/{{ email_domain }}/ssl.crt
-            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.crt
+          ansible.builtin.shell:
+            cmd: >-
+              openssl req -x509
+              -newkey rsa:4096
+              -keyout /usr/local/etc/certs/{{ email_domain }}/key.pem
+              -out /usr/local/etc/certs/{{ email_domain }}/cert.pem
+              -sha256
+              -days 365
+              -subj '/CN={{ email_domain }}'
+              -nodes
+              && chgrp Debian-exim
+              /usr/local/etc/certs/{{ email_domain }}/key.pem
+              && chmod g+r
+              /usr/local/etc/certs/{{ email_domain }}/key.pem
+            creates: /usr/local/etc/certs/{{ email_domain }}/cert.pem
 
         # TODO: Automate the derivation of the target host
+        # TODO: Make it work with the server identity checks for live deployment
+        - name: Test if we can reach the target for certificate deployment
+          ansible.builtin.command: >-
+            ssh -q
+            -i /home/{{ ansible_user }}/.ssh/id_rsa
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            -o LogLevel=QUIET
+            {{ ansible_user }}@email-external exit
+          register: ssh_test
+          ignore_errors: yes
+
         - name: Deploy certificates to external email host
           ansible.builtin.command:
             cmd: >-
@@ -46,8 +75,9 @@
               --rsync-path='sudo rsync'
               /usr/local/etc/certs
               {{ ansible_user }}@email-external:/usr/local/etc
+          when: ssh_test.rc == 0
 
-      when: not email_domain_uses_ca
+      when: not email_uses_ca
 
     - name: Certification authority
       block:
@@ -65,6 +95,6 @@
 
         # TODO: Add initial deployment and putting in place of renewal hook
 
-      when: email_domain_uses_ca
+      when: email_uses_ca
 
   become: yes
