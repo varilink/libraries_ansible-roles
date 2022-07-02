@@ -10,76 +10,92 @@ A library of Ansible roles maintained and used by Varilink. These fall into two 
 
 1. Host roles, used in the [Services - Ansible](https://github.com/varilink/services-ansible) repository to deploy hosting services across the Varilink server estate.
 
-2. Project roles, used in multiple Varilink projects' Ansible repositories, which use them to deploy projects (or "sites") in test and live environments.
+2. Domain roles, used in multiple Varilink projects' Ansible repositories, which use them to deploy projects (or "sites") in test and live environments.
 
 My [Services - Docker](https://github.com/varilink/services-docker) repository provides a Docker Compose wrapper that facilitates the testing of the Ansible roles defined here using Docker containers as the Ansible deployment targets.
 
-There follows a list of the Host Roles and Project Roles that are defined in this repository along with a brief description of each and a link to each role's Ansible artefacts. If there is a README file provided alongside each role's Ansible artefacts this will contain further description of that role.
+There follows a list of the Host Roles and Domain Roles that are defined in this repository along with a brief description of each.
 
 ## Host Roles
 
-### Backup Client ([backup_client](https://github.com/varilink/libraries-ansible/tree/main/backup_client))
+### backup_client
 
 Backup client service using the Bacula file daemon. This is deployed to every host that is in my automated, backup schedule.
 
-### Backup Director ([backup_director](https://github.com/varilink/libraries-ansible/tree/main/backup_director))
+### backup_director
 
 Backup director service using the Bacula Director with a MySQL catalogue store.
 
-### Backup Dropbox ([backup_dropbox](https://github.com/varilink/libraries-ansible/tree/main/backup_dropbox))
+### backup_dropbox
 
-Dropbox integration service for making off-site copies of backups.
+Dropbox integration service for making off-site copies of backups. This is pulled in as a dependency by both the backup_director and backup_storage roles.
 
-### Backup Storage ([backup_storage](https://github.com/varilink/libraries-ansible/tree/main/backup_storage))
+### backup_storage
 
 Backup storage service using the Bacula storage daemon.
 
-### Calendar ([calendar](https://github.com/varilink/libraries-ansible/tree/main/calendar))
+### calendar
 
 CalDAV service using Radicale.
 
-### Database ([database](https://github.com/varilink/libraries-ansible/tree/main/database))
+### database
 
 Database service based using MariaDB.
 
-### DNS External ([dns_external](https://github.com/varilink/libraries-ansible/tree/main/dns_external))
+### dns
 
-Externally facing Dynamic DNS service for internal (to the office) network services that are not at a fixed IP address.
+DNS service using Dnsmasq.
 
-### DNS Internal ([dns_internal](https://github.com/varilink/libraries-ansible/tree/main/dns_internal))
+### dns_api
 
-Internal (to the office network) DNS service using dnsmasq.
+A very simple role that merely deploys the key for API access to Linode hosted DNS zones for use by both the domain_email_certificates and dynamic_dns roles.
 
-### Email Client ([email_client](https://github.com/varilink/libraries-ansible/tree/main/email_client))
+### dns_client
 
-Email client service for servers to send emails using Exim.
+Role that configures hosts to use the service deployed by the dns role.
 
-### Email External ([email_external](https://github.com/varilink/libraries-ansible/tree/main/email_external))
+### dynamic_dns
+
+Keeps the Linode hosted DNS zones up to date with the dynamic IP address provided by our ISP for the office network for services that are hosted on-premise and exposed externally.
+
+### email
+
+Implements a Mail Transport Agent using Exim4 for all hosts and an email server using Dovecot that hosts acting as email servers can selectively import.
+
+### email_certificates
+
+Provides SSL certificates that are either self-signed or obtained from Let's Encrypt for encrypting IMAP and SMTP connections.
+
+### email_external
 
 External (to the office network) email service using Exim and Dovecot.
 
-### Email Internal ([email_internal](https://github.com/varilink/libraries-ansible/tree/main/email_internal))
+### email_internal
 
 Internal (to the office network) email service using Exim and Dovecot with Fetchmail integration to the external email service.
 
-### Reverse Proxy ([reverse_proxy](https://github.com/varilink/libraries-ansible/tree/main/reverse_proxy))
+### reverse_proxy
 
 Reverse proxy service using Nginx.
 
-### WordPress ([wordpress](https://github.com/varilink/libraries-ansible/tree/main/wordpress))
+### wordpress
 
 WordPress service using Apache and PHP.
 
-## Project Roles
+## Domain Roles
 
-### Reverse Proxy Site ([reverse_proxy_site](https://github.com/varilink/libraries-ansible/tree/main/reverse_proxy_site))
+### domain_email_certificate
 
-Project role that configures a website on the reverse proxy service.
+Generates and deploys an email certificate for a project domain using the email_certificates service.
 
-### WordPress Database ([wordpress_database](https://github.com/varilink/libraries-ansible/tree/main/wordpress_database))
+### domain_reverse_proxy
 
-Configures a WordPress site on the database service.
+Configures a project domain on the reverse proxy using the reverse_proxy service.
 
-### WordPress Site ([wordpress_site](https://github.com/varilink/libraries-ansible/tree/main/wordpress_site))
+### domain_wordpress
 
 Configures a WordPress site on the WordPress service.
+
+### domain_wordpress_database
+
+Configures a WordPress site on the database service.
