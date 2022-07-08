@@ -6,7 +6,7 @@
 
         - name: Create domain folder to hold certificates
           ansible.builtin.file:
-            path: /usr/local/etc/certs/{{ email_domain }}
+            path: /usr/local/etc/certs/{{ domain.name }}
             state: directory
 
 #        - name: Template out openssl config file
@@ -41,17 +41,17 @@
             cmd: >-
               openssl req -x509
               -newkey rsa:4096
-              -keyout /usr/local/etc/certs/{{ email_domain }}/key.pem
-              -out /usr/local/etc/certs/{{ email_domain }}/cert.pem
+              -keyout /usr/local/etc/certs/{{ domain.name }}/key.pem
+              -out /usr/local/etc/certs/{{ domain.name }}/cert.pem
               -sha256
               -days 365
-              -subj '/CN={{ email_domain }}'
+              -subj '/CN={{ domain.name }}'
               -nodes
               && chgrp Debian-exim
-              /usr/local/etc/certs/{{ email_domain }}/key.pem
+              /usr/local/etc/certs/{{ domain.name }}/key.pem
               && chmod g+r
-              /usr/local/etc/certs/{{ email_domain }}/key.pem
-            creates: /usr/local/etc/certs/{{ email_domain }}/cert.pem
+              /usr/local/etc/certs/{{ domain.name }}/key.pem
+            creates: /usr/local/etc/certs/{{ domain.name }}/cert.pem
 
         # TODO: Automate the derivation of the target host
         # TODO: Make it work with the server identity checks for live deployment
@@ -62,7 +62,9 @@
             -o StrictHostKeyChecking=no
             -o UserKnownHostsFile=/dev/null
             -o LogLevel=QUIET
-            {{ ansible_user }}@email-external exit
+            {{ ansible_user }}@{{
+            hostvars['external']['email_exim_smarthosts'][0]
+            }} exit
           register: ssh_test
           ignore_errors: yes
 
@@ -74,7 +76,9 @@
               -o StrictHostKeyChecking=no'
               --rsync-path='sudo rsync'
               /usr/local/etc/certs
-              {{ ansible_user }}@email-external:/usr/local/etc
+              {{ ansible_user }}@{{
+              hostvars['external']['email_exim_smarthosts'][0]
+              }}:/usr/local/etc
           when: ssh_test.rc == 0
 
       when: not email_uses_ca
@@ -84,14 +88,14 @@
 
         - name: Obtain certificates that the email service requires
           ansible.builtin.command:
-            cmd: >
+            cmd: >-
               /usr/bin/certbot certonly
               --non-interactive
               --dns-linode
               --dns-linode-credentials /usr/local/etc/dns-linode-credentials.ini
-              --domain imap.{{ email_domain }}
-              --domain smtp.{{ email_domain }}
-            creates: /etc/letsencrypt/live/{{ email_domain }}
+              --domain imap.{{ domain.name }}
+              --domain smtp.{{ domain.name }}
+            creates: /etc/letsencrypt/live/{{ domain.name }}
 
         # TODO: Add initial deployment and putting in place of renewal hook
 

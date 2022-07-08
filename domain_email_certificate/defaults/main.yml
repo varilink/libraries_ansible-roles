@@ -1,5 +1,0 @@
----
-# By default use Let's Encrypt as a certification authority for all certificates
-# used for IMAP and SMTP connections to the external mail server. If this is
-# overridden to false, this role will fall back on self-signed certificates.
-email_uses_ca: true
