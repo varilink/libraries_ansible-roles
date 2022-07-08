@@ -1,0 +1,77 @@
+# This task list uses the web services provided by Radicale to create a calendar
+# for a user.
+
+---
+
+# NOTE: Finding properties for the user silently creates a folder for the user
+# within the collection root if one doesn't already exist.
+- name: Find properties for the user
+  ansible.builtin.uri:
+    url: http://localhost:5232/
+    method: PROPFIND
+    headers:
+      Authorization: "Basic {{ ( user.username + ':' ) | b64encode }}"
+    body: "{{ xml }}"
+    status_code: [207]
+  vars:
+    xml: |-
+      <?xml version="1.0" encoding="utf-8" ?>
+      <propfind xmlns="DAV:">
+        <prop>
+          <current-user-principal />
+          <displayname />
+        </prop>
+      </propfind>
+
+- name: Test if the calendar for the user already exists
+  ansible.builtin.uri:
+    url: http://localhost:5232/{{ user.username }}/calendar/
+    method: GET
+    headers:
+      Authorization: "Basic {{ ( user.username + ':' ) | b64encode }}"
+    status_code: [200, 404]
+  register: calendar_get
+
+- name: Create the calendar if it doesn't already exist
+  ansible.builtin.uri:
+    url: http://localhost:5232/{{ user.username }}/calendar/
+    method: MKCOL
+    headers:
+      Authorization: "Basic {{ ( user.username + ':' ) | b64encode }}"
+    body: "{{ xml }}"
+    status_code: [201]
+  vars:
+    xml: |-
+      <?xml version="1.0" encoding="UTF-8" ?>
+      <mkcol xmlns="DAV:"
+      xmlns:C="urn:ietf:params:xml:ns:caldav"
+      xmlns:CR="urn:ietf:params:xml:ns:carddav"
+      xmlns:I="http://apple.com/ns/ical/"
+      xmlns:INF="http://inf-it.com/ns/ab/"
+      >
+        <set>
+          <prop>
+            <resourcetype>
+              <collection />
+              <C:calendar />
+            </resourcetype>
+            <C:supported-calendar-component-set>
+              <C:comp name="VEVENT" />
+              <C:comp name="VJOURNAL" />
+              <C:comp name="VTODO" />
+            </C:supported-calendar-component-set>
+            <displayname>
+              {{ user.username }}
+            </displayname>
+            <I:calendar-color>
+              #2c8323ff
+            </I:calendar-color>
+            <C:calendar-description>
+              Calendar for {{ user.username }}
+            </C:calendar-description>
+          </prop>
+        </set>
+      </mkcol>
+  # If this task ran and it didn't error then has created a calendar.
+  changed_when: true
+  when: calendar_get.status == 404

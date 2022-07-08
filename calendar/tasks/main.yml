@@ -1,18 +1,23 @@
-- name: Deploy the calendar role
-  become: yes
+# Main task list for deploying the calendar role.
+
+---
+
+- name: Install and configure Radicale
   block:
 
     # NOTE: Version 2 of Radicale installed on Debian Buster
     # Version 3 has been released. To access the version 2 documentation:
     # https://radicale.org/v2.html
-    - name: Install apt package(s) required by the calendar role
-      apt:
+    - name: Install APT package(s) required by the calendar role
+      ansible.builtin.apt:
         name:
           - radicale
         install_recommends: no
 
+    # By default the Radicale service is only exposed on the local interface so
+    # we reconfigure it to expose the service on external interfaces.
     - name: Expose calendar service on the network
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/radicale/config
         # Original line is '#hosts = 127.0.0.1:5232'
         # Regex matches both original and replacement to ensure idempotence
@@ -26,7 +31,7 @@
     # credentials will work. We might want to implement user authentication for
     # our calendar service at some point.
     - name: Disable user authentication
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /etc/radicale/config
         # TODO: Improve approach to generalise matching reliability
         # The hosts setting appears to be unique but the type setting occurs in
@@ -41,3 +46,21 @@
         regexp: '^type = (?:remote_user|none)$'
         line: type = none
       notify: Restart radicale
+
+    - name: Determine current status of the Radicale service
+      ansible.builtin.service_facts:
+
+  become: yes
+
+- name: Create a shared calendar for the office and one for each office user
+  ansible.builtin.include_tasks: create.yml
+  loop: "{{ users }}"
+  loop_control:
+    loop_var: user
+  vars:
+    # Define shared_user to associate a shared, office calendar with.
+    shared_user:
+      username: office
+    # Merge shared_user in with the list of office_users, which are the staff.
+    users: "{{ [shared_user] + office_users }}"
+  when: ansible_facts['services']['radicale']['state'] == 'running'
