@@ -1,12 +1,13 @@
-<VirtualHost {{ wordpress_host.listen_ip }}:{{ site.proxy_pass_port }}>
+<VirtualHost {{ ansible_host }}:{{ domain.proxy_pass_port }}>
 
-  ServerName {{ site.server_name }}
+  ServerName {{ fqdn }}
+  # TODO: Parameterise the server admin email address
   ServerAdmin david.williamson@varilink.co.uk
-  DocumentRoot /var/www/{{ site.server_name }}/html
-  ErrorLog ${APACHE_LOG_DIR}/{{ site.server_name }}-error.log
-  CustomLog ${APACHE_LOG_DIR}/{{ site.server_name }}-access.log combined
+  DocumentRoot /var/www/{{ fqdn }}/html
+  ErrorLog ${APACHE_LOG_DIR}/{{ fqdn }}-error.log
+  CustomLog ${APACHE_LOG_DIR}/{{ fqdn }}-access.log combined
 
-  <Directory "/var/www/{{ site.server_name }}/html">
+  <Directory "/var/www/{{ fqdn }}/html">
     AllowOverride All
   </Directory>
 

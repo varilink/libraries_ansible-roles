@@ -34,8 +34,8 @@
     - name: Set domain to required value in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
-        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ home_domain }})"
-        line: domain={{ home_domain }}
+        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ office_domain }})"
+        line: domain={{ office_domain }}
 
     - name: Template out additional hosts file
       ansible.builtin.template:
