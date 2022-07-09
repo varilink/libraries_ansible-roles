@@ -2,10 +2,10 @@
 dependencies:
   - role: email
     vars:
-      exim_configtype: smarthost
-      exim_other_hostnames: "{{ home_domain }}"
-      exim_hide_mailname: 'false'
-      exim_localdelivery: 'maildir_home'
+      email_exim_configtype: smarthost
+      email_exim_other_hostnames: "{{ office_domain }}"
+      email_exim_hide_mailname: 'false'
+      email_exim_localdelivery: 'maildir_home'
       # This role uses a split configuration so that it can inject additional
       # files into the exim configuration.
-      exim_use_split_config: 'true'
+      email_exim_use_split_config: 'true'

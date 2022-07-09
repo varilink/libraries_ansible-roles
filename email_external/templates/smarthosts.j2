@@ -1,6 +1,6 @@
 # Sending via smarthosts
 
-{%- for smarthost in exim_smarthosts %}
+{%- for smarthost in email_exim_smarthosts %}
 
 {{ smarthost.domain }}: domain=
 {{- smarthost.domain }} username=
