@@ -32,7 +32,7 @@
 
     - name: Add crontab entries for the dynamic-dns script
       ansible.builtin.cron:
-        job: /usr/local/sbin/dynamic-dns.pl error
+        job: /usr/local/sbin/dynamic-dns.pl
         minute: "{{ item }}"
         name: "Dynamic DNS update at {{ item }} minutes past the hour"
       with_sequence: >-
