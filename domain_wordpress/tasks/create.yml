@@ -1,0 +1,98 @@
+- name: Deploy wordpress-host role for a WordPress site
+  block:
+
+  - name: Make site apache2 configuration available
+    ansible.builtin.template:
+      src: apache2.conf.j2
+      dest: /etc/apache2/sites-available/{{ fqdn }}.conf
+    notify:
+      - Reload apache2 configuration
+
+  - name: Enable site apache2 configuration
+    ansible.builtin.file:
+      src: /etc/apache2/sites-available/{{ fqdn }}.conf
+      dest: /etc/apache2/sites-enabled/{{ fqdn }}.conf
+      state: link
+    notify:
+      - Reload apache2 configuration
+
+  - name: Create directory to hold site WordPress files
+    ansible.builtin.file:
+      path: /var/www/{{ fqdn }}/html
+      state: directory
+
+  - name: Download WordPress files
+    ansible.builtin.command:
+      cmd: >-
+        wp --allow-root --path=/var/www/{{ fqdn }}/html
+        core download --locale=en_GB
+      creates: /var/www/{{ fqdn }}/html/index.php
+
+  - name: Create the WordPress config file
+    ansible.builtin.command:
+      cmd: >-
+        wp --allow-root --path=/var/www/{{ fqdn }}/html
+        config create
+        --dbhost={{ subdomain.wordpress_database_host }}
+        --dbname={{ fqdn | regex_replace ('\.', '_') }}
+        --dbuser={{ fqdn | regex_replace ('\.', '_') }}
+        --dbpass={{ subdomain.wordpress_database_password }}
+        --skip-check
+      creates: /var/www/{{ fqdn }}/html/wp-config.php
+
+  - name: Deny visibility of WordPress config file to others
+    ansible.builtin.file:
+      path: /var/www/{{ fqdn }}/html/wp-config.php
+      mode: u=rw,g=r,o=
+
+  - name: Remove WordPress sample config file
+    ansible.builtin.file:
+      path: /var/www/{{ fqdn }}/html/wp-config-sample.php
+      state: absent
+
+  - name: Set correct ownership of all WordPress files
+    ansible.builtin.file:
+      path: /var/www/{{ fqdn }}/html
+      owner: www-data
+      group: www-data
+      recurse: yes
+      state: directory
+
+  - name: Install WordPress
+    # Note shows changed if WordPress was already installed
+    # Can I change it to look first for WordPress installed and skip if it is?
+    ansible.builtin.command: >-
+      wp --allow-root --path=/var/www/{{ fqdn }}/html
+      core install
+      --url={{ fqdn }}
+      --title="{{ domain.organisation }}"
+      --admin_user=admin
+      --admin_password=admin
+      --admin_email=admin@{{ domain.name }}
+
+  - name: Activate the wordpress-importer plugin
+    ansible.builtin.command: >-
+      wp --allow-root --path=/var/www/{{ fqdn }}/html
+      plugin install wordpress-importer --activate
+
+#  - name: Copy theme
+#    synchronize:
+#      src: fobv.web/theme/
+#      dest: /var/www/{{ site.server_name }}/html/wp-content/themes/wp-bootstrap-starter-child
+#      recursive: yes
+#      rsync_opts:
+#        - "--chown=www-data:www-data"
+
+#  - name: Copy migration
+#    copy:
+#      src: files/migrate
+#      dest: /tmp/
+
+#  - name: Process migrations
+#    shell: |
+#      export WP_PATH=/var/www/{{ site.server_name }}/html
+#      sh /tmp/migrate/wp-cli
+
+  become: yes
+  vars:
+    fqdn: "{{ subdomain.name + '.' + domain.name }}"

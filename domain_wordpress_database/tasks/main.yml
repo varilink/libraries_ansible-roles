@@ -1,22 +1,9 @@
-- name: Deploy database role for a WordPress site
-  become: yes
-  block:
 
-    - name: Create database for the WordPress site
-      mysql_db:
-        name: "{{ site.server_name | regex_replace ('\\.', '_') }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
+---
 
-    - name: Delete user
-      mysql_user:
-        name: "{{ ( site.server_name ) | regex_replace ('\\.', '_') }}"
-        state: absent
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-
-
-    - name: Create database user for the WordPress site
-      mysql_user:
-        name: "{{ ( site.server_name ) | regex_replace ('\\.', '_') }}"
-        password: "{{ site.database_password }}"
-        priv: "{{ ( site.server_name ) | regex_replace ('\\.', '_') }}.*:ALL"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
+- name: Check if domain wordpress database is needed for this host
+  ansible.builtin.include_tasks: create.yml
+  when: inventory_hostname == subdomain.wordpress_database_host
+  loop: "{{ domain.subdomains }}"
+  loop_control:
+    loop_var: subdomain

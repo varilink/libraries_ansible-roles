@@ -1,0 +1,21 @@
+- name: Deploy nginx role for a WordPress site
+  block:
+
+  - name: Template site nginx configuration to sites-available
+    template:
+      src: nginx.conf.j2
+      dest: /etc/nginx/sites-available/{{ fqdn }}
+    notify:
+      - Reload nginx configuration
+
+  - name: Enable site nginx configuration
+    file:
+      src: /etc/nginx/sites-available/{{ fqdn }}
+      dest: /etc/nginx/sites-enabled/{{ fqdn }}
+      state: link
+    notify:
+      - Reload nginx configuration
+
+  become: yes
+  vars:
+    fqdn: "{{ subdomain.name + '.' + domain.name }}"

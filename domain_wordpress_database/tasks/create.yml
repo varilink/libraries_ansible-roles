@@ -1,0 +1,28 @@
+- name: Deploy database role for a WordPress site
+  block:
+
+    - name: Create database for the WordPress site
+      community.mysql.mysql_db:
+        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create a local database user for the WordPress site
+      community.mysql.mysql_user:
+        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        password: "{{ subdomain.wordpress_database_password }}"
+        priv: "{{ fqdn | regex_replace ('\\.', '_') }}.*:ALL"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: subdomain.wordpress_host == inventory_hostname
+
+    - name: Create a remote database user for the WordPress site
+      community.mysql.mysql_user:
+        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        host: "{{ hostvars[subdomain.wordpress_host].ansible_host }}"
+        password: "{{ subdomain.wordpress_database_password }}"
+        priv: "{{ fqdn | regex_replace ('\\.', '_') }}.*:ALL"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: subdomain.wordpress_host != inventory_hostname
+
+  become: yes
+  vars:
+    fqdn: "{{ subdomain.name + '.' + domain.name }}"

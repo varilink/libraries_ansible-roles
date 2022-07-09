@@ -1,18 +1,9 @@
-- name: Deploy nginx role for a WordPress site
-  become: yes
-  block:
 
-  - name: Template site nginx configuration to sites-available
-    template:
-      src: nginx.conf.j2
-      dest: /etc/nginx/sites-available/{{ site.server_name }}
-    notify:
-      - Reload nginx configuration
+---
 
-  - name: Enable site nginx configuration
-    file:
-      src: /etc/nginx/sites-available/{{ site.server_name }}
-      dest: /etc/nginx/sites-enabled/{{ site.server_name }}
-      state: link
-    notify:
-      - Reload nginx configuration
+- name: Check if domain reverse proxy is needed for this host
+  ansible.builtin.include_tasks: create.yml
+  when: inventory_hostname == subdomain.reverse_proxy_host
+  loop: "{{ domain.subdomains }}"
+  loop_control:
+    loop_var: subdomain
