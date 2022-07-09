@@ -31,11 +31,11 @@
         dest: /etc/exim4/passwd.client
         group: Debian-exim
         mode: '0640'
-      when: exim_smarthosts | length == 1
+      when: email_exim_smarthosts | length == 1
 
     - name: Redirect emails to root to myself
       ansible.builtin.lineinfile:
         path: /etc/aliases
-        line: "root: {{ admin_user }}@{{ home_domain }}"
+        line: "root: {{ office_admin_mailbox }}@{{ office_domain }}"
 
   become: yes
