@@ -3,7 +3,7 @@ dependencies:
   - role: email
     vars:
       email_exim_configtype: smarthost
-      email_exim_other_hostnames: "{{ office_domain }}"
+      email_exim_other_hostnames: "{{ home_domain }}"
       email_exim_local_interfaces: ''
       email_exim_hide_mailname: 'false'
       email_exim_localdelivery: 'maildir_home'

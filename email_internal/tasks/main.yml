@@ -30,8 +30,8 @@
     - name: Add the interval option for fetchmail
       ansible.builtin.lineinfile:
         path: /etc/default/fetchmail
-        regexp: '^(?:# )?OPTIONS=(?:...|-d 10)$'
-        line: OPTIONS=-d 10
+        regexp: '^(?:# )?OPTIONS=(?:...|"--daemon 10 --syslog")$'
+        line: OPTIONS="--daemon 10 --syslog"
 
     - name: Deploy fetchmailrc file
       ansible.builtin.template:
