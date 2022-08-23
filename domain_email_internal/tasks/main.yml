@@ -1,0 +1,5 @@
+- name: Add operating system users if domain is the office domain
+  ansible.builtin.import_role:
+    name: home_domain_users
+  become: yes
+  when: domain.name == home_domain

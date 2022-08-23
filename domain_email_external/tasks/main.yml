@@ -1,0 +1,23 @@
+- block:
+
+  - name: Template Dovecot cert instructions
+    ansible.builtin.template:
+      src: dovecot.conf.j2
+      dest: /etc/dovecot/domains/{{ domain.name }}.conf
+
+  - name: Add smarthost entry for this domain
+    ansible.builtin.lineinfile:
+      path: /etc/exim4/domain.passwd.client
+      line: "\
+        {{ domain.name }}:\
+        {{ domain.smarthost.username }}:\
+        {{ domain.smarthost.userpass }}\
+        "
+      regexp: "^{{ domain.name }}:"
+
+  - name: Add operating system users if domain is the office domain
+    ansible.builtin.import_role:
+      name: home_domain_users
+    when: domain.name == home_domain
+
+  become: yes

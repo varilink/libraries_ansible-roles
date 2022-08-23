@@ -1,0 +1,9 @@
+
+---
+
+- block:
+
+    - name: Run newaliases
+      ansible.builtin.command: newaliases
+
+  become: yes
