@@ -1,3 +1,3 @@
 # By default do NOT expose the database on an external network interface so that
 # it will only allow connections from the same host.
-database_expose_externally: False
+database_expose_externally: false

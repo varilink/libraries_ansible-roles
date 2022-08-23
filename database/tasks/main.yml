@@ -7,6 +7,8 @@
 
     - name: Install apt package(s) for the database role
       ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
         name:
           - mariadb-server
           - python3-pymysql
