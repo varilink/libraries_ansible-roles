@@ -1,3 +1,12 @@
+# Required client side authentication mechanism for this host to use our chosen
+# external smarthost with a user name and password that is specific to the
+# sender address domain.
+
+PASSWDLINE=${lookup{$sender_address_domain}\
+             lsearch{CONFDIR/domain.passwd.client}{$value}fail\
+            }
+
 login:
   driver = plaintext
-  hide client_send = : ${extract{username}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}: ${extract{userpass}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}
+  public_name = LOGIN
+  client_send = : ${extract{1}{::}{PASSWDLINE}} : ${extract{2}{::}{PASSWDLINE}}

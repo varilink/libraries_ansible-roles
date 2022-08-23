@@ -1,16 +1,23 @@
+# This is a custom router, i.e. not one that comes with the exim4 package in
+# Debian. This host's Exim configuration type is smarthost. If the message being
+# processed is for a non-local domain then it would be processed by the
+# smarthost router in 200_exim4-config_primary.
 #
-# Send all non-local mail to a smarthost determined by the sending domain
-#
+# This custom router is placed so as to intercept the routing for some messages
+# before they are tested against that smarthost router so that they get routed
+# by this smarthost_for_sender_domain router instead. Relative to the smarthost
+# router there are two changes here:
+# 1. The debug_print message includes the sender address domain
+# 2. The transport is remote_smtp_smarthost_for_sender_domain rather than
+#    remote_smtp_smarthost
 
-smarthosts:
-  debug_print = "R: smarthost for $local_part@$domain from $sender_address_domain"
+domain_smarthost:
+  debug_print = "R: smarthost for $local_part@$domain \
+  from $sender_address_domain"
   driver = manualroute
   domains = ! +local_domains
-  # Check that the sending domain is present in /etc/exim4/smarthosts
-  condition = "${if eq{${lookup{$sender_address_domain}partial-lsearch{/etc/exim4/smarthosts}{$value}}}{}{false}{true}}"
-  transport = remote_smtp_smarthosts
-  # Set the route_list
-  route_list = * ${extract{hostname}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}
+  transport = remote_smtp_domain_smarthost
+  route_list = * DCsmarthost byname
   host_find_failed = ignore
   same_domain_copy_routing = yes
   no_more

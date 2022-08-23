@@ -1,17 +1,38 @@
-remote_smtp_smarthosts:
-  debug_print = "T: mailgun for $local_part@$domain from $sender_address_domain"
+
+### transport/30_exim4-config_remote_smtp_smarthost_for_sender_domain
+#################################
+
+# This is a custom transport, i.e. not distributed with the exim4 package in
+# Debian. We use it in place of the remote_smtp_smarthost transport defined in
+# 30_exim4-config_remote_smtp_smarthost. Relative to that transport the changes
+# here are as follows:
+# 1. The debug_print message includes sender address domain.
+# 2. Instead of doing a lookup in CONFDIR/passwd.client, we do a look up in our
+#    file that contains sender domain specific SMTP credentials, which is
+#    CONFDIR/sender-domain-passwd.client.
+# 3. When we do an nwildsearch lookup in the CONFDIR/sender-domain-passwd.client
+#    file we do so using $sender_address_domain not $host.
+
+remote_smtp_domain_smarthost:
+  debug_print = "T: remote_smtp_domain_smarthost for $local_part@$domain \
+  from $sender_address_domain"
   driver = smtp
   multi_domain
 .ifndef IGNORE_SMTP_LINE_LENGTH_LIMIT
   message_size_limit = ${if > {$max_received_linelength}{998} {1}{0}}
 .endif
-  # Get the port to use for the connection by looking up the sending domain in
-  # the /etc/exim4/smarthosts file.
-  port = ${extract{port}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}
-  hosts_require_auth = $host_address
-  hosts_require_tls = $host_address
+  hosts_try_auth = <; ${if exists{CONFDIR/domain.passwd.client} \
+        {\
+        ${lookup{$sender_address_domain}\
+          nwildlsearch{CONFDIR/domain.passwd.client}{$host_address}}\
+        }\
+        {} \
+      }
 .ifdef REMOTE_SMTP_SMARTHOST_HOSTS_AVOID_TLS
   hosts_avoid_tls = REMOTE_SMTP_SMARTHOST_HOSTS_AVOID_TLS
+.endif
+.ifdef REMOTE_SMTP_SMARTHOST_HOSTS_REQUIRE_TLS
+  hosts_require_tls = REMOTE_SMTP_SMARTHOST_HOSTS_REQUIRE_TLS
 .endif
 .ifdef REMOTE_SMTP_HEADERS_REWRITE
   headers_rewrite = REMOTE_SMTP_HEADERS_REWRITE

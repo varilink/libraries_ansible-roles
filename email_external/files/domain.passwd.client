@@ -1,0 +1,15 @@
+# password file used when the local exim is authenticating to a remote
+# host as a client.
+#
+# see exim4_passwd_client(5) for more documentation
+#
+# This file contains a customisation to the structure of the passwd.client file
+# that is distributed with the exim4 package in Debian. Instead of lines taking
+# the form:
+## target.mail.server.example:login:password
+#
+# Here they take the form:
+## sender.domain:target.mail.server.example:login:password
+#
+# This is because we want to have separate login credentials to the smarthost
+# depending on the sender's domain.t

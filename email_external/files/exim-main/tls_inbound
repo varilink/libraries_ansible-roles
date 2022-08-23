@@ -1,4 +1,54 @@
+# Enable TLS for clients connecting to us
 MAIN_TLS_ENABLE = yes
-MAIN_TLS_CERTIFICATE = /usr/local/etc/certs/varilink.co.uk/cert.pem
-MAIN_TLS_PRIVATEKEY = /usr/local/etc/certs/varilink.co.uk/key.pem
+
+# Enforce TLS on connect for connections to us on port 465
+# Note that this macro only takes effect because of the edit we make to
+# /etc/exim4/conf.d/main/03_exim4-config_tlsoptions in the task "Add
+# TLS_ON_CONNECT_PORTS section to Exim's main config tlsoptions"
 TLS_ON_CONNECT_PORTS = 465
+
+# If tls_sni is defined then use it to define the MAIN_TLS_CERTIFICATE and
+# MAIN_TLS_PRIVATEKEY macros to return a domain specific certificate and private
+# key. First look for a Let's Encrypt certificate and private key for the SNI
+# domain and if they are found then use them. Failing that look for a self-
+# signed certificate and private key for the SNI domain and again if they are
+# found then use them.
+#
+# If either tls_sni isn't defined or no certificate and private key are found
+# for the SNI domain then these macros will be undefined. In the case, the logic
+# in 03_exim4-config_tlsoptions will use the certificate and private key at
+# CONFDIR/exim.crt and CONFDIR/exim.key respectively.
+#
+# NOTE: The logic below extracts the domain from tls_sni values by using the
+# substr function with an offset of 5. That's because our host naming convention
+# is smtp; for example smtp.varilink.co.uk for the domain varilink.co.uk. If we
+# start to allow different host naming conventions then a more flexible way of
+# doing this will have to be found.
+
+MAIN_TLS_CERTIFICATE =\
+  ${if def:tls_sni\
+    {\
+      ${if exists {/etc/letsencrypt/live/${substr_5:$tls_sni}/}\
+        {/etc/letsencrypt/live/${substr_5:$tls_sni}/cert.pem}\
+        {\
+          ${if exists {/usr/local/etc/certs/${substr_5:$tls_sni}/}\
+            {/usr/local/etc/certs/${substr_5:$tls_sni}/cert.pem}\
+          }\
+        }\
+      }\
+    }\
+  }
+
+MAIN_TLS_PRIVATEKEY =\
+  ${if def:tls_sni\
+    {\
+      ${if exists {/etc/letsencrypt/live/${substr_5:$tls_sni}/}\
+        {/etc/letsencrypt/live/${substr_5:$tls_sni}/privkey.pem}\
+        {\
+          ${if exists {/usr/local/etc/certs/${substr_5:$tls_sni}/}\
+            {/usr/local/etc/certs/${substr_5:$tls_sni}/key.pem}\
+          }\
+        }\
+      }\
+    }\
+  }

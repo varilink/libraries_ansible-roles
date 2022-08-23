@@ -1,14 +1,18 @@
-dovecot_login:
+# These are substitutions for the plain_server and login_server authenticators
+# in /etc/exim4/conf.d/auth/30_exim4-config_examples file. These authenticators
+# hand-off exim server side authentication to dovecot.
+
+dovecot_plain_server:
   driver = dovecot
-  public_name = LOGIN
+  public_name = PLAIN
   server_socket = /var/run/dovecot/auth-client
   # Setting server_set_id might break several headers in mails sent by
   # authenticated smtp. So be careful.
   server_set_id = $auth1
 
-dovecot_plain:
+dovecot_login_server:
   driver = dovecot
-  public_name = PLAIN
+  public_name = LOGIN
   server_socket = /var/run/dovecot/auth-client
   # Setting server_set_id might break several headers in mails sent by
   # authenticated smtp. So be careful.
