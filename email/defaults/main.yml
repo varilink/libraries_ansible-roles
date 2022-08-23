@@ -1,8 +1,11 @@
+# These values are Used in templates/update-exim4.conf.conf.j2 and are listed in
+# the order that they appear in that file.
 email_exim_configtype: satellite
-email_exim_hide_mailname: 'true'
-email_exim_local_interfaces: 127.0.0.1
-email_exim_localdelivery: mail_spool
 email_exim_other_hostnames: ''
+email_exim_local_interfaces: 127.0.0.1
+email_exim_readhost: "{{ home_domain }}"
 email_exim_relay_nets: ''
 email_exim_use_split_config: 'false'
-office_admin_mailbox: admin
+email_exim_hide_mailname: 'true'
+email_exim_localdelivery: mail_spool
+email_exim_mailname: "{{ home_domain }}"

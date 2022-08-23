@@ -1,15 +1,15 @@
 dc_eximconfig_configtype='{{ email_exim_configtype }}'
 dc_other_hostnames='{{ email_exim_other_hostnames }}'
 dc_local_interfaces='{{ email_exim_local_interfaces }}'
-dc_readhost='{{ office_domain }}'
+dc_readhost='{{ email_exim_readhost }}'
 dc_relay_domains=''
 dc_minimaldns='false'
 dc_relay_nets='{{ email_exim_relay_nets }}'
 dc_smarthost='
-{%- if ( email_exim_smarthosts | length ) == 1 %}
-{{- email_exim_smarthosts[0].hostname }}
-{%- if email_exim_smarthosts[0].port is defined %}
-:{{ email_exim_smarthosts[0].port }}
+{%- if email_exim_smarthost is defined %}
+{{ email_exim_smarthost.hostname }}
+{%- if email_exim_smarthost.port is defined %}
+::{{ email_exim_smarthost.port }}
 {%- endif %}
 {%- endif %}
 '

@@ -6,12 +6,13 @@
 
     - name: Install APT package(s) required by the email role
       ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
         name:
           # If any role that has a dependency on this role requires the
           # exim4-daemon-heavy package then it must install it itself. That will
           # replace the exim4-daemon-light package.
           - exim4-daemon-light
-        install_recommends: no
 
     - name: Template out the Exim4 update-exim4.conf.conf file
       template:
@@ -23,19 +24,26 @@
     - name: Template out the Exim4 mailname file
       ansible.builtin.template:
         src: mailname.j2
-        dest: /etc/exim4/mailname
+        dest: /etc/mailname
+      notify:
+        - exim configuration changed
 
-    - name: Create the /etc/exim4/passwd.client file if using a single smarthost
-      ansible.builtin.template:
-        src: passwd.client.j2
-        dest: /etc/exim4/passwd.client
-        group: Debian-exim
-        mode: '0640'
-      when: email_exim_smarthosts | length == 1
+    - name: Add line to /etc/exim4/passwd.client if credentials supplied
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/passwd.client
+        line: "\
+          {{ email_exim_smarthost.hostname }}:\
+          {{ email_exim_smarthost.username }}:\
+          {{ email_exim_smarthost.userpass }}\
+          "
+        regex: "^{{ email_exim_smarthost.hostname }}:"
+      when: email_exim_smarthost.username is defined
 
-    - name: Redirect emails to root to myself
+    - name: Redirect emails to root to the home domain admin user
       ansible.builtin.lineinfile:
         path: /etc/aliases
-        line: "root: {{ office_admin_mailbox }}@{{ office_domain }}"
+        line: "root: {{ home_domain_admin_user }}"
+      notify:
+        - Run newaliases
 
   become: yes

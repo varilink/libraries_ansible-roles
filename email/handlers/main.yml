@@ -20,4 +20,7 @@
       when: ansible_facts['services']['exim4']['state'] == 'running'
       listen: exim configuration changed
 
+    - name: Run newaliases
+      ansible.builtin.command: newaliases
+
   become: yes

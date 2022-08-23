@@ -46,6 +46,9 @@
               -sha256
               -days 365
               -subj '/CN={{ domain.name }}'
+              -addext 'subjectAltName =
+              DNS:imap.{{ domain.name }},
+              DNS:smtp.{{ domain.name }}'
               -nodes
               && chgrp Debian-exim
               /usr/local/etc/certs/{{ domain.name }}/key.pem
@@ -62,23 +65,39 @@
             -o StrictHostKeyChecking=no
             -o UserKnownHostsFile=/dev/null
             -o LogLevel=QUIET
-            {{ ansible_user }}@{{
-            hostvars['external']['email_exim_smarthosts'][0]
-            }} exit
+            {{ ansible_user }}@{{ target_host }}
+            exit
           register: ssh_test
           ignore_errors: yes
+          vars:
+            # To derive the target host we load the playbook, filter on the play
+            # that contains the role 'email_external' and use the single host
+            # (there will be only one) that is targetted by that play.
+            target_host: >-
+              {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
+              | community.general.json_query(
+                "[?contains(roles,'email_external')].hosts|[0]"
+              ) }}
 
         - name: Deploy certificates to external email host
-          ansible.builtin.command:
-            cmd: >-
-              rsync -r -g
-              -e 'ssh -i /home/{{ ansible_user }}/.ssh/id_rsa
-              -o StrictHostKeyChecking=no'
-              --rsync-path='sudo rsync'
-              /usr/local/etc/certs
-              {{ ansible_user }}@{{
-              hostvars['external']['email_exim_smarthosts'][0]
-              }}:/usr/local/etc
+          ansible.builtin.command: >-
+            rsync --recursive --group --log-file=/var/log/rsync
+            --rsh='ssh -i /home/{{ ansible_user }}/.ssh/id_rsa
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            -o LogLevel=QUIET'
+            --rsync-path='sudo rsync'
+            /usr/local/etc/certs
+            {{ ansible_user }}@{{ target_host }}:/usr/local/etc
+          vars:
+            # To derive the target host we load the playbook, filter on the play
+            # that contains the role 'email_external' and use the single host
+            # (there will be only one) that is targetted by that play.
+            target_host: >-
+              {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
+              | community.general.json_query(
+                "[?contains(roles,'email_external')].hosts|[0]"
+              ) }}
           when: ssh_test.rc == 0
 
       when: not email_uses_ca
