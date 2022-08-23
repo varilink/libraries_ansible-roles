@@ -8,14 +8,14 @@
         regex: "^\
           {{ ansible_host.replace('.', '\\.') }}\
           \\s+\
-          (?:{{ inventory_hostname }}\\.{{ office_domain.replace('.', '\\.') }}\
+          (?:{{ inventory_hostname }}\\.{{ home_domain.replace('.', '\\.') }}\
           \\s+)?\
           {{ inventory_hostname }}\
           $"
         line: "\
           {{ ansible_host }}\
           \t\
-          {{ inventory_hostname }}.{{ office_domain }} {{ inventory_hostname }}"
+          {{ inventory_hostname }}.{{ home_domain }} {{ inventory_hostname }}"
         unsafe_writes: "{{ unsafe_writes }}"
 
     - name: Template out resolv.conf

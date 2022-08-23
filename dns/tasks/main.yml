@@ -4,9 +4,10 @@
 
     - name: Install APT package(s) required by the DNS internal role
       ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
         name:
           - dnsmasq
-        install_recommends: no
 
     - name: Template out upstream-resolv.conf
       ansible.builtin.template:
@@ -18,24 +19,47 @@
         path: /etc/dnsmasq.conf
         regexp: '^#?resolv-file='
         line: resolv-file=/etc/upstream-resolv.conf
+      notify:
+        - dnsmasq configuration changed
 
     - name: Enable expand-hosts in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?expand-hosts'
         line: expand-hosts
+      notify:
+        - dnsmasq configuration changed
 
     - name: Enable read of additional hosts file in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?addn-hosts='
         line: addn-hosts=/etc/addn-hosts
+      notify:
+        - dnsmasq configuration changed
 
     - name: Set domain to required value in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
-        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ office_domain }})"
-        line: domain={{ office_domain }}
+        regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ home_domain }})"
+        line: domain={{ home_domain }}
+      notify:
+        - dnsmasq configuration changed
+
+    # This step is only used in our testing rig
+    - name: If required enable an MX record
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: >-
+          ^#?mx-host=(?:maildomain\.com|{{
+          home_domain
+          }}),(?:servermachine\.com|{{
+          dns_mx_host
+          }}),50$
+        line: "mx-host={{ home_domain }},{{ dns_mx_host }},50"
+      when: dns_mx_host is defined
+      notify:
+        - dnsmasq configuration changed
 
     - name: Template out additional hosts file
       ansible.builtin.template:

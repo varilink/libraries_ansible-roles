@@ -1,4 +1,5 @@
-search {{ office_domain }}
+search {{ home_domain }}
 {% for nameserver in dns_resolvers %}
 nameserver {{ nameserver }}
 {% endfor %}
+options ndots:0
