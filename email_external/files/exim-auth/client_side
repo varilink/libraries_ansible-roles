@@ -1,0 +1,3 @@
+login:
+  driver = plaintext
+  hide client_send = : ${extract{username}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}: ${extract{userpass}{${lookup{$sender_address_domain}lsearch{/etc/exim4/smarthosts}}}}

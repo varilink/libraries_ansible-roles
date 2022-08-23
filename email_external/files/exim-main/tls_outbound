@@ -1,0 +1,2 @@
+# Require TLS for remote SMTP connections to all smarthost hosts
+REMOTE_SMTP_SMARTHOST_HOSTS_REQUIRE_TLS = *
