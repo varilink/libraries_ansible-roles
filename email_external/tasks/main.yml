@@ -34,14 +34,121 @@
           - exim4-daemon-heavy
         install_recommends: no
 
-    - name: Configure email authentication to our specific needs
-      ansible.builtin.import_tasks: auth.yml
+    # These tasks configure authentication for the external email service to our
+    # specific needs, which are:
+    #  - No plain text authentication credentials without SSL/TLS
+    #  - Both the Dovecot and Exim services share Dovecot's authentication
+    #    mechanisms
 
-    - name: Configure sieve email filtering to our specific needs
-      ansible.builtin.import_tasks: sieve.yml
+    - name: Disable plaintext Dovecot authentication
+      # This disables all plaintext Dovecot authentication unless SSL/TLS is used.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        regexp: '^#?disable_plaintext_auth = yes$'
+        line: disable_plaintext_auth = yes
+      notify: dovecot configuration changed
 
-    - name: Modify Exim to use different smarthosts depending on sender domain
-      ansible.builtin.import_tasks: smarthosts.yml
+    - name: Enable login as an available Dovecot authentication mechanism
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        regexp: '^auth_mechanisms = plain'
+        line: auth_mechanisms = plain login
+      notify: dovecot configuration changed
+
+    - name: Insert auth-client unix listener in the Dovecot auth service section
+      # This provides the Dovecot authentication socket that Exim accesses to
+      # delegate its authentication to Dovecot,
+      ansible.builtin.blockinfile:
+        path: /etc/dovecot/conf.d/10-master.conf
+        insertafter: '^service auth {$'
+        block: |-2
+            unix_listener auth-client {
+              user = Debian-exim
+            mode = 0600
+          }
+        marker: "  # {mark} ANSIBLE MANAGED AUTH CLIENT BLOCK"
+      notify: dovecot configuration changed
+
+    - name: Comment all examples in Exim's 30_exim4-config_examples file
+      # This disables the Exim client side authentication mechanisms that are
+      # enabled by default so that we can conveniently replace them with ONLY the
+      # client side authentication mechanisms that we want.
+      ansible.builtin.replace:
+        path: /etc/exim4/conf.d/auth/30_exim4-config_examples
+        # TODO: Make pattern match more robust
+        # This works if:
+        # 1. Where lines are commented the # is in the first column
+        # 2. Empty lines are just that, i.e. they don't contain whitespace
+        # Both are true in this file within the package NOW but it would be better
+        # not to have to rely on that being the case.
+        regexp: '^([^#\n].*)$'
+        replace: '# \1'
+      notify:
+        - exim configuration changed
+
+    - name: Install our required Exim authenticators
+      # Having disabled the default Exim client side authentication mechanisms we
+      # can now install our required client AND server side authentication
+      # mechanisms. The the file for more information.
+      ansible.builtin.copy:
+        src: exim-authenticators
+        dest: /etc/exim4/conf.d/auth/30_exim4-config_custom
+      notify:
+        - exim configuration changed
+
+    # These tasks implement spam filtering of incoming emails using sieve.
+    # TODO: Look into the benefit of using the Dovecot ManageSieve server
+
+    - name: Put Ansible managed block markers around the lmtp unix listener config
+      ansible.builtin.replace:
+        path: /etc/dovecot/conf.d/10-master.conf
+        # Matches these lines in the file with whitespace flexibility built in:
+        #   unix_listener lmtp {
+        #     #mode = 0666
+        #   }
+        # but NOT if immediately followed by the '# END' block marker to ensure
+        # idempotency.
+        regexp: "\
+          (^\\s*unix_listener\\s+lmtp\\s+{[^\\S\n]*\n\
+          \\s*#mode\\s*=\\s*0666[^\\S\n]*\n\
+          \\s*}[^\\S\n]*$)\
+          (?!# END)\
+          "
+          replace: |-2
+              # BEGIN ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+            \1
+              # END ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+
+    - name: Set the required mode and user for the lmtp unix listener
+      ansible.builtin.blockinfile:
+        path: /etc/dovecot/conf.d/10-master.conf
+        block: |-2
+            unix_listener lmtp {
+              user = Debian-exim
+              mode = 0666
+            }
+        marker: "  # {mark} ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK"
+
+    - name: Copy the smarthosts router configuration
+      ansible.builtin.copy:
+        src: smarthosts-router
+        dest: /etc/exim4/conf.d/router/175_exim4-config_smarthosts
+      notify:
+        - exim configuration changed
+
+    - name: Copy the smarthosts transport configuration
+      ansible.builtin.copy:
+        src: smarthosts-transport
+        dest: /etc/exim4/conf.d/transport/30_exim4-config_remote_smtp_smarthosts
+      notify:
+        - exim configuration changed
+
+    - name: Template out the smarthosts connection details file
+      ansible.builtin.template:
+        src: smarthosts.j2
+        dest: /etc/exim4/smarthosts
+        group: Debian-exim
+        mode: '0640'
 
     - name: Copy the config header
       ansible.builtin.copy:
