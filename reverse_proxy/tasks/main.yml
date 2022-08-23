@@ -1,33 +1,46 @@
+# Reverse proxy role. We serve all of our websites behind a reverse proxy.
+
+---
+
 - name: Install reverse proxy role
-  become: yes
   block:
 
     - name: Install apt package(s) for reverse proxy role
-      apt:
+      ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
         name: nginx
 
-    # Any host fulfiling a reverse proxy role that is external to the Varilink
-    # Computing Ltd office network must be enabled to support SSL connections.
+    # Setup in to obtain Let's Encrypt certificates if SSL if required on this
+    # host. We use SSL on any host that will provide externally facing websites
+    # but we might not do so on a server that hosts internally facing websites
+    # for development only for example.
     - name: Setup Let's Encrypt if SSL is required for this host
-      when: "'external' in groups and inventory_hostname in groups['external']"
       block:
 
+        # NOTE: certbot renewals
         # If systemd is available, installing the certbot apt package creates
         # and activates a systemd timer unit called certbot.timer to "Run cerbot
         # twice daily". The associated systemd service unit (certbot.service),
-        # executes certbot's renew subcommand. The equivalent CRON setup is
-        # disabled since the CRON job on executes certbot's renew subcommand if
-        # it does NOT find /run/systemd/system to be present.
+        # executes certbot's renew subcommand. The equivalent CRON setup is then
+        # disabled since the CRON job executes certbot's renew subcommand only
+        # if it does NOT find /run/systemd/system to be present.
         - name: Install certbot apt package
-          apt:
+          ansible.builtin.apt:
+            install_recommends: no
             name: certbot
 
         # On the successful deployment of a renewed certificate, we must reload
-        # the nginx configuration for it to take effect.
+        # the nginx configuration for it to take effect. So we deploy a script
+        # that does this as a renewal hook.
         - name: Automate reload of nginx configuration on certificate renewal
-          copy:
+          ansible.builtin.copy:
             src: files/reload-nginx-config.sh
             dest: /etc/letsencrypt/renewal-hooks/deploy/
             owner: root
             group: root
             mode: '755'
+
+      when: reverse_proxy_uses_ssl
+
+  become: yes

@@ -1,17 +1,24 @@
+# Main install tasks for the WordPress role.
+
+---
+
 - name: Deploy wordpress host role
   become: yes
   block:
 
     - name: Install apt package(s) for wordpress host role
-      apt:
+      ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
         name:
           - apache2
+          - ca-certificates
           - libapache2-mod-php
           - php
           - php-mysql
 
     - name: Enable apache2 rewrite module
-      apache2_module:
+      community.general.apache2_module:
         state: present
         name: rewrite
 
@@ -24,13 +31,13 @@
     #    state: directory
 
     - name: Change ports that apache2 will listen on
-      template:
+      ansible.builtin.template:
         src: ports.conf.j2
         dest: /etc/apache2/ports.conf
         mode: '755'
 
     - name: Install WP-CLI
-      get_url:
+      ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         dest: /usr/local/bin/wp
         mode: '755'

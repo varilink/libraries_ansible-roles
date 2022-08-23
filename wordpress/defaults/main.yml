@@ -1,2 +1,2 @@
 # Do NOT expose service externally by default
-wordpress_host_listen_ip: 127.0.0.1
+wordpress_expose_externally: false
