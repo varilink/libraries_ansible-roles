@@ -1,12 +1,16 @@
 server {
 
+{% if webhost.wordpress_host == inventory_hostname %}
+  listen      127.0.0.1:80;
+{%- else %}
   listen      {{ ansible_host }}:80;
+{%- endif %}
   server_name {{ fqdn }};
 
   access_log /var/log/nginx/{{ fqdn }}-access.log;
   error_log /var/log/nginx/{{ fqdn }}-error.log;
 
-{% if domain.proxy_uses_ssl %}
+{% if reverse_proxy_uses_ssl %}
 
   location /.well-known/acme-challenge/ {
     root      /var/www/{{ fqdn }}/html;
@@ -22,7 +26,11 @@ server {
 
 server {
 
+{% if webhost.wordpress_host == inventory_hostname %}
+  listen      127.0.0.1:443 ssl;
+{%- else %}
   listen      {{ ansible_host }}:443 ssl;
+{%- endif %}
   server_name {{ fqdn }};
 
   ssl_certificate /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem;
@@ -31,8 +39,13 @@ server {
   location / {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.proxy_pass_port }}/ /;
-    proxy_pass http://{{ subdomain.wordpress_host }}:{{ domain.proxy_pass_port }};
+{%- if webhost.reverse_proxy_pass_port is defined %}
+    proxy_redirect ~(http|https)://{{ fqdn }}:{{ webhost.reverse_proxy_pass_port }}/ /;
+    proxy_pass http://{{ webhost.wordpress_host }}:{{ webhost.reverse_proxy_pass_port }};
+{%- else %}
+    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.reverse_proxy_pass_port }}/ /;
+    proxy_pass http://{{ webhost.wordpress_host }}:{{ domain.reverse_proxy_pass_port }};
+{%- endif %}
     proxy_set_header X-Forwarded-Proto "https" ;
     proxy_set_header X-Forwarded-Port "443" ;
   }
@@ -42,8 +55,13 @@ server {
   location / {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.proxy_pass_port }}/ /;
-    proxy_pass http://{{ subdomain.wordpress_host }}:{{ domain.proxy_pass_port }};
+{%- if webhost.reverse_proxy_pass_port is defined %}
+    proxy_redirect ~(http|https)://{{ fqdn }}:{{ webhost.reverse_proxy_pass_port }}/ /;
+    proxy_pass http://{{ webhost.wordpress_host }}:{{ webhost.reverse_proxy_pass_port }};
+{%- else %}
+    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.reverse_proxy_pass_port }}/ /;
+    proxy_pass http://{{ webhost.wordpress_host }}:{{ domain.reverse_proxy_pass_port }};
+{%- endif %}
   }
 
 {% endif %}

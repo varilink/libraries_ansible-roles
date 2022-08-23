@@ -28,17 +28,31 @@
         core download --locale=en_GB
       creates: /var/www/{{ fqdn }}/html/index.php
 
-  - name: Create the WordPress config file
+  - name: Create the WordPress config file for local database
     ansible.builtin.command:
       cmd: >-
         wp --allow-root --path=/var/www/{{ fqdn }}/html
         config create
-        --dbhost={{ subdomain.wordpress_database_host }}
+        --dbhost=localhost
         --dbname={{ fqdn | regex_replace ('\.', '_') }}
         --dbuser={{ fqdn | regex_replace ('\.', '_') }}
-        --dbpass={{ subdomain.wordpress_database_password }}
+        --dbpass={{ webhost.wordpress_database_password }}
         --skip-check
       creates: /var/www/{{ fqdn }}/html/wp-config.php
+    when: inventory_hostname == webhost.wordpress_database_host
+
+  - name: Create the WordPress config file for remote database
+    ansible.builtin.command:
+      cmd: >-
+        wp --allow-root --path=/var/www/{{ fqdn }}/html
+        config create
+        --dbhost={{ webhost.wordpress_database_host }}
+        --dbname={{ fqdn | regex_replace ('\.', '_') }}
+        --dbuser={{ fqdn | regex_replace ('\.', '_') }}
+        --dbpass={{ webhost.wordpress_database_password }}
+        --skip-check
+      creates: /var/www/{{ fqdn }}/html/wp-config.php
+    when: inventory_hostname != webhost.wordpress_database_host
 
   - name: Deny visibility of WordPress config file to others
     ansible.builtin.file:
@@ -95,4 +109,4 @@
 
   become: yes
   vars:
-    fqdn: "{{ subdomain.name + '.' + domain.name }}"
+    fqdn: "{{ webhost.name + '.' + domain.name }}"

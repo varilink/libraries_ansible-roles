@@ -1,4 +1,8 @@
-<VirtualHost {{ ansible_host }}:{{ domain.proxy_pass_port }}>
+{%- if webhost.reverse_proxy_pass_port is defined %}
+<VirtualHost {{ ansible_host }}:{{ webhost.reverse_proxy_pass_port }}>
+{%- else %}
+<VirtualHost {{ ansible_host }}:{{ domain.reverse_proxy_pass_port }}>
+{%- endif %}
 
   ServerName {{ fqdn }}
   # TODO: Parameterise the server admin email address
