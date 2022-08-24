@@ -1,1 +1,2 @@
 dynamic_dns_crontab_stride: 15
+dynamic_dns_domains_dir: /usr/local/etc/dynamic-dns-domains

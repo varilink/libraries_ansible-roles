@@ -20,6 +20,7 @@ use HTTP::Headers;
 use JSON qw(encode_json decode_json);
 use LWP::UserAgent;
 use Sys::Syslog qw(:standard :macros);
+use YAML qw(LoadFile);
 
 # Script expects no arguments. Error and exit if any are provided.
 if ( @ARGV > 0 ) {
@@ -54,24 +55,14 @@ openlog(
 # Report to the syslog that we've started a scheduled run of this script.
 syslog( LOG_INFO, 'Started check for Dynamic DNS updates' );
 
-# Variable that holds an array of domain ids (Linode domain identifier) and an
-# array of domain record ids (Linode domain record identifier) for each domain
-# that correspond to services on our office network that we're exposing
-# externally to clients.
-my @domains = (
-{% for domain in dynamic_dns_domains %}
-  {
-    id => '{{ domain.id }}',
-    records => [
-{% for record in domain.records %}
-      { id => '{{ record.id }}' },
-{% endfor %}
-    ]
-  },
-{% endfor %}
-);
+opendir ( my $dh , '{{ dynamic_dns_domains_dir }}' )
+  || die "Can't opendir {{ dynamic_dns_domains_dir }}: $!";
+my @domain_files = grep ( /\.yml$/ , readdir ( $dh ) );
+closedir $dh;
 
-foreach my $domain ( @domains ) {
+foreach my $domain_file ( @domain_files ) {
+
+  my $domain = LoadFile( "{{ dynamic_dns_domains_dir }}/$domain_file" );
 
   # Variable to hold the current domain name.
   my $domain_name = '';
@@ -99,7 +90,7 @@ foreach my $domain ( @domains ) {
 
     # Invoke the Domain Record View API for the current domain record.
     $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
-      $domain->{ id } . '/records/' . $record->{ id }
+      $domain->{ id } . '/records/' . $record
     );
 
     if ( $response->is_success ) {
@@ -115,7 +106,7 @@ foreach my $domain ( @domains ) {
 
       # Invoke the Domain Record Update API for the current domain record.
       $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
-        $domain->{ id } . '/records/' . $record->{ id } ,
+        $domain->{ id } . '/records/' . $record ,
         'Content-Type' => 'application/json',
         'Content' => $content
       );
@@ -142,7 +133,7 @@ foreach my $domain ( @domains ) {
       } else {
 
         print STDERR $response->status_line,
-          ' updating record ', $record->{ id }, ' in domain ', $domain->{ id },
+          ' updating record ', $record, ' in domain ', $domain->{ id },
           "\n";
 
       }
@@ -150,7 +141,7 @@ foreach my $domain ( @domains ) {
     } else {
 
       print STDERR $response->status_line,
-        ' viewing record ', $record->{ id }, ' in domain ', $domain->{ id },
+        ' viewing record ', $record, ' in domain ', $domain->{ id },
         "\n";
 
     }

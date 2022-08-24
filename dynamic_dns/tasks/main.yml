@@ -14,6 +14,7 @@
           - libjson-perl
           - libperl5.32
           - libwww-perl
+          - libyaml-perl
           # Ensure that an editor is present in case we want to `crontab -e` if
           # only to conveniently inspect the crontab.
           - nano
@@ -39,3 +40,9 @@
         start=0
         end={{ 60 - dynamic_dns_crontab_stride }}
         stride={{ dynamic_dns_crontab_stride }}
+
+    - name: Create a directory to hold dynamic DNS details for each domain
+      ansible.builtin.file:
+        path: "{{ dynamic_dns_domains_dir }}"
+        state: directory
+        mode: u=rw,g=,o=
