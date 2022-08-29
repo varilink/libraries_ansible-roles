@@ -1,0 +1,9 @@
+- block:
+
+  - name: Restart fetchmail
+    ansible.builtin.service:
+      name: fetchmail
+      state: restarted
+    ignore_errors: yes
+
+  become: yes
