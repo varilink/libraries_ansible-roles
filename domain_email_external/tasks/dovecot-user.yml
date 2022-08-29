@@ -1,0 +1,24 @@
+- name: Generate a Dovecot password hash for the user
+  ansible.builtin.command: >-
+    doveadm pw
+    -s CRYPT
+    -p {{ user.passwd }}
+    -u {{ user.email }}@{{ domain.name }}
+  register: pw_hash
+
+- name: Add virtual email user
+  ansible.builtin.lineinfile:
+    path: /etc/dovecot/users
+    line: "\
+      {{ user.email }}@{{ domain.name }}:\
+      {{ pw_hash.stdout }}::::\
+      /home/vmail/{{ user.email }}@{{ domain.name }}::\
+      "
+    regexp: "^{{ ( user.email + '@' + domain_name + ':' ) | regex_escape() }}"
+
+- name: Create folder for the user's mailbox
+  ansible.builtin.file:
+    path: /home/vmail/{{ user.email }}@{{ domain.name }}
+    state: directory
+    owner: vmail
+    group: vmail

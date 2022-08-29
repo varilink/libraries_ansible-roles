@@ -103,8 +103,8 @@
     # This file includes all files in /etc/dovecot/domains into the Dovecot
     # configuration - see the previous task.
     ansible.builtin.copy:
-      src: dovecot-local-conf
-      dest: /etc/dovecot/
+      src: dovecot-local.conf
+      dest: /etc/dovecot/local.conf
 
 # 3. SMTP inbound
 # ---------------
@@ -213,6 +213,7 @@
 # ------------------------------------
 
   # TODO: Look into the benefit of using the Dovecot ManageSieve server
+  # TODO: Invoke the relevant Dovecot reload/restart handlers
 
   - name: Copy the dovecot Exim router
     ansible.builtin.copy:
@@ -223,6 +224,25 @@
     ansible.builtin.copy:
       src: exim-transport/dovecot_lmtp
       dest: /etc/exim4/conf.d/transport/30_exim4-config_dovecot_lmtp
+
+  - name: Create vmail user whose home directory holds virtual user mailboxes
+    ansible.builtin.user:
+      name: vmail
+      shell: /usr/sbin/nologin
+
+  - name: Fix ownership of home directory created in previous task
+    ansible.builtin.file:
+      path: /home/vmail
+      owner: vmail
+      group: vmail
+
+  - name: Create users file to hold authentication details for virtual users
+    ansible.builtin.file:
+      path: /etc/dovecot/users
+      state: touch
+      owner: root
+      group: dovecot
+      mode: u=rw,g=r,o=
 
   - name: Put Ansible managed block markers around the lmtp unix listener config
     ansible.builtin.replace:
@@ -243,6 +263,7 @@
           # BEGIN ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
         \1
           # END ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+    notify: dovecot configuration changed
 
   - name: Set the required mode and user for the lmtp unix listener
     ansible.builtin.blockinfile:
@@ -253,6 +274,30 @@
             mode = 0666
           }
       marker: "  # {mark} ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK"
+    notify: dovecot configuration changed
+
+  - name: Enable Dovecot's passwdfile auth mechanism
+    ansible.builtin.lineinfile:
+      path: /etc/dovecot/conf.d/10-auth.conf
+      line: "!include auth-passwdfile.conf.ext"
+      regexp: '^#?!include auth-passwdfile\.conf\.ext$'
+    notify: dovecot configuration changed
+
+#  - name: Disable Dovecot's system auth mechanism
+#    ansible.builtin.lineinfile:
+#      path: /etc/dovecot/conf.d/10-auth.conf
+#      line: "#!include auth-system.conf.ext"
+#      regexp: '^#?!include auth-system\.conf\.ext$'
+#    notify: dovecot configuration changed
+
+  - name: Set mail_uid and mail_gid to vmail
+    ansible.builtin.lineinfile:
+      path: /etc/dovecot/conf.d/10-mail.conf
+      line: "{{ item }} = vmail"
+      regexp: '^#?{{ item }} ='
+    loop: [ mail_uid, mail_gid ]
+    notify: dovecot configuration changed
+
 
 # 6. Delivering email to non local domains
 # ----------------------------------------

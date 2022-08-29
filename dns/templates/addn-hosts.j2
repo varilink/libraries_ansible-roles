@@ -46,8 +46,6 @@ name of the role in either scenario.
  bacula-sd
 {%- elif role_name == 'calendar' %}
  caldav
-{%- elif role | regex_search('^email_(?:internal|external)$') %}
- imap smtp
 {%- endif %}
 
 {%- endfor %}{# role loop #}
