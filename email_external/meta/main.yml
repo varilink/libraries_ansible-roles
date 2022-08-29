@@ -1,6 +1,7 @@
 ---
 dependencies:
-  - role: email
+  - role: mail
+  - role: mta
     vars:
       email_exim_configtype: smarthost
       email_exim_other_hostnames: "{{ home_domain }}"

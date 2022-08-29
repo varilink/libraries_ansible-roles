@@ -49,14 +49,6 @@
 
 - block:
 
-  - name: Import the base Dovecot aspects of the email role
-    # The email role provides handlers and tasks for any host that Dovecot must
-    # be installed on. The host for the email_external role is such a host.
-    ansible.builtin.import_role:
-      name: email
-      handlers_from: dovecot
-      tasks_from: dovecot
-
   - name: Install APT package(s) required by the email external role
     # The base email role installs the dovecot-imapd and exim4 pacakges but the
     # email external role requires additional/different packages as follows:

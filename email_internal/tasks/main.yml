@@ -4,14 +4,6 @@
 
 - block:
 
-    # TODO: Make a note somewhere about whether we should have an email server
-    # role. In face I probably should have one.
-    - name: Import the Dovecot aspects of the email role
-      ansible.builtin.import_role:
-        name: email
-        handlers_from: dovecot
-        tasks_from: dovecot
-
     - name: Install APT package(s) required by the email internal role
       # In addition to the packages installed by the base email role, the
       # internal email server also requires fetchmail to get emails for our home
