@@ -1,5 +1,45 @@
-- name: Add operating system users if domain is the office domain
-  ansible.builtin.import_role:
-    name: home_domain_users
+- block:
+
+  - name: Install APT package(s) required by the domain email internal role
+    # User fetchmail to fetch for the home domain from tHe external email server
+    ansible.builtin.apt:
+      name:
+        - fetchmail
+      install_recommends: no
+
+  - name: Make fetchmail run in daemon mode
+    ansible.builtin.lineinfile:
+      path: /etc/default/fetchmail
+      regexp: '^START_DAEMON=(?:yes|no)$'
+      line: START_DAEMON=yes
+
+  - name: Add the interval option for fetchmail
+    ansible.builtin.lineinfile:
+      path: /etc/default/fetchmail
+      regexp: '^(?:# )?OPTIONS=(?:...|"-d 10")$'
+      line: OPTIONS="-d 10"
+
+  - name: Deploy fetchmailrc file
+    ansible.builtin.template:
+      src: fetchmailrc.j2
+      dest: /etc/fetchmailrc
+      owner: fetchmail
+      mode: 0600
+    vars:
+      # To derive the target host we load the playbook, filter on the play that
+      # contains the role 'email_external' and use the single host (there will
+      # be only one) that is targetted by that play.
+      target_host: >-
+        {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
+        | community.general.json_query(
+          "[?contains(roles,'email_external')].hosts|[0]"
+        ) }}
+      users: "{{ domain.users }}"
+    notify: Restart fetchmail
+
+  - name: Add operating system users if domain is the home domain
+    ansible.builtin.import_role:
+      name: home_domain_users
+
   become: yes
   when: domain.name == home_domain

@@ -4,34 +4,6 @@
 
 - block:
 
-    - name: Install APT package(s) required by the email internal role
-      # In addition to the packages installed by the base email role, the
-      # internal email server also requires fetchmail to get emails for our home
-      # domain from hte external email server.
-      ansible.builtin.apt:
-        name:
-          - fetchmail
-        install_recommends: no
-
-    - name: Make fetchmail run in daemon mode
-      ansible.builtin.lineinfile:
-        path: /etc/default/fetchmail
-        regexp: '^START_DAEMON=(?:yes|no)$'
-        line: START_DAEMON=yes
-
-    - name: Add the interval option for fetchmail
-      ansible.builtin.lineinfile:
-        path: /etc/default/fetchmail
-        regexp: '^(?:# )?OPTIONS=(?:...|"--daemon 10 --syslog")$'
-        line: OPTIONS="--daemon 10 --syslog"
-
-    - name: Deploy fetchmailrc file
-      ansible.builtin.template:
-        src: fetchmailrc.j2
-        dest: /etc/fetchmailrc
-        owner: fetchmail
-        mode: 0600
-
     - name: Trust the IMAP connections from clients on the office network
       # Where we have users on clients on the office network we choose to trust
       # this client connections without authentication.
