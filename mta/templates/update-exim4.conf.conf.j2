@@ -1,20 +1,20 @@
-dc_eximconfig_configtype='{{ email_exim_configtype }}'
-dc_other_hostnames='{{ email_exim_other_hostnames }}'
-dc_local_interfaces='{{ email_exim_local_interfaces }}'
-dc_readhost='{{ email_exim_readhost }}'
+dc_eximconfig_configtype='{{ mta_configtype }}'
+dc_other_hostnames='{{ mta_other_hostnames }}'
+dc_local_interfaces='{{ mta_local_interfaces }}'
+dc_readhost='{{ mta_readhost }}'
 dc_relay_domains=''
 dc_minimaldns='false'
-dc_relay_nets='{{ email_exim_relay_nets }}'
+dc_relay_nets='{{ mta_relay_nets }}'
 dc_smarthost='
-{%- if email_exim_smarthost is defined %}
-{{ email_exim_smarthost.hostname }}
-{%- if email_exim_smarthost.port is defined %}
-::{{ email_exim_smarthost.port }}
+{%- if mta_smarthost is defined %}
+{{ mta_smarthost.hostname }}
+{%- if mta_smarthost.port is defined %}
+::{{ mta_smarthost.port }}
 {%- endif %}
 {%- endif %}
 '
 CFILEMODE='644'
-dc_use_split_config='{{ email_exim_use_split_config }}'
-dc_hide_mailname='{{ email_exim_hide_mailname }}'
+dc_use_split_config='{{ mta_use_split_config }}'
+dc_hide_mailname='{{ mta_hide_mailname }}'
 dc_mailname_in_oh='true'
-dc_localdelivery='{{ email_exim_localdelivery }}'
+dc_localdelivery='{{ mta_localdelivery }}'

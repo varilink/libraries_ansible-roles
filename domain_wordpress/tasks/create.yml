@@ -82,7 +82,7 @@
       --title="{{ domain.organisation }}"
       --admin_user=admin
       --admin_password=admin
-      --admin_email=admin@{{ domain.name }}
+      --admin_mail=admin@{{ domain.name }}
 
   - name: Activate the wordpress-importer plugin
     ansible.builtin.command: >-

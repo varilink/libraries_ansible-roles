@@ -1,10 +1,10 @@
-# Deploy the email role
+# Deploy the mail role
 
 ---
 
 - block:
 
-    - name: Install APT package(s) required by the email role
+    - name: Install APT package(s) required by the mail role
       ansible.builtin.apt:
         install_recommends: no
         update_cache: yes
@@ -32,12 +32,12 @@
       ansible.builtin.lineinfile:
         path: /etc/exim4/passwd.client
         line: "\
-          {{ email_exim_smarthost.hostname }}:\
-          {{ email_exim_smarthost.username }}:\
-          {{ email_exim_smarthost.userpass }}\
+          {{ mta_smarthost.hostname }}:\
+          {{ mta_smarthost.username }}:\
+          {{ mta_smarthost.userpass }}\
           "
-        regex: "^{{ email_exim_smarthost.hostname }}:"
-      when: email_exim_smarthost.username is defined
+        regex: "^{{ mta_smarthost.hostname }}:"
+      when: mta_smarthost.username is defined
 
     - name: Redirect emails to root to the home domain admin user
       ansible.builtin.lineinfile:

@@ -3,10 +3,10 @@ dependencies:
   - role: mail
   - role: mta
     vars:
-      email_exim_configtype: smarthost
-      email_exim_other_hostnames: "{{ home_domain }}"
-      email_exim_hide_mailname: 'false'
-      email_exim_localdelivery: 'maildir_home'
+      mta_configtype: smarthost
+      mta_other_hostnames: "{{ home_domain }}"
+      mta_hide_mailname: 'false'
+      mta_localdelivery: 'maildir_home'
       # This role uses a split configuration so that it can inject additional
       # files into the exim configuration.
-      email_exim_use_split_config: 'true'
+      mta_use_split_config: 'true'

@@ -1,4 +1,4 @@
-- name: Generate domain email certificates
+- name: Generate domain mail certificates
   block:
 
     - name: Self-signed
@@ -8,33 +8,6 @@
           ansible.builtin.file:
             path: /usr/local/etc/certs/{{ domain.name }}
             state: directory
-
-#        - name: Template out openssl config file
-#          ansible.builtin.template:
-#            src: openssl.cnf.j2
-#            dest: /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
-
-#        - name: Generate SSL certificate key
-#          ansible.builtin.shell:
-#            cmd: >-
-#              openssl genrsa -out
-#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-#              2048
-#              && chgrp Debian-exim
-#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-#              && chmod g+r
-#              /usr/local/etc/certs/{{ email_domain }}/ssl.key
-#            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.key
-
-#        - name: Generate self-signed certificate
-#          ansible.builtin.command:
-#            cmd: >
-#              openssl req
-#              -config /usr/local/etc/certs/{{ email_domain }}/openssl.cnf
-#              -x509 -sha256
-#              -new -key /usr/local/etc/certs/{{ email_domain }}/ssl.key
-#              -out /usr/local/etc/certs/{{ email_domain }}/ssl.crt
-#            creates: /usr/local/etc/certs/{{ email_domain }}/ssl.crt
 
         - name: Generate self-signed certificate
           ansible.builtin.shell:
@@ -71,15 +44,15 @@
           ignore_errors: yes
           vars:
             # To derive the target host we load the playbook, filter on the play
-            # that contains the role 'email_external' and use the single host
+            # that contains the role 'mail_external' and use the single host
             # (there will be only one) that is targetted by that play.
             target_host: >-
               {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
               | community.general.json_query(
-                "[?contains(roles,'email_external')].hosts|[0]"
+                "[?contains(roles,'mail_external')].hosts|[0]"
               ) }}
 
-        - name: Deploy certificates to external email host
+        - name: Deploy certificates to external mail host
           ansible.builtin.command: >-
             rsync --recursive --group --log-file=/var/log/rsync
             --rsh='ssh -i /home/{{ ansible_user }}/.ssh/id_rsa
@@ -91,21 +64,21 @@
             {{ ansible_user }}@{{ target_host }}:/usr/local/etc
           vars:
             # To derive the target host we load the playbook, filter on the play
-            # that contains the role 'email_external' and use the single host
+            # that contains the role 'mail_external' and use the single host
             # (there will be only one) that is targetted by that play.
             target_host: >-
               {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
               | community.general.json_query(
-                "[?contains(roles,'email_external')].hosts|[0]"
+                "[?contains(roles,'mail_external')].hosts|[0]"
               ) }}
           when: ssh_test.rc == 0
 
-      when: not email_uses_ca
+      when: not mail_uses_ca
 
     - name: Certification authority
       block:
 
-        - name: Obtain certificates that the email service requires
+        - name: Obtain certificates that the mail service requires
           ansible.builtin.command:
             cmd: >-
               /usr/bin/certbot certonly
@@ -118,6 +91,6 @@
 
         # TODO: Add initial deployment and putting in place of renewal hook
 
-      when: email_uses_ca
+      when: mail_uses_ca
 
   become: yes

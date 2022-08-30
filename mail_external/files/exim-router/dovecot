@@ -3,7 +3,7 @@
 
 # This router delivers mail to any dovecot "virtual" user who has a directory
 # under /home/vmail/. A virtual user corresponds to an email address within a
-# customer domain that we provide the email service for. The users are virtual
+# customer domain that we provide the mail service for. The users are virtual
 # in that they do not correspond to operating system users, which correspond to
 # home (or "real" as opposed to "virtual") domain. This router is placed after
 # the real_local router and before the system_aliases router.
@@ -12,7 +12,7 @@ dovecot_router:
 
   driver = accept
 
-  # A customer domain that we provide the email service for is an Exim local
+  # A customer domain that we provide the mail service for is an Exim local
   # domain, i.e. this host is the final destination for emails addresses in that
   # domain.
   domains = +local_domains

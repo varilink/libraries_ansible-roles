@@ -21,7 +21,7 @@
         "
       regexp: "^{{ domain.name }}:"
 
-  - name: Add email aliases for users in the home domain
+  - name: Add mail aliases for users in the home domain
     ansible.builtin.lineinfile:
       path: /etc/aliases
       line: "{{ user.fname }}.{{ user.lname }}: {{ user.fname }}"
@@ -31,7 +31,7 @@
       loop_var: user
     when: domain_name == home_domain
 
-  - name: Add virtual email users if domain is NOT the home domain
+  - name: Add virtual mail users if domain is NOT the home domain
     ansible.builtin.include_tasks: dovecot-user.yml
     loop: "{{ domain.users }}"
     loop_control:

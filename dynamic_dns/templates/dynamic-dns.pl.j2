@@ -32,7 +32,7 @@ if ( @ARGV > 0 ) {
 # updates only. The format of the file that the token is stored in is as
 # required by the DNS Linode plugin to certbot, since the token is shared with
 # the process that obtains SSL certificates for imap and smtp connections to our
-# client email service.
+# customer and home domains' mail services.
 my $config = Config::Tiny->read( '/usr/local/etc/dns-linode-credentials.ini' );
 my $dns_linode_key = $config->{_}->{dns_linode_key};
 
