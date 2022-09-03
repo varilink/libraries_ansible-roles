@@ -3,22 +3,22 @@
     doveadm pw
     -s CRYPT
     -p {{ user.passwd }}
-    -u {{ user.mail }}@{{ domain.name }}
+    -u {{ user.email }}@{{ domain.name }}
   register: pw_hash
 
 - name: Add virtual mail user
   ansible.builtin.lineinfile:
     path: /etc/dovecot/users
     line: "\
-      {{ user.mail }}@{{ domain.name }}:\
+      {{ user.email }}@{{ domain.name }}:\
       {{ pw_hash.stdout }}::::\
-      /home/vmail/{{ user.mail }}@{{ domain.name }}::\
+      /home/vmail/{{ user.email }}@{{ domain.name }}::\
       "
-    regexp: "^{{ ( user.mail + '@' + domain_name + ':' ) | regex_escape() }}"
+    regexp: "^{{ ( user.email + '@' + domain_name + ':' ) | regex_escape() }}"
 
 - name: Create folder for the user's mailbox
   ansible.builtin.file:
-    path: /home/vmail/{{ user.mail }}@{{ domain.name }}
+    path: /home/vmail/{{ user.email }}@{{ domain.name }}
     state: directory
     owner: vmail
     group: vmail
