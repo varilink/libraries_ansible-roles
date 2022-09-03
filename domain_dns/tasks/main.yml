@@ -1,9 +1,10 @@
 - block:
 
-    - name: Add imap and smtp entries to DNS service (home domain)
-      ansible.builtin.lineinfile:
-        path: /etc/addn-hosts
-        line: "{{ mail_server_address }} imap smtp"
-      when: domain.name == home_domain
+  - name: Add imap entry to DNS service for the home domain only
+    ansible.builtin.lineinfile:
+      path: /etc/addn-hosts
+      line: "{{ hostvars[mail_internal_host].ansible_host }} imap"
+    when: domain.name == home_domain
+    notify: dnsmasq configuration changed
 
   become: yes

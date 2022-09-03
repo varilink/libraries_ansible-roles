@@ -40,12 +40,15 @@ name of the role in either scenario.
 {% set role_name = role['role'] %}
 {% endif %}
 
+{#- Add any service aliases that are indicated by the role name. #}
 {%- if role_name == 'backup_director' %}
  bacula-dir
 {%- elif role_name == 'backup_storage' %}
  bacula-sd
 {%- elif role_name == 'calendar' %}
  caldav
+{%- elif role_name == 'mail_internal' %}
+ smtp
 {%- endif %}
 
 {%- endfor %}{# role loop #}

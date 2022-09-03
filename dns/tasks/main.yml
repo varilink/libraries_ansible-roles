@@ -50,6 +50,7 @@
       ansible.builtin.template:
         src: addn-hosts.j2
         dest: /etc/addn-hosts
+        force: no
       vars:
         # Load the contents of hosts.yml into the variable "playbook"
         playbook: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
