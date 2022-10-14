@@ -41,3 +41,9 @@
         url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         dest: /usr/local/bin/wp
         mode: '755'
+
+    - name: Install WordPress backup script
+      ansible.builtin.template:
+        src: wordpress-backup.sh.j2
+        dest: /etc/bacula/scripts/wordpress-backup.sh
+        mode: 0644
