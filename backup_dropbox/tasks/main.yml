@@ -22,6 +22,12 @@
       | tar xzf -'
     creates: /var/lib/bacula/.dropbox-dist
 
+- name: Ensure we can monitor entire Dropbox folder hierarchy
+  ansible.builtin.lineinfile:
+    path: /etc/sysctl.conf
+    line: fs.inotify.max_user_watches=100000
+  notify: sysctl configuration changed
+
 - name: Install Dropbox python helper script
     url: https://www.dropbox.com/download?dl=packages/dropbox.py
     dest: /var/lib/bacula

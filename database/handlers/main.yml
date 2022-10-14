@@ -1,0 +1,6 @@
+# NOTE: There is no reload job type under systemctl for the mariadb.service unit
+- name: restart mariadb service
+  ansible.builtin.service:
+    name: mariadb.service
+    state: restarted
+  become: yes

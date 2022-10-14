@@ -26,10 +26,6 @@
         regexp: '^(bind-address\s*=\s*)127\.0\.0\.1$'
         replace: '\g<1>0.0.0.0'
       when: database_expose_externally
+      notify: restart mariadb service
 
   become: yes
-
-- name: Import the tasks for storing a bacula catalog if required
-  ansible.builtin.import_tasks: bacula.yml
-  when:
-    - "'backup' in group_names"
