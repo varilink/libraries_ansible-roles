@@ -1,0 +1,9 @@
+---
+
+- name: Expose database host on external network interface
+  ansible.builtin.replace:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^(bind-address\s*=\s*)127\.0\.0\.1$'
+    replace: '\g<1>0.0.0.0'
+  become: yes
+  notify: restart mariadb service

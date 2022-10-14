@@ -1,0 +1,11 @@
+- name: Re-initialize the catalog database
+  block:
+
+    - name: Drop and recreate catalog database
+      ansible.builtin.shell: >-
+        cd /usr/share/bacula-director &&
+        db_name=bacula ./drop_mysql_tables
+        db_name=bacula ./make_mysql_tables
+      notify: restart bacula director
+
+  become: yes
