@@ -3,34 +3,39 @@
   block:
 
   - name: Determine the current status of the Dropbox daemon
-    shell: gosu bacula bash -c '~/dropbox.py status'
+    ansible.builtin.shell: gosu bacula bash -c '~/dropbox.py status'
     register: dropbox_daemon_status
     changed_when: false
 
-  - debug:
+  - name: Report the current status of the Dropbox daemon
+    ansible.builtin.debug:
       msg: Dropbox status={{ dropbox_daemon_status.stdout }}
 
   - name: Start Dropbox daemon and wait a little
-    shell: |
+    ansible.builtin.shell: |-
       gosu bacula bash -c '~/dropbox.py start'
       sleep 60
     when: dropbox_daemon_status.stdout == "Dropbox isn't running!"
 
   - name: Find what we need to exclude
-    find:
       paths: /var/lib/bacula/Dropbox
+    ansible.builtin.find:
       file_type: directory
     register: to_exclude
 
   - name: Exclude directories
-    shell: gosu bacula bash -c '~/dropbox.py exclude add "{{ item.path }}"'
+    ansible.builtin.shell: >-
+      gosu bacula bash -c
+      '~/dropbox.py
+      exclude add "{{ item.path }}"'
     loop: "{{ to_exclude['files'] }}"
     loop_control:
       label: "{{ item.path }}"
     when: item.path != "/var/lib/bacula/Dropbox/{{ backup_copy_folder }}"
     register: exclusions
 
-  - debug:
+  - name: Confirm that the syncrhonisation exclusions have been added
+    ansible.builtin.debug:
       msg: "{{ item.stdout }}"
     loop: "{{ exclusions['results'] }}"
     loop_control:

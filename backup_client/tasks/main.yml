@@ -3,12 +3,12 @@
   block:
 
   - name: Install apt package(s) required by the backup client role
-    apt:
+    ansible.builtin.apt:
       name: bacula-fd
       install_recommends: no
 
   - name: Configure the bacula file daemon
-    template:
+    ansible.builtin.template:
       dest: /etc/bacula/bacula-fd.conf
       group: bacula
       mode: 0640

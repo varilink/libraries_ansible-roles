@@ -4,6 +4,6 @@
 # of service to customers.
 - name: restart bacula director
   become: yes
-  service:
+  ansible.builtin.service:
     name: bacula-director.service
     state: restarted

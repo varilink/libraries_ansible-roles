@@ -1,5 +1,5 @@
 - name: Install apt package(s) required for the backup dropbox role
-  apt:
+  ansible.builtin.apt:
     name:
       - ca-certificates
       - gosu
@@ -7,8 +7,8 @@
       - wget
 
 - name: Install Dropbox Headless
-  shell:
     cmd: >
+  ansible.builtin.shell:
       gosu bacula bash -c
       'cd /var/lib/bacula &&
       wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64"
@@ -16,9 +16,9 @@
     creates: /var/lib/bacula/.dropbox-dist
 
 - name: Install Dropbox python helper script
-  get_url:
     url: https://www.dropbox.com/download?dl=packages/dropbox.py
     dest: /var/lib/bacula
+  ansible.builtin.get_url:
     owner: bacula
     group: bacula
     mode: 0755
