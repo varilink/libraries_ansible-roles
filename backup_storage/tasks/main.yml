@@ -24,7 +24,7 @@
       ansible.builtin.file:
         group: bacula
         owner: bacula
-        path: /var/local/bacula
+        path: "{{ backup_archive_media_directory }}"
         state: directory
 
     - name: Template out the bacula-sd.conf for the backup server

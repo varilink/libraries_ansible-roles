@@ -1,1 +1,2 @@
 backup_copy_folder: bacula
+backup_archive_media_directory: /var/local/bacula

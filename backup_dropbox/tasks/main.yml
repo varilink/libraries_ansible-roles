@@ -6,6 +6,13 @@
       - python3
       - wget
 
+- name: Create backup archive media directory
+  ansible.builtin.file:
+    path: "{{ backup_archive_media_directory }}"
+    state: directory
+    owner: bacula
+    group: bacula
+
 - name: Install Dropbox Headless
     cmd: >
   ansible.builtin.shell:
