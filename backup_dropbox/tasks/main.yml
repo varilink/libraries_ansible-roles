@@ -5,6 +5,7 @@
       - gosu
       - python3
       - wget
+    install_recommends: no
 
 - name: Create backup archive media directory
   ansible.builtin.file:
