@@ -51,6 +51,14 @@
         - client
         - role
 
+    - name: Determine the roles that have a Bacula FileSet include file defined
+      local_action:
+        module: ansible.builtin.find
+        paths: [ "{{ role_path }}/.." ]
+        patterns: [ "bacula-fileset.conf" ]
+        recurse: yes
+      register: include
+
     - name: Template client specific filesets to filesets
       ansible.builtin.template:
         src: bacula-client-fileset.j2
@@ -62,8 +70,13 @@
       loop_control:
         loop_var: hostname
       vars:
+        include_files: "{{ include.files }}"
         # Load the contents of hosts.yml into the variable "playbook"
-        playbook: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
+        playbook: >-
+          {{
+          lookup('file', playbook_dir + '/deploy-host-roles.yml') | from_yaml
+          }}
+      notify: restart bacula director
 
     - name: Copy role snippets for inclusion in client specific filesets
       ansible.builtin.copy:
