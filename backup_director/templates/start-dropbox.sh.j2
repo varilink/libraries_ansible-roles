@@ -10,15 +10,15 @@
 chown bacula:bacula /var/lib/bacula/Dropbox/{{ backup_copy_folder }}/*.bsr
 
 echo "Reporting Dropbox status at end of job:"
-gosu bacula bash -c '~/dropbox.py status'
+~/dropbox.py status
 
 # Start Dropbox filtering out Python informational messages
-gosu bacula bash -c '~/dropbox.py start 2>/dev/null'
+~/dropbox.py start 2>/dev/null
 
 # Pause for the command that we just issued to take effect
 sleep 10
 
 echo "Reporting Dropbox status after start command issued:"
-gosu bacula bash -c '~/dropbox.py status'
+~/dropbox.py status
 
 exit 0

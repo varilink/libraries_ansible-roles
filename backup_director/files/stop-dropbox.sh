@@ -5,15 +5,15 @@
 # job is writing to the Dropbox folder.
 
 echo "Reporting Dropbox status at start of job:"
-gosu bacula bash -c '~/dropbox.py status'
+~/dropbox.py status
 
 # Stop Dropbox
-gosu bacula bash -c '~/dropbox.py stop'
+~/dropbox.py stop
 
 # Pause for the command that we just issued to take effect
 sleep 10
 
 echo "Reporting Dropbox status after stop command issued:"
-gosu bacula bash -c '~/dropbox.py status'
+~/dropbox.py status
 
 exit 0
