@@ -39,6 +39,7 @@
         # Every host in the inventory is backed up. For brevity, define variable
         # for this query as it is referenced three times in the template file.
         hostnames: "{{ query('inventory_hostnames', 'all') }}"
+      notify: restart bacula director
 
     - name: Create folders to hold filesets for clients and roles
       ansible.builtin.file:
@@ -88,6 +89,7 @@
       with_filetree: "{{ role_path }}/.."
       loop_control:
         label: "{{ item.path }}"
+      notify: restart bacula director
 
     - name: Deploy dropbox-status.sh and stop-dropbox.sh helper scripts
       ansible.builtin.copy:
