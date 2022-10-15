@@ -3,7 +3,7 @@
 # service. However, restarting it is no issue as it doesn't result in any loss
 # of service to customers.
 - name: restart bacula director
-  become: yes
   ansible.builtin.service:
     name: bacula-director.service
     state: restarted
+  become: yes
