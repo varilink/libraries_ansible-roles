@@ -6,23 +6,47 @@
   become: yes
   block:
 
-    - name: Install apt package(s) for wordpress host role
+    - name: Install common apt package(s) for the wordpress host role
       ansible.builtin.apt:
         install_recommends: no
         update_cache: yes
         name:
-          - apache2
           - ca-certificates
-          - libapache2-mod-php
           - jq
           - php
           - php-mysql
           - unzip
 
-    - name: Enable apache2 rewrite module
-      community.general.apache2_module:
-        state: present
-        name: rewrite
+    - name: Server is a host for at least one WordPress site that uses Apache
+      block:
+
+        - name: Install apt package(s) for wordpress host role using Apache
+          ansible.builtin.apt:
+            install_recommends: no
+            update_cache: yes
+            name:
+              - apache2
+              - libapache2-mod-php
+
+        - name: Enable apache2 rewrite module
+          community.general.apache2_module:
+            state: present
+            name: rewrite
+
+      when: >-
+        wordpress_host_uses_nginx_only is not defined
+        or not wordpress_host_uses_nginx_only
+
+    - name: Install apt package(s) for wordpress host role using Nginx
+      ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
+        name:
+          - nginx
+          - php-fpm
+      when: >-
+        wordpress_host_uses_apache_only is not defined
+        or not wordpress_host_uses_apache_only
 
     # TODO: Check if task is necessary
     # This directory isn't present on multiple Apache webservers that I have
