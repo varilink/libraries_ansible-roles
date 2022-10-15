@@ -17,21 +17,12 @@
           # Create the account for the IP address of the host that is the target
           # for the backup_director role. This relies on the play that contains
           # the backup_director role applying to a single host only.
-          host: "{{ hostvars[play.hosts].ansible_host }}"
+          host: "{{ backup_database_director_host }}"
           login_unix_socket: /var/run/mysqld/mysqld.sock
           name: "{{ backup_database_username }}"
           password: "{{ backup_database_password }}"
           priv: 'bacula.*:ALL'
           state: present
-        # Loop through the plays in the playbook that deploys the host roles
-        loop: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
-        loop_control:
-          loop_var: play
-        # Isolate the play that contains a simple array of role names, one of
-        # which is the backup_director role. This relies on the play that
-        # contains the backup_director role being in that form, i.e. a simple
-        # array of role names.
-        when: "'backup_director' in play.roles"
         # BUG: On subsequent executions of this task an exception occurs:
         # https://github.com/ansible/ansible/issues/51356
         # We are using ignore_errors as a workaround for this issue.
