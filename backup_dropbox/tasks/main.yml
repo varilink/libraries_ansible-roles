@@ -30,9 +30,9 @@
   notify: sysctl configuration changed
 
 - name: Install Dropbox python helper script
-    url: https://www.dropbox.com/download?dl=packages/dropbox.py
     dest: /var/lib/bacula
   ansible.builtin.get_url:
+    url: https://linux.dropbox.com/packages/dropbox.py
     owner: bacula
     group: bacula
     mode: 0755
