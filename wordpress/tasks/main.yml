@@ -14,8 +14,10 @@
           - apache2
           - ca-certificates
           - libapache2-mod-php
+          - jq
           - php
           - php-mysql
+          - unzip
 
     - name: Enable apache2 rewrite module
       community.general.apache2_module:
@@ -41,6 +43,11 @@
         url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         dest: /usr/local/bin/wp
         mode: '755'
+
+    - name: Install the WP-CLI find command's package
+      ansible.builtin.command:
+        cmd: wp --allow-root package install wp-cli/find-command
+        creates: ~/.wp-cli/packages/vendor/wp-cli/find-command
 
     - name: Install WordPress backup script
       ansible.builtin.template:
