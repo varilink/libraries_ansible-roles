@@ -32,11 +32,11 @@
     #    path: /var/run/apache2
     #    state: directory
 
-    - name: Change ports that apache2 will listen on
-      ansible.builtin.template:
-        src: ports.conf.j2
-        dest: /etc/apache2/ports.conf
-        mode: '755'
+    #- name: Change ports that apache2 will listen on
+    #  ansible.builtin.template:
+    #    src: ports.conf.j2
+    #    dest: /etc/apache2/ports.conf
+    #    mode: '755'
 
     - name: Install WP-CLI
       ansible.builtin.get_url:
