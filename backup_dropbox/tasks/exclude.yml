@@ -21,6 +21,8 @@
     ansible.builtin.find:
       paths: ~bacula/Dropbox/
       file_type: directory
+      excludes:
+        - "{{ backup_copy_folder }}"
     register: to_exclude
 
   - name: Exclude directories
@@ -31,7 +33,6 @@
     loop: "{{ to_exclude['files'] }}"
     loop_control:
       label: "{{ item.path }}"
-    when: item.path != "/var/lib/bacula/Dropbox/{{ backup_copy_folder }}"
     register: exclusions
 
   - name: Confirm that the syncrhonisation exclusions have been added
