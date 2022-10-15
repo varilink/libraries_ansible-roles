@@ -4,7 +4,7 @@
 
 - block:
 
-    - name: Install APT package(s) required by the mail role
+    - name: Install APT package(s) required by the mta role
       ansible.builtin.apt:
         install_recommends: no
         update_cache: yes
