@@ -15,13 +15,13 @@
     group: bacula
 
 - name: Install Dropbox Headless
-    cmd: >
   ansible.builtin.shell:
+    cmd: >-
       gosu bacula bash -c
-      'cd /var/lib/bacula &&
+      'cd ~ &&
       wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64"
       | tar xzf -'
-    creates: /var/lib/bacula/.dropbox-dist
+    creates: ~bacula/.dropbox-dist/dropboxd
 
 - name: Ensure we can monitor entire Dropbox folder hierarchy
   ansible.builtin.lineinfile:
@@ -30,9 +30,9 @@
   notify: sysctl configuration changed
 
 - name: Install Dropbox python helper script
-    dest: /var/lib/bacula
   ansible.builtin.get_url:
     url: https://linux.dropbox.com/packages/dropbox.py
+    dest: ~bacula/dropbox.py
     owner: bacula
     group: bacula
     mode: 0755

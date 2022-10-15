@@ -18,8 +18,8 @@
     when: dropbox_daemon_status.stdout == "Dropbox isn't running!"
 
   - name: Find what we need to exclude
-      paths: /var/lib/bacula/Dropbox
     ansible.builtin.find:
+      paths: ~bacula/Dropbox/
       file_type: directory
     register: to_exclude
 
