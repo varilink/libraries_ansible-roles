@@ -41,7 +41,7 @@
     - name: Install WP-CLI
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-        dest: /usr/local/bin/wp
+        dest: /usr/local/sbin/wp
         mode: '755'
 
     - name: Install the WP-CLI find command's package
