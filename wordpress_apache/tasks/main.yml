@@ -14,6 +14,7 @@
       community.general.apache2_module:
         name: rewrite
         state: present
+      notify: apache2 configuration changed
 
     - name: Install WordPress backup script
       ansible.builtin.copy:

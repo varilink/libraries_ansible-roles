@@ -16,6 +16,7 @@
         regexp: '^(\s+)(?:# )?server_names_hash_bucket_size 64;$'
         line: '\1server_names_hash_bucket_size 64;'
         backrefs: yes
+      notify: nginx configuration changed
 
     - name: Install WordPress backup script
       ansible.builtin.copy:
