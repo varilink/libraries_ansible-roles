@@ -1,41 +1,6 @@
-# Main install tasks for the WordPress role.
-
 ---
 
-- name: Deploy wordpress host role
-  become: yes
-  block:
-
-    - name: Install common apt package(s) for the wordpress host role
-      ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
-        name:
-          - ca-certificates
-          - jq
-          - php
-          - php-mysql
-          - unzip
-
-    - name: Server is a host for at least one WordPress site that uses Apache
-      block:
-
-        - name: Install apt package(s) for wordpress host role using Apache
-          ansible.builtin.apt:
-            install_recommends: no
-            update_cache: yes
-            name:
-              - apache2
-              - libapache2-mod-php
-
-        - name: Enable apache2 rewrite module
-          community.general.apache2_module:
-            state: present
-            name: rewrite
-
-      when: >-
-        wordpress_host_uses_nginx_only is not defined
-        or not wordpress_host_uses_nginx_only
+- block:
 
     - name: Install apt package(s) for wordpress host role using Nginx
       ansible.builtin.apt:
@@ -44,9 +9,6 @@
         name:
           - nginx
           - php-fpm
-      when: >-
-        wordpress_host_uses_apache_only is not defined
-        or not wordpress_host_uses_apache_only
 
     - name: Set Nginx server_names_hash_bucket_size to 64
       ansible.builtin.lineinfile:
@@ -55,33 +17,10 @@
         line: '\1server_names_hash_bucket_size 64;'
         backrefs: yes
 
-    # TODO: Check if task is necessary
-    # This directory isn't present on multiple Apache webservers that I have
-    # in current use so I wonder if perhaps it isn't needed.
-    #- name: Create apache2 run directory
-    #  file:
-    #    path: /var/run/apache2
-    #    state: directory
-
-    #- name: Change ports that apache2 will listen on
-    #  ansible.builtin.template:
-    #    src: ports.conf.j2
-    #    dest: /etc/apache2/ports.conf
-    #    mode: '755'
-
-    - name: Install WP-CLI
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-        dest: /usr/local/sbin/wp
-        mode: '755'
-
-    - name: Install the WP-CLI find command's package
-      ansible.builtin.command:
-        cmd: wp --allow-root package install wp-cli/find-command
-        creates: ~/.wp-cli/packages/vendor/wp-cli/find-command
-
     - name: Install WordPress backup script
-      ansible.builtin.template:
-        src: wordpress-backup.sh.j2
-        dest: /etc/bacula/scripts/wordpress-backup.sh
+      ansible.builtin.copy:
+        src: wordpress-nginx-backup.sh
+        dest: /etc/bacula/scripts/wordpress-nginx-backup.sh
         mode: 0644
+
+  become: yes

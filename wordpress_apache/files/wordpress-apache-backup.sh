@@ -18,10 +18,6 @@
 # Go into the /tmp folder so that database exports are written there.
 cd /tmp
 
-{%
-if wordpress_host_uses_nginx_only is not defined
-or not wordpress_host_uses_nginx_only
-%}
 # Find all the WordPress websites that use Apache on the server.
 for SITE in $(                                                                 \
   wp --allow-root find --format=json /var/www |                                \
@@ -40,31 +36,6 @@ do
   )
   echo /tmp/$EXPORT
 done
-{% endif %}
-
-{%
-if wordpress_host_uses_apache_only is not defined
-or not wordpress_host_uses_apache_only
-%}
-# Find all the WordPress websites that use Nginx on the server.
-for SITE in $(                                                                 \
-  wp --allow-root find --format=json /usr/local/share/nginx |                  \
-  jq '.[].version_path'                                     |                  \
-  cut --delimiter=/ --fields=6                                                 \
-)
-do
-  echo /usr/local/share/nginx/$SITE
-  TR_SITE=`echo $SITE|tr . _`
-  for DUMP in $(ls /tmp/${TR_SITE}*.sql 2>/dev/null)
-  do
-    rm $DUMP
-  done
-  EXPORT=$(                                                                    \
-    wp --allow-root --path=/usr/local/share/nginx/$SITE db export --porcelain  \
-  )
-  echo /tmp/$EXPORT
-done
-{% endif %}
 
 # Return to initial folder. This is here for when testing this script in-situ on
 # a WordPress host. It's irrelevant when the script is run via a backup job.
