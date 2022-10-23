@@ -48,6 +48,13 @@
         wordpress_host_uses_apache_only is not defined
         or not wordpress_host_uses_apache_only
 
+    - name: Set Nginx server_names_hash_bucket_size to 64
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s+)(?:# )?server_names_hash_bucket_size 64;$'
+        line: '\1server_names_hash_bucket_size 64;'
+        backrefs: yes
+
     # TODO: Check if task is necessary
     # This directory isn't present on multiple Apache webservers that I have
     # in current use so I wonder if perhaps it isn't needed.
