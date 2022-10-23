@@ -1,7 +1,0 @@
-{% for port in wordpress_ports %}
-{% if wordpress_expose_externally %}
-Listen {{ ansible_host }}:{{ port }} http
-{% else %}
-Listen 127.0.0.1:{{ port }} http
-{% endif %}
-{% endfor %}

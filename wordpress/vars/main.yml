@@ -1,5 +1,0 @@
-# TODO: Parameterize and automatically grow list as domains are deployed
-wordpress_host_ports:
-  - 8080
-  - 8081
-  - 8082
