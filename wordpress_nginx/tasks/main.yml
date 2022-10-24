@@ -18,6 +18,12 @@
         backrefs: yes
       notify: nginx configuration changed
 
+    - name: Configure upstream php-fpm for Nginx
+      ansible.builtin.template:
+        src: php-fpm.conf.j2
+        dest: /etc/nginx/conf.d/php-fpm.conf
+      notify: nginx configuration changed
+
     - name: Install WordPress backup script
       ansible.builtin.copy:
         src: wordpress-nginx-backup.sh
