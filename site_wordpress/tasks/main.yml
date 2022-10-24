@@ -1,112 +1,76 @@
-- name: Deploy wordpress-host role for a WordPress site
-  block:
+- block:
 
-  - name: Make site apache2 configuration available
-    ansible.builtin.template:
-      src: apache2.conf.j2
-      dest: /etc/apache2/sites-available/{{ fqdn }}.conf
-    notify:
-      - Reload apache2 configuration
+    - name: Create directory to hold site WordPress files
+      ansible.builtin.file:
+        path: "{{ wordpress_site_path }}"
+        state: directory
 
-  - name: Enable site apache2 configuration
-    ansible.builtin.file:
-      src: /etc/apache2/sites-available/{{ fqdn }}.conf
-      dest: /etc/apache2/sites-enabled/{{ fqdn }}.conf
-      state: link
-    notify:
-      - Reload apache2 configuration
+    - name: Download WordPress files
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root --path={{ wordpress_site_path }}
+          core download --locale=en_GB
+        creates: "{{ wordpress_site_path }}/index.php"
 
-  - name: Create directory to hold site WordPress files
-    ansible.builtin.file:
-      path: /var/www/{{ fqdn }}/html
-      state: directory
+    - name: Create the WordPress config file for local database
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root --path={{ wordpress_site_path }}
+          config create
+          --dbhost=localhost
+          --dbname={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbuser={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbpass={{ wordpress_site.database_password }}
+          --skip-check
+        creates: "{{ wordpress_site_path }}/wp-config.php"
+      when: wordpress_site.database_host is not defined
 
-  - name: Download WordPress files
-    ansible.builtin.command:
-      cmd: >-
-        wp --allow-root --path=/var/www/{{ fqdn }}/html
-        core download --locale=en_GB
-      creates: /var/www/{{ fqdn }}/html/index.php
+    - name: Create the WordPress config file for remote database
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root --path={{ wordpress_site_path }}
+          config create
+          --dbhost={{ wordpress_site.database_host }}
+          --dbname={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbuser={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbpass={{ wordpress_site.database_password }}
+          --skip-check
+        creates: "{{ wordpress_site_path }}/wp-config.php"
+      when: wordpress_site.database_host is defined
 
-  - name: Create the WordPress config file for local database
-    ansible.builtin.command:
-      cmd: >-
-        wp --allow-root --path=/var/www/{{ fqdn }}/html
-        config create
-        --dbhost=localhost
-        --dbname={{ fqdn | regex_replace ('\.', '_') }}
-        --dbuser={{ fqdn | regex_replace ('\.', '_') }}
-        --dbpass={{ webhost.wordpress_database_password }}
-        --skip-check
-      creates: /var/www/{{ fqdn }}/html/wp-config.php
-    when: inventory_hostname == webhost.wordpress_database_host
+    - name: Deny visibility of WordPress config file to others
+      ansible.builtin.file:
+        path: "{{ wordpress_site_path }}/wp-config.php"
+        mode: u=rw,g=r,o=
 
-  - name: Create the WordPress config file for remote database
-    ansible.builtin.command:
-      cmd: >-
-        wp --allow-root --path=/var/www/{{ fqdn }}/html
-        config create
-        --dbhost={{ webhost.wordpress_database_host }}
-        --dbname={{ fqdn | regex_replace ('\.', '_') }}
-        --dbuser={{ fqdn | regex_replace ('\.', '_') }}
-        --dbpass={{ webhost.wordpress_database_password }}
-        --skip-check
-      creates: /var/www/{{ fqdn }}/html/wp-config.php
-    when: inventory_hostname != webhost.wordpress_database_host
+    - name: Remove WordPress sample config file
+      ansible.builtin.file:
+        path: "{{ wordpress_site_path }}/wp-config-sample.php"
+        state: absent
 
-  - name: Deny visibility of WordPress config file to others
-    ansible.builtin.file:
-      path: /var/www/{{ fqdn }}/html/wp-config.php
-      mode: u=rw,g=r,o=
+    - name: Set correct ownership of all WordPress files
+      ansible.builtin.file:
+        path: "{{ wordpress_site_path }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+        state: directory
 
-  - name: Remove WordPress sample config file
-    ansible.builtin.file:
-      path: /var/www/{{ fqdn }}/html/wp-config-sample.php
-      state: absent
+    - name: Install WordPress
+      # Note shows changed if WordPress was already installed
+      # Can I change it to look first for WordPress installed and skip if it is?
+      ansible.builtin.command: >-
+        wp --allow-root --path={{ wordpress_site_path }}
+        core install
+        --url={{ domain_name }}
+        --title="{{ domain_organisation }}"
+        --admin_user={{ wordpress_admin_user }}
+        --admin_password={{ wordpress_admin_password }}
+        --admin_email={{ wordpress_admin_email }}
 
-  - name: Set correct ownership of all WordPress files
-    ansible.builtin.file:
-      path: /var/www/{{ fqdn }}/html
-      owner: www-data
-      group: www-data
-      recurse: yes
-      state: directory
-
-  - name: Install WordPress
-    # Note shows changed if WordPress was already installed
-    # Can I change it to look first for WordPress installed and skip if it is?
-    ansible.builtin.command: >-
-      wp --allow-root --path=/var/www/{{ fqdn }}/html
-      core install
-      --url={{ fqdn }}
-      --title="{{ domain.organisation }}"
-      --admin_user=admin
-      --admin_password=admin
-      --admin_mail=admin@{{ domain.name }}
-
-  - name: Activate the wordpress-importer plugin
-    ansible.builtin.command: >-
-      wp --allow-root --path=/var/www/{{ fqdn }}/html
-      plugin install wordpress-importer --activate
-
-#  - name: Copy theme
-#    synchronize:
-#      src: fobv.web/theme/
-#      dest: /var/www/{{ site.server_name }}/html/wp-content/themes/wp-bootstrap-starter-child
-#      recursive: yes
-#      rsync_opts:
-#        - "--chown=www-data:www-data"
-
-#  - name: Copy migration
-#    copy:
-#      src: files/migrate
-#      dest: /tmp/
-
-#  - name: Process migrations
-#    shell: |
-#      export WP_PATH=/var/www/{{ site.server_name }}/html
-#      sh /tmp/migrate/wp-cli
+    - name: Activate the wordpress-importer plugin
+      ansible.builtin.command: >-
+        wp --allow-root --path={{ wordpress_site_path }}
+        plugin install wordpress-importer --activate
 
   become: yes
-  vars:
-    fqdn: "{{ webhost.name + '.' + domain.name }}"

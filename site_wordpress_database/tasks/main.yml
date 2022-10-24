@@ -1,32 +1,33 @@
-- name: Deploy database role for a WordPress site
-  block:
+---
+
+- block:
 
     - name: Create database for the WordPress site
       community.mysql.mysql_db:
-        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        name: "{{ wordpress_site.server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
     # domain_wordpress role colocated with domain_wordpress_database role
     - name: Create a local database user for the WordPress site
       community.mysql.mysql_user:
-        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        name: "{{ wordpress_site.server_name | regex_replace ('\\.', '_') }}"
         # no host value needed since connection to the database is local
-        password: "{{ webhost.wordpress_database_password }}"
-        priv: "{{ fqdn | regex_replace ('\\.', '_') }}.*:ALL"
+        password: "{{ wordpress_site.database_password }}"
+        priv: "\
+          {{ wordpress_site.server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      when: webhost.wordpress_host == inventory_hostname
+      when: wordpress_site.database_host is not defined
 
     # domain_wordpress role NOT colocated with domain_wordpress_database role
     - name: Create a remote database user for the WordPress site
       community.mysql.mysql_user:
-        name: "{{ fqdn | regex_replace ('\\.', '_') }}"
+        name: "{{ wordpress_site.server_name | regex_replace ('\\.', '_') }}"
         # host value needed since connection to the database is remote
-        host: "{{ hostvars[webhost.wordpress_host].ansible_host }}"
-        password: "{{ webhost.wordpress_database_password }}"
-        priv: "{{ fqdn | regex_replace ('\\.', '_') }}.*:ALL"
+        host: "{{ wordpress_site.database_host }}"
+        password: "{{ wordpress_site.database_password }}"
+        priv: "\
+          {{ wordpress_site.server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      when: webhost.wordpress_host != inventory_hostname
+      when: wordpress_site.database_host is defined
 
   become: yes
-  vars:
-    fqdn: "{{ webhost.name + '.' + domain.name }}"
