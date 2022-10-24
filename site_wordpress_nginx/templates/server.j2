@@ -1,0 +1,62 @@
+server {
+
+	listen		80 ;
+	server_name	{{ wordpress_site.server_name }} ;
+
+	location /.well-known/acme-challenge/ {
+		root /usr/local/share/nginx/{{ wordpress_site.server_name }}/htdocs ;
+		auth_basic off ;
+		allow all ;
+		try_files $uri =404 ;
+		break ;
+	}
+
+	location / {
+		return 301 https://{{ wordpress_site.server_name }} ;
+	}
+
+}
+
+server {
+
+	listen		443 ssl ;
+	server_name	{{ wordpress_site.server_name }} ;
+
+	ssl_certificate /etc/letsencrypt/live/{{ wordpress_site.server_name }}/fullchain.pem ;
+	ssl_certificate_key /etc/letsencrypt/live/{{ wordpress_site.server_name }}/privkey.pem ;
+
+	rewrite_log on ;
+	client_max_body_size {{ wordpress_site.client_max_body_size }} ;
+	root /usr/local/share/nginx/{{ wordpress_site.server_name }} ;
+	index index.html index.php ;
+	access_log /var/log/nginx/{{ wordpress_site.server_name }}.uk-access.log ;
+	error_log /var/log/nginx/{{ wordpress_site.server_name }}.uk-error.log ;
+
+#  location ~ ^\/(\w+\/)*\w+\.php(\/\w+)*$ {
+
+    # .php file match
+    # \/        The root directory
+    # (\w+\/)*  Zero or more folders
+    # \w+\.php  A php file name
+    # (\/\w+)   Zero or more folders
+
+# Check out the nginx prescribed way of doing this at:
+# https://www.nginx.com/resources/wiki/start/topics/recipes/wordpress/
+
+	location ~ \.php$ {
+
+		fastcgi_split_path_info ^(.+\.php)(/.+)$ ;
+		include fastcgi_params ;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name ;
+		fastcgi_param PATH_INFO $fastcgi_path_info ;
+		fastcgi_pass php-fpm ;
+
+	}
+
+	location / {
+
+		try_files $uri $uri/ =404 ;
+
+	}
+
+}

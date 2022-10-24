@@ -1,0 +1,10 @@
+---
+
+dependencies:
+
+  - role: wordpress_nginx
+
+  - role: site_wordpress
+    vars:
+      wordpress_site_path: "\
+        /usr/local/share/nginx/{{ wordpress_site.server_name }}"
