@@ -572,7 +572,20 @@ Pool {
 # Restricted console used by tray-monitor to get the status of the director
 #
 Console {
-  Name = 85fb96d441ae-mon
-  Password = "9TeMVHXY5hJLsnS9XISVyMuI4uEr_twar"
+  Name = {{ backup_monitor_name }}
+  Password = "{{ backup_director_monitor_password }}"
+  JobACL = {% for hostname in hostnames %}{{ hostname }}, {% endfor %}
+BackupCatalog, DailyCatalogCopy, DailyCatalogCopy
+  ClientACL = {% for hostname in hostnames %}{% if loop.index != 1 %}
+, {% endif %}{{ hostname }}{% endfor %}
+
+  StorageACL = File, FileCopy
+{% if  backup_director_schedules_active %}
+  ScheduleACL = Catalog, DailyCatalogCopy, DailyOffSite, DailyOnSite, DailyCopy
+{% endif %}
+  PoolACL = Catalog, DailyOnSite, WeeklyOnSite, MonthlyOnSite, DailyOffSite, WeeklyOffsite, MonthlyOffite, CatalogCopy, DailyCopy, WeeklyCopy
+  FileSetACL = {% for hostname in hostnames %}{{ hostname }}, {% endfor %}
+Catalog, "Full Set"
+  CatalogACL = MyCatalog
   CommandACL = status, .status
 }
