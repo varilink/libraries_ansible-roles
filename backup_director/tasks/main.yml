@@ -88,25 +88,14 @@
         label: "{{ item.path }}"
       notify: restart bacula director
 
-    - name: Deploy dropbox-status.sh and stop-dropbox.sh helper scripts
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: /etc/bacula/scripts/
-        owner: bacula
-        group: bacula
-        mode: u=rwx,g=rx,o=rx
-      loop:
-        - dropbox-status.sh
-        - stop-dropbox.sh
-
-    - name: Deploy start-dropbox.sh helper script
-      ansible.builtin.template:
-        src: start-dropbox.sh.j2
-        dest: /etc/bacula/scripts/
-        owner: bacula
-        group: bacula
-        mode: u=rwx,g=rx,o=rx
-
     - name: Install and setup Dropbox for backup use
       ansible.builtin.import_role:
         name: backup_dropbox
+
+    - name: Deploy check-director-dropbox-status.sh script
+      ansible.builtin.copy:
+        src: check-director-dropbox-status.sh
+        dest: /etc/bacula/scripts/
+        owner: root
+        group: root
+        mode: u=rwx,g=rx,o=rx
