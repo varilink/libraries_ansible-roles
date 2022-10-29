@@ -7,10 +7,6 @@
         path: /etc/apt/sources.list
         line: deb http://deb.debian.org/debian buster-backports main
 
-    - name: Update the APT cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     # BUG: ERROR 1044 and 1064 messages on creation of Bacula MySQL tables
     # When we test this role using the Docker container approach defined in the
     # varilink/services-docker repository, at the point of creation of the
@@ -26,6 +22,7 @@
           - bacula-director
           - bacula-director-mysql
         install_recommends: no
+        update_cache: yes
         default_release: buster-backports
 
     - name: Template bacula-dir.conf
