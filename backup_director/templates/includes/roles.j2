@@ -1,0 +1,90 @@
+{#-
+Iterate the groups that the current host is in, looking for roles associated
+with each group. Use the Ansible special variable "groups" containing "A
+dictionary/map with all the groups in inventory and each group has the list of
+hosts that belong to it" (reference the Ansible documentation).
+#}
+
+{%- for group in groups %}
+
+  {%- for host in groups[group] %}
+
+    {%- if host == hostname %}
+
+{#-
+The variable "playbook" containing the deploy-host-roles.yml playbook is passed
+to this template from the backup_director role's main task list. This gives us
+the mapping between groups or individual hosts and the roles assigned to them.
+#}
+
+      {%- for play in playbook %}
+
+        {%- if play['hosts'] == group %}
+
+          {%- for role in play['roles'] %}
+
+{#-
+The role is referenced as a string containing the role name.
+#}
+
+            {%- if role is string %}
+
+{#-
+Hack to append the found role to the roles array without displaying anything.
+#}
+
+              {{- roles.append(role) or "" }}
+
+            {%- else %}{# role is not string #}
+
+{#-
+The role is referenced as a dictionary variable with the role attribute
+containing the role name.
+#}
+
+              {{- roles.append(role['role']) or "" }}
+
+            {%- endif %}{# role is string #}
+
+          {%- endfor %}{# role in play['roles'] #}
+
+        {%- endif %}{# play['hosts'] == group #}
+
+      {%- endfor %}{# play in playbook #}
+
+    {%- endif %}{# host == hostname #}
+
+  {%- endfor %}{# host in groups[group] #}
+
+{%- endfor %}{# group in groups #}
+
+{#-
+Now go through the playbook agin, this time looking for roles that are assigned
+directly to the current host rather than via that host's membership of a group.
+#}
+
+{%- for play in playbook %}
+
+  {%- if play['hosts'] == hostname %}
+
+    {%- if 'roles' in play %}
+
+      {%- for role in play['roles'] %}
+
+        {%- if role is string %}
+
+          {{- roles.append(role) or "" }}
+
+        {%- else %}{# role is not string #}
+
+          {{- roles.append(role['role']) or "" }}
+
+        {%- endif %}{# role is string #}
+
+      {%- endfor %}{# role in play['roles'] #}
+
+    {%- endif %}{# if 'roles' in play #}
+
+  {%- endif %}{# play['hosts'] == hostname #}
+
+{%- endfor %}{# play in playbook #}
