@@ -2,6 +2,11 @@
   become: yes
   block:
 
+  - name: Fix Dropbox folder permissions
+    ansible.builtin.file:
+      path: ~bacula/Dropbox/
+      mode: u=rwx,g=rx,o=
+
   - name: Determine the current status of the Dropbox daemon
     ansible.builtin.shell: gosu bacula bash -c '~/dropbox.py status'
     register: dropbox_daemon_status
@@ -42,7 +47,3 @@
     loop_control:
       label: "{{ item.item.path }}"
     when: item.skipped is not defined
-
-  - name: Stop Dropbox daemon
-    shell: gosu bacula bash -c '~/dropbox.py stop'
-    when: dropbox_daemon_status.stdout == "Dropbox isn't running!"
