@@ -25,6 +25,14 @@
         update_cache: yes
         default_release: buster-backports
 
+    - name: Determine the roles that have a Bacula FileSet include file defined
+      local_action:
+        module: ansible.builtin.find
+        paths: [ "{{ role_path }}/.." ]
+        patterns: [ "bacula-fileset.conf" ]
+        recurse: yes
+      register: include
+
     - name: Template bacula-dir.conf
       ansible.builtin.template:
         src: bacula-dir.conf.j2
@@ -36,38 +44,6 @@
         # Every host in the inventory is backed up. For brevity, define variable
         # for this query as it is referenced three times in the template file.
         hostnames: "{{ query('inventory_hostnames', 'all') }}"
-      notify: restart bacula director
-
-    - name: Create folders to hold filesets for clients and roles
-      ansible.builtin.file:
-        path: /etc/bacula/inc/{{ item }}-fs
-        state: directory
-        owner: root
-        group: bacula
-        mode: 0750
-      loop:
-        - client
-        - role
-
-    - name: Determine the roles that have a Bacula FileSet include file defined
-      local_action:
-        module: ansible.builtin.find
-        paths: [ "{{ role_path }}/.." ]
-        patterns: [ "bacula-fileset.conf" ]
-        recurse: yes
-      register: include
-
-    - name: Template client specific filesets to filesets
-      ansible.builtin.template:
-        src: bacula-client-fileset.j2
-        dest: /etc/bacula/inc/client-fs/{{ hostname }}.conf
-        owner: root
-        group: bacula
-        mode: 0640
-      loop: "{{ query('inventory_hostnames', 'all') }}"
-      loop_control:
-        loop_var: hostname
-      vars:
         include_files: "{{ include.files }}"
         # Load the contents of hosts.yml into the variable "playbook"
         playbook: >-
@@ -76,14 +52,32 @@
           }}
       notify: restart bacula director
 
+    - name: Create folder to hold filesets for roles
+      ansible.builtin.file:
+        path: /etc/bacula/role-filesets
+        state: directory
+        owner: root
+        group: bacula
+        mode: 0750
+
     - name: Copy role snippets for inclusion in client specific filesets
+      # Copy files/bacula-fileset.conf files within roles to the role-filesets/
+      # directory within the Bacula configuration directory. Name the files
+      # role_name.conf at the destination.
       ansible.builtin.copy:
         src: "{{ role_path + '/../' + item.path }}"
-        dest: "{{ '/etc/bacula/inc/role-fs/' + item.path|regex_search('^[\\w-]+') + '.conf' }}"
-      # if files/bacula-fileset is in a role capture its path relative to roles
-      when: item.path is regex('[\w-]+/files/bacula-fileset.conf')
-      # recursively match all files roles folder
-      with_filetree: "{{ role_path }}/.."
+        dest: >-
+          {{ '/etc/bacula/role-filesets/' + item.path|regex_search('^[\w]+') +
+          '.conf' }}
+      # The filetree contains all the files in the roles/ directory. We only
+      # want files/bacula-fileset.conf files.
+      when: item.path is regex('[\w]+/files/bacula-fileset.conf')
+      # Get the filetree for roles/ directory. The role_path variable holds the
+      # path to the current role, which is backup_director. So, the roles/
+      # directory will be the directory above this in the filetree hierarchy.
+      with_community.general.filetree: "{{ role_path }}/.."
+      # The filetree output gives us lots of information about each file that we
+      # don't need, limit the filetree loop output to only the path for brevity.
       loop_control:
         label: "{{ item.path }}"
       notify: restart bacula director
