@@ -8,10 +8,7 @@
     ansible.builtin.service:
       name: dnsmasq
       state: restarted
-    when: >-
-      ansible_facts['services']['dnsmasq']['source'] == 'systemd'
-      and
-      ansible_facts['services']['dnsmasq']['state'] == 'running'
+    when: ansible_facts['services']['dnsmasq']['state'] == 'running'
     listen: dnsmasq configuration changed
 
   become: yes

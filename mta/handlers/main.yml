@@ -18,10 +18,7 @@
       ansible.builtin.service:
         name: exim4
         state: reloaded
-      when: >-
-        ansible_facts['services']['exim4']['source'] == 'systemd'
-        and
-        ansible_facts['services']['exim4']['state'] == 'running'
+      when: ansible_facts['services']['exim4']['state'] == 'running'
       listen: exim configuration changed
 
     - name: Run newaliases

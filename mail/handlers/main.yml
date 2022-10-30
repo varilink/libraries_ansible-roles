@@ -12,10 +12,7 @@
       ansible.builtin.service:
         name: dovecot
         state: restarted
-      when: >-
-        ansible_facts['services']['dovecot']['source'] == 'systemd'
-        and
-        ansible_facts['services']['dovecot']['state'] == 'running'
+      when: ansible_facts['services']['dovecot']['state'] == 'running'
       listen: dovecot configuration changed
 
   become: yes
