@@ -18,6 +18,8 @@
           # Ensure that an editor is present in case we want to `crontab -e` if
           # only to conveniently inspect the crontab.
           - nano
+        install_recommends: no
+        update_cache: yes        
 
     - name: Deploy the dynamic-dns script
       ansible.builtin.template:

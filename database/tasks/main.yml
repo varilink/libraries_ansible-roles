@@ -7,11 +7,11 @@
 
     - name: Install apt package(s) for the database role
       ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
         name:
           - mariadb-server
           - python3-pymysql
+        install_recommends: no
+        update_cache: yes
 
     # TODO: Add MySQL hardening measures
     # There are plenty of published articles that describe steps that can be
