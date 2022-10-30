@@ -1,5 +1,16 @@
+{#
+You may see the "domain" directive in some existing /etc/resolv.conf files.
+According to the resolv.conf man page, this "is an obsolete name for the search
+directive that handles one search list entry only".
+#}
+# Deployed using Ansible dns_client role
 search {{ home_domain }}
 {% for nameserver in dns_resolvers %}
 nameserver {{ nameserver }}
 {% endfor %}
+{#
+TODO: Make this configurable so it's enabled for Docker but not otherwise
+#}
+{% if false %}
 options ndots:0
+{% endif -%}

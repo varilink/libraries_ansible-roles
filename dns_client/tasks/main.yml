@@ -2,21 +2,22 @@
   become: yes
   block:
 
-    - name: Ensure domain name is in /etc/hosts file
-      ansible.builtin.lineinfile:
-        path: /etc/hosts
-        regex: "^\
-          {{ ansible_host.replace('.', '\\.') }}\
-          \\s+\
-          (?:{{ inventory_hostname }}\\.{{ home_domain.replace('.', '\\.') }}\
-          \\s+)?\
-          {{ inventory_hostname }}\
-          $"
-        line: "\
-          {{ ansible_host }}\
-          \t\
-          {{ inventory_hostname }}.{{ home_domain }} {{ inventory_hostname }}"
-        unsafe_writes: "{{ unsafe_writes }}"
+    # TODO: Move this step to the bootstrap
+    #- name: Ensure domain name is in /etc/hosts file
+    #  ansible.builtin.lineinfile:
+    #    path: /etc/hosts
+    #    regex: "^\
+    #      {{ ansible_host.replace('.', '\\.') }}\
+    #      \\s+\
+    #      (?:{{ inventory_hostname }}\\.{{ home_domain.replace('.', '\\.') }}\
+    #      \\s+)?\
+    #      {{ inventory_hostname }}\
+    #      $"
+    #    line: "\
+    #      {{ ansible_host }}\
+    #      \t\
+    #      {{ inventory_hostname }}.{{ home_domain }} {{ inventory_hostname }}"
+    #    unsafe_writes: "{{ unsafe_writes }}"
 
     - name: Template out resolv.conf
       ansible.builtin.template:
