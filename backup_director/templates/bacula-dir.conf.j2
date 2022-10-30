@@ -73,10 +73,7 @@ derived from the Ansible roles that are deployed to each server.
 #}
 
   FileSet = {{ hostname }}
-{%-
-if hostvars[hostname]['backup_client_location'] is defined
-and hostvars[hostname]['backup_client_location'] == 'off-site'
-%}
+  {%- if hostname in groups['external'] %}
 
 {#-
 If the server is off-site then we use the schedule and default pool for backups
@@ -85,12 +82,15 @@ configured to accept connections from outside of the office network for the
 storage director that is located on the office network.
 #}
 
-{% if  backup_director_schedules_active %}
+    {%- if  backup_director_schedules_active %}
+
   Schedule = DailyOffSite
-{% endif %}
+
+    {%- endif %}
+
   Pool = DailyOffSite
 
-{%- else %}
+  {%- elif hostname in groups['internal'] %}
 
 {#-
 If the server is on-site then use the schedule and default pool for backups of
@@ -100,12 +100,15 @@ directive, since both the server being backed up and the storage director are
 both on the office network.
 #}
 
-{% if  backup_director_schedules_active %}
+    {%- if  backup_director_schedules_active %}
+
   Schedule = DailyOnSite
-{% endif %}
+
+    {%- endif %}
+
   Pool = DailyOnSite
 
-{%- endif %}
+  {%- endif %}{# hostname in groups['external'] #}
 
 }
 {% endfor %}
