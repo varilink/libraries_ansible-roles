@@ -87,8 +87,6 @@ storage director that is located on the office network.
 
 {% if  backup_director_schedules_active %}
   Schedule = DailyOffSite
-{% else %}
-  #Schedule = DailyOffSite
 {% endif %}
   Pool = DailyOffSite
 
@@ -104,8 +102,6 @@ both on the office network.
 
 {% if  backup_director_schedules_active %}
   Schedule = DailyOnSite
-{% else %}
-  #Schedule = DailyOnSite
 {% endif %}
   Pool = DailyOnSite
 
@@ -123,8 +119,6 @@ Job {
   Pool = Catalog
 {% if  backup_director_schedules_active %}
   Schedule = Catalog
-{% else %}
-  #Schedule = Catalog
 {% endif %}
   # This script provided by the vendor creates an ASCII copy of the catalog
   # Arguments to make_catalog_backup.pl are:
@@ -144,8 +138,6 @@ Job {
   Pool = Catalog
 {% if  backup_director_schedules_active %}
   Schedule = DailyCatalogCopy
-{% else %}
-  #Schedule = DailyCatalogCopy
 {% endif %}
 }
 
@@ -157,8 +149,6 @@ Job {
   Pool = DailyCopy
 {% if  backup_director_schedules_active %}
   Schedule = DailyCopy
-{% else %}
-  #Schedule = DailyCopy
 {% endif %}
 }
 
@@ -171,8 +161,6 @@ Job {
   FileSet = Dropbox
 {% if  backup_director_schedules_active %}
   Schedule = DailyOffSite
-{% else %}
-  #Schedule = DailyOffSite
 {% endif %}
 }
 
