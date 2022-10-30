@@ -174,18 +174,18 @@ Job {
 # Standard Restore template, to be changed by Console program
 #  Only one such job is needed for all Jobs/Clients/Storage ...
 #
-#Job {
-#  Name = "Restore Files"
-#  Type = Restore
-#  Client={{ inventory_hostname }}
-#  Storage = File
+Job {
+  Name = "Restore Files"
+  Type = Restore
+  Client={{ inventory_hostname }}
+  Storage = File
 # The FileSet and Pool directives are not used by Restore Jobs
 # but must not be removed
-#  FileSet="Full Set"
-#  Pool = File
-#  Messages = Standard
-#  Where = /tmp/bacula-restores
-#}
+  FileSet="Full Set"
+  Pool = DailyOnSite
+  Messages = Standard
+  Where = /tmp/bacula-restores
+}
 
 #-------------------------------------------------------------------------------
 # FileSet Directives
