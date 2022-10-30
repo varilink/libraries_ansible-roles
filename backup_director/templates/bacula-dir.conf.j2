@@ -4,7 +4,6 @@ Director {
   QueryFile = "/etc/bacula/scripts/query.sql"
   WorkingDirectory = "/var/lib/bacula"
   PidDirectory = "/run/bacula"
-  Maximum Concurrent Jobs = 20
   Password = "{{ backup_director_console_password }}"
   Messages = Daemon
 }
@@ -22,7 +21,6 @@ JobDefs {
   Storage = File # default for all backup jobs, overriden for external clients
   Messages = Standard
   Priority = 10
-  Maximum Concurrent Jobs = 20
 }
 
 JobDefs {
@@ -38,7 +36,6 @@ JobDefs {
   # stop Dropbox synchronisation before copying
   RunBeforeJob = "/etc/bacula/scripts/stop-dropbox.sh"
   RunAfterJob = "/etc/bacula/scripts/start-dropbox.sh"
-  Maximum Concurrent Jobs = 20
 }
 
 JobDefs {
@@ -348,7 +345,6 @@ Storage {
   SDPort = 9103
   Password = "{{ backup_storage_password }}"
   Device = FileStorage
-  Maximum Concurrent Jobs = 20
   Media Type = File
 }
 
@@ -359,7 +355,6 @@ Storage {
   SDPort = 9103
   Password = "{{ backup_storage_password }}"
   Device = FileStorage
-  Maximum Concurrent Jobs = 20
   Media Type = File
 }
 
@@ -370,7 +365,6 @@ Storage {
    Password = "{{ backup_storage_password }}"
    Device = FileStorageCopy
    Media Type = File
-   Maximum Concurrent Jobs = 20
 }
 
 # Generic catalog service
