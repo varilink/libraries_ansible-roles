@@ -5,6 +5,11 @@ Storage {                             # definition of myself
   Pid Directory = "/run/bacula"
   Plugin Directory = "/usr/lib/bacula"
   Maximum Concurrent Jobs = 20
+
+  # We don't specify an SDAddress
+  # The Director connects on localhost
+  # Remote clients connect on the external interface
+
 }
 
 #
@@ -35,6 +40,17 @@ Device {
   AutomaticMount = yes
   RemovableMedia = no
   AlwaysOpen = no
+}
+
+Device {
+  Name = FileStorageCopy
+  Media Type = File
+  Archive Device = /var/lib/bacula/Dropbox/bacula
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
 }
 
 Messages {

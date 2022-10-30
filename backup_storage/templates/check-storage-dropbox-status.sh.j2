@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Script to check the current Dropbox status on the backup storage host. This is
-# "Run Before Job" for an admin job so that its success or failure status is
-# reflected in the job's success or failure status.
+# "Client Run After Job" for the backup job for the host of the backup_storage
+# role.
 
 echo 'Checking current Dropbox status'
-status=$(/var/lib/bacula/dropbox.py status)
+status=$(gosu bacula bash -c '~/dropbox.py status')
 echo $status
 
 if [[ $status == 'Up to date' ]]; then
   # Consider status 'Up to date' to be success
   exit 0
 else
-  # Consider any status other than 'Up to date' to be failure
+  # Send an email for any status other than 'Up to date'
   /usr/sbin/exim4 -v {{ admin_user }}@{{ home_domain }} << EOM
 To: {{ admin_user }}@{{ home_domain }}
 From: bacula@{{ home_domain }}
@@ -19,5 +19,9 @@ Subject: Dropbox status on the backup storage host
 I have detected that the status of the Dropbox service on the backup storage host is NOT 'Up to date'. It is instead reported as:
 $status
 EOM
-  exit 1
+  # Exit with success return code even though the Dropbox status was not "Up to
+  # date". If we exit with a failure status then the job terminates with errors
+  # and the volumes that have been created, which are fine, are excluded from
+  # the copy to offsite.
+  exit 0
 fi

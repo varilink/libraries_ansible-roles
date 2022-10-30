@@ -2,10 +2,15 @@
   become: yes
   block:
 
+    # We operate the storage daemon currently on Debian buster. Since we have
+    # backup clients in our server estate running on Debian bullseye, we must
+    # install the storage daemon from buster-backports.
     - name: Add buster backports to the sources list
-      ansible.builtin.lineinfile:
+      ansible.builtin.blockinfile:
         path: /etc/apt/sources.list
-        line: deb http://deb.debian.org/debian buster-backports main
+        block: |
+          # buster-backports
+          deb http://deb.debian.org/debian buster-backports main
 
     - name: Update the APT cache
       ansible.builtin.apt:
@@ -35,6 +40,14 @@
         owner: root
         group: bacula
       notify: bacula storage daemon configuration changed
+
+    - name: Deploy check-storage-dropbox-status.sh script
+      ansible.builtin.template:
+        src: check-storage-dropbox-status.sh.j2
+        dest: /etc/bacula/scripts/check-storage-dropbox-status.sh
+        owner: root
+        group: root
+        mode: u=rwx,g=rx,o=rx
 
     - name: Install and setup Dropbox for backup use
       ansible.builtin.import_role:
