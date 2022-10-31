@@ -1,69 +1,74 @@
 server {
 
-{% if webhost.wordpress_host == inventory_hostname %}
-  listen      127.0.0.1:80;
-{%- else %}
-  listen      {{ ansible_host }}:80;
-{%- endif %}
-  server_name {{ fqdn }};
+  listen      80;
+  listen      [::]:80;
+  server_name
+{%- if wordpress_site.subdomain == 'www' %}
+ {{ domain_name }}
+{% endif %}
+ {{ wordpress_site_server_name }};
 
-  access_log /var/log/nginx/{{ fqdn }}-access.log;
-  error_log /var/log/nginx/{{ fqdn }}-error.log;
+  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
-{% if reverse_proxy_uses_ssl %}
+{%- if reverse_proxy_uses_ssl %}
+
 
   location /.well-known/acme-challenge/ {
-    root      /var/www/{{ fqdn }}/html;
+    root      /var/www/{{ wordpress_site_server_name }}/html;
     try_files $uri =404;
     break;
   }
 
   location / {
-    return 301 https://{{ fqdn }}$request_uri;
+    return 301 https://{{ wordpress_site_server_name }}$request_uri;
   }
 
 }
 
+{%- if wordpress_site.subdomain == 'www' %}
+
 server {
 
-{% if webhost.wordpress_host == inventory_hostname %}
-  listen      127.0.0.1:443 ssl;
-{%- else %}
-  listen      {{ ansible_host }}:443 ssl;
-{%- endif %}
-  server_name {{ fqdn }};
+  listen      443 ssl;
+  listen      [::]:443 ssl;
+  server_name {{ domain_name }};
 
-  ssl_certificate /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/{{ fqdn }}/privkey.pem;
+  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
-  location / {
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-{%- if webhost.reverse_proxy_pass_port is defined %}
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ webhost.reverse_proxy_pass_port }}/ /;
-    proxy_pass http://{{ webhost.wordpress_host }}:{{ webhost.reverse_proxy_pass_port }};
-{%- else %}
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.reverse_proxy_pass_port }}/ /;
-    proxy_pass http://{{ webhost.wordpress_host }}:{{ domain.reverse_proxy_pass_port }};
-{%- endif %}
-    proxy_set_header X-Forwarded-Proto "https" ;
-    proxy_set_header X-Forwarded-Port "443" ;
-  }
-
-{% else %}
+  ssl_certificate /etc/letsencrypt/live/
+  {{- wordpress_site_server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/
+  {{- wordpress_site_server_name }}/privkey.pem;
 
   location / {
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-{%- if webhost.reverse_proxy_pass_port is defined %}
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ webhost.reverse_proxy_pass_port }}/ /;
-    proxy_pass http://{{ webhost.wordpress_host }}:{{ webhost.reverse_proxy_pass_port }};
-{%- else %}
-    proxy_redirect ~(http|https)://{{ fqdn }}:{{ domain.reverse_proxy_pass_port }}/ /;
-    proxy_pass http://{{ webhost.wordpress_host }}:{{ domain.reverse_proxy_pass_port }};
-{%- endif %}
+    return 301 https://{{ wordpress_site_server_name }}$request_uri;
   }
 
-{% endif %}
+}
+{% endif %}{# wordpress_site.subdomain == 'www' #}
 
+
+server {
+
+  listen      443 ssl;
+  listen      [::]:443 ssl;
+  server_name {{ wordpress_site_server_name }};
+
+  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
+
+  ssl_certificate /etc/letsencrypt/live/
+  {{- wordpress_site_server_name }}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/
+  {{- wordpress_site_server_name }}/privkey.pem;
+
+  location / {
+    proxy_pass http://127.0.0.1:{{ domain_reverse_proxy_pass_port }};
+    proxy_set_header Host {{ wordpress_site_server_name }};
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+{% endif %}{# reverse_proxy_uses_ssl #}
 }

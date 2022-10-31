@@ -1,17 +1,17 @@
-{%- if webhost.reverse_proxy_pass_port is defined %}
-<VirtualHost {{ ansible_host }}:{{ webhost.reverse_proxy_pass_port }}>
-{%- else %}
-<VirtualHost {{ ansible_host }}:{{ domain.reverse_proxy_pass_port }}>
-{%- endif %}
+{% if wordpress_site.reverse_proxy_pass_port is defined %}
+<VirtualHost 127.0.0.1:{{ wordpress_site.reverse_proxy_pass_port }}>
+{% else %}
+<VirtualHost 127.0.0.1:{{ domain_reverse_proxy_pass_port }}>
+{% endif %}
 
-  ServerName {{ fqdn }}
-  # TODO: Parameterise the server admin email address
-  ServerAdmin david.williamson@varilink.co.uk
-  DocumentRoot /var/www/{{ fqdn }}/html
-  ErrorLog ${APACHE_LOG_DIR}/{{ fqdn }}-error.log
-  CustomLog ${APACHE_LOG_DIR}/{{ fqdn }}-access.log combined
+  ServerName {{ wordpress_site_server_name }}
+  ServerAdmin {{ wordpress_admin_email }}
+  DocumentRoot /var/www/{{ wordpress_site_server_name }}/html
+  ErrorLog ${APACHE_LOG_DIR}/{{ wordpress_site_server_name }}-error.log
+  CustomLog ${APACHE_LOG_DIR}/
+  {{- wordpress_site_server_name }}-access.log combined
 
-  <Directory "/var/www/{{ fqdn }}/html">
+  <Directory "/var/www/{{ wordpress_site_server_name }}/html">
     AllowOverride All
   </Directory>
 

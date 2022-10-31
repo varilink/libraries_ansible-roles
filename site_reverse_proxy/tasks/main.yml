@@ -1,21 +1,21 @@
-- name: Deploy nginx role for a WordPress site
-  block:
+- block:
 
-  - name: Template site nginx configuration to sites-available
-    template:
-      src: nginx.conf.j2
-      dest: /etc/nginx/sites-available/{{ fqdn }}
-    notify:
-      - Reload nginx configuration
+    - name: Template site nginx configuration to sites-available
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/{{ wordpress_site_server_name }}
+      notify:
+        - nginx configuration changed
 
-  - name: Enable site nginx configuration
-    file:
-      src: /etc/nginx/sites-available/{{ fqdn }}
-      dest: /etc/nginx/sites-enabled/{{ fqdn }}
-      state: link
-    notify:
-      - Reload nginx configuration
+    - name: Enable site nginx configuration
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/{{ wordpress_site_server_name }}
+        dest: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}
+        state: link
+      notify:
+        - nginx configuration changed
 
-  become: yes
   vars:
-    fqdn: "{{ webhost.name + '.' + domain.name }}"
+    wordpress_site_server_name: "\
+      {{ wordpress_site.subdomain }}.{{ domain_name }}"
+  become: yes

@@ -18,8 +18,8 @@
           wp --allow-root --path={{ wordpress_site_path }}
           config create
           --dbhost=localhost
-          --dbname={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
-          --dbuser={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
           --dbpass={{ wordpress_site.database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
@@ -31,8 +31,8 @@
           wp --allow-root --path={{ wordpress_site_path }}
           config create
           --dbhost={{ wordpress_site.database_host }}
-          --dbname={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
-          --dbuser={{ wordpress_site.server_name | regex_replace ('\.', '_') }}
+          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
           --dbpass={{ wordpress_site.database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
@@ -57,18 +57,20 @@
         state: directory
 
     - name: Install WordPress
-      # Note shows changed if WordPress was already installed
-      # Can I change it to look first for WordPress installed and skip if it is?
+      # NOTE: Reports changed even if WordPress already installed.
+      # TODO: Try to make it skip if WordPress already installed.
       ansible.builtin.command: >-
         wp --allow-root --path={{ wordpress_site_path }}
         core install
-        --url={{ domain_name }}
+        --url={{ wordpress_site_server_name }}
         --title="{{ domain_organisation }}"
         --admin_user={{ wordpress_admin_user }}
         --admin_password={{ wordpress_admin_password }}
         --admin_email={{ wordpress_admin_email }}
 
     - name: Activate the wordpress-importer plugin
+      # NOTE: Reports changed even if plugin already activated.
+      # TODO: Try to make it skip if plugin already activated.
       ansible.builtin.command: >-
         wp --allow-root --path={{ wordpress_site_path }}
         plugin install wordpress-importer --activate

@@ -5,16 +5,33 @@
     - name: Make site apache2 configuration available
       ansible.builtin.template:
         src: apache2.conf.j2
-        dest: /etc/apache2/sites-available/{{ fqdn }}.conf
+        dest: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
       notify:
         - apache2 configuration changed
 
     - name: Enable site apache2 configuration
       ansible.builtin.file:
-        src: /etc/apache2/sites-available/{{ fqdn }}.conf
-        dest: /etc/apache2/sites-enabled/{{ fqdn }}.conf
+        src: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
+        dest: /etc/apache2/sites-enabled/{{ wordpress_site_server_name }}.conf
         state: link
       notify:
         - apache2 configuration changed
 
+    - name: Listen on domain's custom port
+      ansible.builtin.lineinfile:
+        path: /etc/apache2/ports.conf
+        line: Listen 127.0.0.1:{{ domain_reverse_proxy_pass_port }} http
+        insertafter: '# Custom site Listen entries'
+      when: wordpress_site.reverse_proxy_pass_port is not defined
+
+    - name: Listen on sites's custom port
+      ansible.builtin.lineinfile:
+        path: /etc/apache2/ports.conf
+        line: Listen 127.0.0.1:{{ wordpress_site.reverse_proxy_pass_port }} http
+        insertafter: '# Custom site Listen entries'
+      when: wordpress_site.reverse_proxy_pass_port is defined
+
+  vars:
+    wordpress_site_server_name: "\
+      {{ wordpress_site.subdomain }}.{{ domain_name }}"
   become: yes
