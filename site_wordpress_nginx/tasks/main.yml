@@ -5,13 +5,13 @@
     - name: Make Nginx site configuration available
       ansible.builtin.template:
         src: server.j2
-        dest: "/etc/nginx/sites-available/{{ wordpress_site.server_name }}"
+        dest: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}"
       notify: nginx configuration changed
 
     - name: Enable Nginx site configuration
       ansible.builtin.file:
-        src: /etc/nginx/sites-available/{{ wordpress_site.server_name }}
-        path: /etc/nginx/sites-enabled/{{ wordpress_site.server_name }}
+        src: /etc/nginx/sites-available/{{ wordpress_site_server_name }}
+        path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}
         state: link
       notify: nginx configuration changed
 
