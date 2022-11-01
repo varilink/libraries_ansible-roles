@@ -75,12 +75,4 @@
         wp --allow-root --path={{ wordpress_site_path }}
         plugin install wordpress-importer --activate
 
-    - name: Activate the restricted-site-access plugin if required
-      # NOTE: Reports changed even if plugin already activated.
-      # TODO: Try to make it skip if plugin already activated.
-      ansible.builtin.command: >-
-        wp --allow-root --path={{ wordpress_site_path }}
-        plugin install restricted-site-access --activate
-      when: wordpress_site.restricted is defined and wordpress_site.restricted
-
   become: yes

@@ -1,19 +1,62 @@
-- name: Restore WordPress website from a backup
+- block:
+
+    - name: Restore files from backup
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir + '/backup/html' }}"
+        dest: "/var/www/{{ wordpress_site_server_name }}"
+        recursive: yes
+        rsync_opts:
+          - "--exclude=wp-config.php"
+          - "--chown=www-data:www-data"
+
+    - name: Restore database from backup
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root
+          --path=/var/www/{{ wordpress_site_server_name }}/html
+          db import -
+        # Use the contents of the database export that with_fileglob found as
+        # stdin for the cmd.
+        stdin: "{{ lookup('file', item) }}"
+        # Find the single .sql file within the backup folder that will contain a
+        # recent database export.
+      with_fileglob:
+        - >-
+          {{
+            playbook_dir + '/backup/' + (
+              source_wordpress_site_server_name | regex_replace ('\.', '_')
+            ) + '*.sql'
+          }}
+
+    - name: Search and replace the source server name if it is different
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root
+          --path=/var/www/{{ wordpress_site_server_name }}/html
+          search-replace
+          {{ source_wordpress_site_server_name }}
+          {{ wordpress_site_server_name }}
+      when: source_wordpress_site_server_name != wordpress_site_server_name
+
+    - debug:
+        var: wordpress_admin_user
+
+    - debug:
+        var: wordpress_admin_password
+
+    - debug:
+        var: wordpress_site_server_name
+
+    - name: Set the admin user's password for this environment
+      ansible.builtin.command:
+        cmd: >-
+          wp --allow-root
+          --path=/var/www/{{ wordpress_site_server_name }}/html
+          user update {{ wordpress_admin_user }}
+          --user_pass='{{ wordpress_admin_password }}'
+      register: user_update
+
+    - debug:
+        var: user_update
+
   become: yes
-  block:
-
-  - name: Restore files backup
-    synchronize:
-      src: files/html/
-      dest: /var/www/{{ site.server_name }}/html
-      recursive: yes
-      rsync_opts:
-        - "--exclude=wp-config.php"
-        - "--chown=www-data:www-data"
-
-  - name: Search and replace
-    command: >
-      wp --allow-root --path=/var/www/{{ site.server_name }}/html
-      search-replace
-      {{ backup_url }}
-      {{ site.url }}

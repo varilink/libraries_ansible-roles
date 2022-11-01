@@ -1,0 +1,23 @@
+- block:
+
+    - name: Activate the restricted-site-access plugin if required
+      # NOTE: Reports changed even if plugin already activated.
+      # TODO: Try to make it skip if plugin already activated.
+      ansible.builtin.command: >-
+        wp --allow-root
+        --path=/var/www/{{ wordpress_site_server_name }}/html
+        plugin install restricted-site-access --activate
+
+    - name: Deactivate the google-captcha plugin
+      ansible.builtin.command: >-
+        wp --allow-root
+        --path=/var/www/{{ wordpress_site_server_name }}/html
+        plugin deactivate google-captcha
+
+    - name: Remove reCAPTCHA integration from Contact 7 plugin
+      ansible.builtin.command: >-
+        wp --allow-root
+        --path=/var/www/{{ wordpress_site_server_name }}/html
+        option patch delete wpcf7 recaptcha
+
+  become: yes
