@@ -16,25 +16,22 @@
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         # no host value needed since connection to the database is local
-        password: "{{ wordpress_site.database_password }}"
+        password: "{{ wordpress_site_database_password }}"
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      when: wordpress_site.database_host is not defined
+      when: wordpress_site_database_host is not defined
 
     # domain_wordpress role NOT colocated with domain_wordpress_database role
     - name: Create a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         # host value needed since connection to the database is remote
-        host: "{{ wordpress_site.database_host }}"
-        password: "{{ wordpress_site.database_password }}"
+        host: "{{ wordpress_site_database_host }}"
+        password: "{{ wordpress_site_database_password }}"
         priv: "\
-          {{ wordpress_site.server_name | regex_replace ('\\.', '_') }}.*:ALL"
+          {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      when: wordpress_site.database_host is defined
+      when: wordpress_site_database_host is defined
 
-  vars:
-    wordpress_site_server_name: "\
-      {{ wordpress_site.subdomain }}.{{ domain_name }}"
   become: yes

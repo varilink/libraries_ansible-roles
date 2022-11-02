@@ -20,23 +20,23 @@
           --dbhost=localhost
           --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
           --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbpass={{ wordpress_site.database_password }}
+          --dbpass={{ wordpress_site_database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
-      when: wordpress_site.database_host is not defined
+      when: wordpress_site_database_host is not defined
 
     - name: Create the WordPress config file for remote database
       ansible.builtin.command:
         cmd: >-
           wp --allow-root --path={{ wordpress_site_path }}
           config create
-          --dbhost={{ wordpress_site.database_host }}
+          --dbhost={{ wordpress_site_database_host }}
           --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
           --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbpass={{ wordpress_site.database_password }}
+          --dbpass={{ wordpress_site_database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
-      when: wordpress_site.database_host is defined
+      when: wordpress_site_database_host is defined
 
     - name: Deny visibility of WordPress config file to others
       ansible.builtin.file:
