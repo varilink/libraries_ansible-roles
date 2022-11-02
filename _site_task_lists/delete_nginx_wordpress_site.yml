@@ -1,0 +1,20 @@
+- name: Check for a single host
+  fail: msg="Single host check failed"
+  when: (play_hosts|length) != 1
+
+- block:
+
+    - name: Delete WordPress site's files and Nginx configuration
+      ansible.builtin.import_role:
+        name: site_wordpress_nginx
+        tasks_from: delete.yml
+
+    - name: Delete WordPress site's database
+      ansible.builtin.import_role:
+        name: site_wordpress_database
+        tasks_from: delete.yml
+
+  vars:
+    wordpress_site_server_name: "\
+      {{ wordpress_site_subdomain }}.{{ domain_name }}"
+    wordpress_site_path: "/var/www/{{ wordpress_site_server_name }}/html"
