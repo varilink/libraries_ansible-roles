@@ -1,0 +1,29 @@
+---
+
+- block:
+
+    # domain_wordpress role colocated with domain_wordpress_database role
+    - name: Drop a local database user for the WordPress site
+      community.mysql.mysql_user:
+        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        state: absent
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: wordpress_site_database_host is not defined
+
+    # domain_wordpress role NOT colocated with domain_wordpress_database role
+    - name: Drop a remote database user for the WordPress site
+      community.mysql.mysql_user:
+        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        # host value needed since connection to the database is remote
+        host: "{{ wordpress_site_database_host }}"
+        state: absent
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: wordpress_site_database_host is defined
+
+    - name: Drop database for the WordPress site
+      community.mysql.mysql_db:
+        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        state: absent
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+  become: yes

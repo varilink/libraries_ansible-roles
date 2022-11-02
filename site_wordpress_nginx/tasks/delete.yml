@@ -1,0 +1,22 @@
+---
+
+- block:
+
+    - name: Import the wordpress_nginx role for its handlers only
+      ansible.builtin.import_role:
+        name: wordpress_nginx
+        tasks_from: none.yml
+
+    - name: Disable Nginx site configuration
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}
+        state: absent
+      notify: nginx configuration changed
+
+    - name: Make Nginx site configuration unavailable
+      ansible.builtin.file:
+        path: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}"
+        state: absent
+      notify: nginx configuration changed
+
+  become: yes
