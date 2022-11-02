@@ -11,6 +11,7 @@ server {
     break;
   }
 
+{% if webhost_uses_ssl is defined and webhost_uses_ssl %}
   location / {
     return 301 https://{{ wordpress_site_server_name }};
   }
@@ -26,6 +27,8 @@ server {
   {{- wordpress_site_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/privkey.pem;
+
+{% endif %}
 
   rewrite_log on;
   client_max_body_size {{ wordpress_site.client_max_body_size }};
