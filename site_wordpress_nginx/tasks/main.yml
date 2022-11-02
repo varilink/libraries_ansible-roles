@@ -2,6 +2,13 @@
 
 - block:
 
+    - name: Import wordpress_nginx and site_wordpresss roles
+      ansible.builtin.import_role:
+        name: "{{ item }}"
+      loop:
+        - wordpress_nginx
+        - site_wordpress
+
     - name: Make Nginx site configuration available
       ansible.builtin.template:
         src: server.j2

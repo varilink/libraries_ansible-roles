@@ -2,6 +2,10 @@
 
 - block:
 
+    - name: Import the wordpress role
+      ansible.builtin.import_role:
+        name: wordpress
+
     - name: Install apt package(s) for wordpress host role using Nginx
       ansible.builtin.apt:
         install_recommends: no

@@ -2,6 +2,10 @@
 
 - block:
 
+    - name: Import database role
+      ansible.builtin.import_role:
+        name: database
+
     - name: Create database for the WordPress site
       community.mysql.mysql_db:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
