@@ -31,7 +31,9 @@ server {
 {% endif %}
 
   rewrite_log on;
-  client_max_body_size {{ wordpress_site.client_max_body_size }};
+{% if wordpress_site_client_max_body_size is defined %}
+  client_max_body_size {{ wordpress_site_client_max_body_size }};
+{% endif %}
   root /var/www/{{ wordpress_site_server_name }}/html;
   index index.html index.php;
   access_log /var/log/nginx/{{ wordpress_site_server_name }}.uk-access.log;
