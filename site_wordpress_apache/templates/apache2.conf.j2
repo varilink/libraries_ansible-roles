@@ -1,8 +1,4 @@
-{% if wordpress_site.reverse_proxy_pass_port is defined %}
-<VirtualHost 127.0.0.1:{{ wordpress_site.reverse_proxy_pass_port }}>
-{% else %}
-<VirtualHost 127.0.0.1:{{ domain_reverse_proxy_pass_port }}>
-{% endif %}
+<VirtualHost 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }}>
 
   ServerName {{ wordpress_site_server_name }}
   ServerAdmin {{ wordpress_admin_email }}

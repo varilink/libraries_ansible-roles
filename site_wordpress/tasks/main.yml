@@ -10,6 +10,9 @@
         cmd: >-
           wp --allow-root --path={{ wordpress_site_path }}
           core download --locale=en_GB
+          {% if wordpress_site_version is defined %}
+          --version={{ wordpress_site_version }}
+          {% endif %}
         creates: "{{ wordpress_site_path }}/index.php"
 
     - name: Create the WordPress config file for local database
@@ -74,5 +77,62 @@
       ansible.builtin.command: >-
         wp --allow-root --path={{ wordpress_site_path }}
         plugin install wordpress-importer --activate
+
+    - block:
+
+        - name: Find the currently installed plugins
+          ansible.builtin.command:
+            wp --allow-root --path={{ wordpress_site_path }}
+            plugin list --format=json
+          changed_when: false
+          register: installed_plugins
+
+        - name: Uninstall (and deactivate if necessary) plugins not required
+          ansible.builtin.command: >-
+            wp --allow-root --path={{ wordpress_site_path }}
+            plugin uninstall {{ item }} --deactivate
+          # This loop returns the names of all plugins that are currently
+          # installed that are NOT in the list of plugins required, as indicated
+          # by the wordpress_site_plugins variable.
+          loop: >-
+            {{ (
+              (installed_plugins.stdout | from_json) | map(attribute='name')
+            ) | difference (
+              wordpress_site_plugins | map(attribute='name')
+            ) }}
+
+        - name: Install missing plugins that are required
+          ansible.builtin.command: >-
+            wp --allow-root --path={{ wordpress_site_path }}
+            plugin install {{ item.name }}
+            {% if item.version is defined%}
+            --version={{ item.version }}
+            {% endif %}
+            --activate
+          # This loop returns the names of all plugins that are indicated as
+          # required by the wordpress_site_plugins variable but are not yet
+          # installed.
+          loop: >-
+            {{ (
+              wordpress_site_plugins | map(attribute='name')
+            ) | difference (
+              (installed_plugins.stdout | from_json) | map(attribute='name')
+            ) }}
+
+        - name: Update any plugins where update is indicated
+          ansible.builtin.command: >-
+            wp --allow-root --path={{ wordpress_site_path }}
+            plugin update {{ item.name }}
+            {% if item.version is defined %}
+            --version={{ item.version }}
+            {% endif %}
+          loop: "{{ wordpress_site_plugins }}"
+
+        - name: Activate any plugins that are inactive
+          ansible.builtin.command: >-
+            wp --allow-root --path={{ wordpress_site_path }}
+            plugin activate --all
+
+      when: wordpress_site_plugins is defined
 
   become: yes

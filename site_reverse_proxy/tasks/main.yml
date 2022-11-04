@@ -15,7 +15,4 @@
       notify:
         - nginx configuration changed
 
-  vars:
-    wordpress_site_server_name: "\
-      {{ wordpress_site.subdomain }}.{{ domain_name }}"
   become: yes

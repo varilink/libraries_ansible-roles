@@ -1,0 +1,32 @@
+- block:
+
+    - ansible.builtin.command:
+        cmd: >-
+          wp --allow-root
+          --path=/var/www/{{ dest_subdomain }}.{{ domain_name }}/html
+          db import -
+        # Use the contents of the database export that with_fileglob found as
+        # stdin for the cmd.
+        stdin: "{{ lookup('file', item) }}"
+        # Find the single .sql file within the backup folder that will contain a
+        # recent database export.
+        with_fileglob:
+          - >-
+            {{
+            playbook_dir + '/backup/' +
+            ((src_subdomain + '.' + domain_name) | regex_replace ('\.', '_'))
+            + '*.sql'
+            }}
+
+    - ansible.builtin.command:
+        cmd: >-
+          wp --allow-root
+          --path=/var/www/{{ dest_subdomain }}.{{ domain_name }}/html
+          search-replace
+          {{ src_subdomain + '.' + domain_name }}
+          {{ dest_subdomain + '.' + domain_name }}
+      when: src_domain != dest_domain
+
+    -
+
+  become: yes

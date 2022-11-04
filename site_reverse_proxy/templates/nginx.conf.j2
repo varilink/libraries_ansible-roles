@@ -3,7 +3,7 @@ server {
   listen      80;
   listen      [::]:80;
   server_name
-{%- if wordpress_site.subdomain == 'www' %}
+{%- if wordpress_site_subdomain == 'www' %}
  {{ domain_name }}
 {% endif %}
  {{ wordpress_site_server_name }};
@@ -11,7 +11,7 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
-{%- if reverse_proxy_uses_ssl %}
+{%- if webhost_uses_ssl is defined and webhost_uses_ssl %}
 
 
   location /.well-known/acme-challenge/ {
@@ -26,7 +26,7 @@ server {
 
 }
 
-{%- if wordpress_site.subdomain == 'www' %}
+{%- if wordpress_site_subdomain == 'www' %}
 
 server {
 
@@ -64,11 +64,13 @@ server {
   ssl_certificate_key /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/privkey.pem;
 
+{% endif %}{# reverse_proxy_uses_ssl #}
+
+
   location / {
-    proxy_pass http://127.0.0.1:{{ domain_reverse_proxy_pass_port }};
+    proxy_pass http://127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }};
     proxy_set_header Host {{ wordpress_site_server_name }};
     proxy_set_header X-Real-IP $remote_addr;
   }
 
-{% endif %}{# reverse_proxy_uses_ssl #}
 }

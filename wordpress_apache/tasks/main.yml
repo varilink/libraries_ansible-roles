@@ -10,6 +10,12 @@
         install_recommends: no
         update_cache: yes
 
+    - name: Disable the default Apache site
+      ansible.builtin.file:
+        path: /etc/apache2/sites-enabled/000-default.conf
+        state: absent
+      notify: apache2 configuration changed
+
     # I always use Apache behind and Nginx proxy. The Nginx proxy listens on
     # port 80, and if HTTPS is supported, also on port 443. Apache listens on
     # custom ports, one per site, and supports HTTP only.

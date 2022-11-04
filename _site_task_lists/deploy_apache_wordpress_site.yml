@@ -2,15 +2,23 @@
   fail: msg="Single host check failed"
   when: (play_hosts|length) != 1
 
+-
+  fail: msg=""
+  when: wordpress_sites_public is defined
+
 - block:
 
     - name: Install WordPress site's database
       ansible.builtin.import_role:
         name: site_wordpress_database
 
-    - name: Install WordPress site's files and Nginx configuration
+    - name: Install WordPress site's files and Apache configuration
       ansible.builtin.import_role:
-        name: site_wordpress_nginx
+        name: site_wordpress_apache
+
+    - name: Install WordPress site's reverse proxy
+      ansible.builtin.import_role:
+        name: site_reverse_proxy
 
   vars:
     wordpress_site_server_name: "\

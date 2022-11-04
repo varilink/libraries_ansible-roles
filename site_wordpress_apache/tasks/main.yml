@@ -17,21 +17,10 @@
       notify:
         - apache2 configuration changed
 
-    - name: Listen on domain's custom port
+    - name: Listen on WordPress site's custom port
       ansible.builtin.lineinfile:
         path: /etc/apache2/ports.conf
-        line: Listen 127.0.0.1:{{ domain_reverse_proxy_pass_port }} http
+        line: Listen 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }} http
         insertafter: '# Custom site Listen entries'
-      when: wordpress_site.reverse_proxy_pass_port is not defined
 
-    - name: Listen on sites's custom port
-      ansible.builtin.lineinfile:
-        path: /etc/apache2/ports.conf
-        line: Listen 127.0.0.1:{{ wordpress_site.reverse_proxy_pass_port }} http
-        insertafter: '# Custom site Listen entries'
-      when: wordpress_site.reverse_proxy_pass_port is defined
-
-  vars:
-    wordpress_site_server_name: "\
-      {{ wordpress_site.subdomain }}.{{ domain_name }}"
   become: yes
