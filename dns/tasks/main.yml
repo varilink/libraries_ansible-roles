@@ -1,5 +1,4 @@
 - name: Deploy the DNS internal role
-  become: yes
   block:
 
     - name: Install APT package(s) required by the DNS internal role
@@ -46,11 +45,44 @@
       notify:
         - dnsmasq configuration changed
 
-    - name: Template out additional hosts file
-      ansible.builtin.template:
-        src: addn-hosts.j2
+    - name: Copy skeleton addn-hosts file
+      ansible.builtin.copy:
+        content: |
+          # Entries for hosts and services
+          # BEGIN ANSIBLE MANAGED BLOCK
+          # END ANSIBLE MANAGED BLOCK
+
+          # Project entries
         dest: /etc/addn-hosts
         force: no
+
+    - name: Gather IP addresses each DNS host pattern
+      ansible.builtin.include_tasks: hosts-matching-pattern.yml
+      loop: "{{ dns_host_patterns }}"
+      loop_control:
+        loop_var: pattern
+
+    - ansible.builtin.template:
+        src: addn-hosts.j2
+        dest: /tmp/addn-hosts
       vars:
-        # Load the contents of hosts.yml into the variable "playbook"
-        playbook: "{{ lookup('file', playbook_dir + '/hosts.yml') | from_yaml }}"
+        playbook: >-
+          {{
+            lookup('file', playbook_dir + '/deploy-host-roles.yml') | from_yaml
+          }}
+
+    - name: Template hosts and services lookups to addn-hosts
+      ansible.builtin.blockinfile:
+        path: /etc/addn-hosts
+        block: >-
+          {{
+            lookup('ansible.builtin.template', './templates/addn-hosts.j2')
+          }}
+      vars:
+        playbook: >-
+          {{
+            lookup('file', playbook_dir + '/deploy-host-roles.yml') | from_yaml
+          }}
+
+  become: yes
+  tags: dns

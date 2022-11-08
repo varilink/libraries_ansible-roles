@@ -1,0 +1,9 @@
+- name: Gather IP address for each host matching a pattern
+  ansible.builtin.setup:
+  delegate_to: "{{ matching_host }}"
+  delegate_facts: True
+  when: hostvars[matching_host]['ansible_default_ipv4'] is not defined
+  with_inventory_hostnames:
+    - "{{ pattern.string }}"
+  loop_control:
+    loop_var: matching_host
