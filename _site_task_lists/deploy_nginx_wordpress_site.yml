@@ -1,5 +1,5 @@
 - name: Check for a single host
-  fail: msg="Single host check failed"
+  ansible.builtin.fail: msg="Single host check failed"
   when: (play_hosts|length) != 1
 
 - block:

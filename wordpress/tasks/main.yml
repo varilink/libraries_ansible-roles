@@ -15,7 +15,8 @@
 
     - name: Install WP-CLI
       ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+        url: "https://\
+          raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
         dest: /usr/local/sbin/wp
         mode: '755'
 

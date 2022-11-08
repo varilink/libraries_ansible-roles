@@ -2,8 +2,8 @@
   fail: msg="Single host check failed"
   when: (play_hosts|length) != 1
 
--
-  fail: msg=""
+- name: "wordpress_site_subdomain"
+  prompt: "Select the WordPress site subdomain"
   when: wordpress_sites_public is defined
 
 - block:

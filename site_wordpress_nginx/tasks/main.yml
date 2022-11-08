@@ -3,7 +3,7 @@
 - block:
 
     - name: Import wordpress_nginx and site_wordpresss roles
-      ansible.builtin.import_role:
+      ansible.builtin.include_role:
         name: "{{ item }}"
       loop:
         - wordpress_nginx
