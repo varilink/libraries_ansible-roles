@@ -11,7 +11,7 @@ server {
     break;
   }
 
-{% if webhost_uses_ssl is defined and webhost_uses_ssl %}
+{% if wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl %}
   location / {
     return 301 https://{{ wordpress_site_server_name }};
   }

@@ -10,8 +10,8 @@
         --create-home {{ user.fname }}
         --password `mkpasswd --method=md5 {{ user.passwd }}`
       creates: "/home/{{ user.fname }}"
-    when: user.fname != home_domain_admin_user
-    loop: "{{ domain.users }}"
+    when: user.fname != admin_user
+    loop: "{{ domain_users }}"
     loop_control:
       loop_var: user
 
@@ -20,7 +20,7 @@
       path: /etc/aliases
       line: "{{ user.fname }}.{{ user.lname }}: {{ user.fname }}"
     notify: Run newaliases
-    loop: "{{ domain.users }}"
+    loop: "{{ domain_users }}"
     loop_control:
       loop_var: user
 

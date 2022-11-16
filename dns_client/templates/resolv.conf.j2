@@ -1,16 +1,23 @@
 {#
-You may see the "domain" directive in some existing /etc/resolv.conf files.
-According to the resolv.conf man page, this "is an obsolete name for the search
-directive that handles one search list entry only".
+According to the resolv.conf man page, "The domain directive is an obsolete name
+for the search directive that handles one search list entry only." However, It
+is often included in automatically generated resolv.conf files; for example,
+when a Linode VM is created. So, I include it here regardless of the fact that
+the resolv.conf man page says that it is obsolete.
+
+Note that we cannot apply any changes to the /etc/resolv.conf file on our Linode
+VMs as the Linode hosting service will overwrite them with its own
+/etc/resolv.conf file. For this reason it's pointless to deploy this dns_client
+role to those hosts.
 #}
 # Deployed using Ansible dns_client role
+domain {{ home_domain }}
 search {{ home_domain }}
-{% for nameserver in dns_resolvers %}
+{% for nameserver in dns_client_nameservers %}
 nameserver {{ nameserver }}
 {% endfor %}
-{#
-TODO: Make this configurable so it's enabled for Docker but not otherwise
-#}
-{% if false %}
-options ndots:0
+{% if dns_client_options is defined %}
+{% for option in dns_client_options %}
+options {{ option }}
+{% endfor %}
 {% endif -%}

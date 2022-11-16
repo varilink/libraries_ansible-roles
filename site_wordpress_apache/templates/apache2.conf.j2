@@ -1,7 +1,7 @@
 <VirtualHost 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }}>
 
   ServerName {{ wordpress_site_server_name }}
-  ServerAdmin {{ wordpress_admin_email }}
+  ServerAdmin {{ wordpress_admin_user_email }}
   DocumentRoot /var/www/{{ wordpress_site_server_name }}/html
   ErrorLog ${APACHE_LOG_DIR}/{{ wordpress_site_server_name }}-error.log
   CustomLog ${APACHE_LOG_DIR}/

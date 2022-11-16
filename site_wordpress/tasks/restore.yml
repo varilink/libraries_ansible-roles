@@ -52,8 +52,8 @@
         cmd: >-
           wp --allow-root
           --path=/var/www/{{ wordpress_site_server_name }}/html
-          user update {{ wordpress_admin_user }}
-          --user_pass='{{ wordpress_admin_password }}'
+          user update {{ wordpress_site_admin_user }}
+          --user_pass='{{ wordpress_site_admin_password }}'
       register: user_update
 
     - debug:

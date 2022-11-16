@@ -4,7 +4,7 @@
     ansible.builtin.lineinfile:
       path: /etc/addn-hosts
       line: "{{ hostvars[mail_internal_host].ansible_host }} imap"
-    when: domain.name == home_domain
+    when: domain_name == home_domain
     notify: dnsmasq configuration changed
 
   become: yes

@@ -15,7 +15,7 @@
 
     - name: Create an ACME account
       ansible.builtin.command:
-        cmd: certbot register --agree-tos --email {{ mail_admin_address }}
+        cmd: certbot register --agree-tos --email {{ admin_user_email }}
         creates: /etc/letsencrypt/accounts
       when: mail_uses_ca
 

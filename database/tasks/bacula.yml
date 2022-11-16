@@ -17,10 +17,10 @@
           # Create the account for the IP address of the host that is the target
           # for the backup_director role. This relies on the play that contains
           # the backup_director role applying to a single host only.
-          host: "{{ backup_database_director_host }}"
+          host: "{{ backup_director_host | default('localhost') }}"
           login_unix_socket: /var/run/mysqld/mysqld.sock
-          name: "{{ backup_database_username }}"
-          password: "{{ backup_database_password }}"
+          name: "{{ backup_database_user | default('bacula') }}"
+          password: "{{ backup_database_password | default('bacula') }}"
           priv: 'bacula.*:ALL'
           state: present
         # BUG: On subsequent executions of this task an exception occurs:

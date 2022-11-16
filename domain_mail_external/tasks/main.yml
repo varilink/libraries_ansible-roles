@@ -3,52 +3,52 @@
   - name: Add operating system users if domain is the home domain
     ansible.builtin.import_role:
       name: home_domain_users
-    when: domain.name == home_domain
+    when: domain_name == home_domain
 
   - name: Template Dovecot cert instructions
     ansible.builtin.template:
       src: dovecot.conf.j2
-      dest: /etc/dovecot/domains/{{ domain.name }}.conf
+      dest: /etc/dovecot/domains/{{ domain_name }}.conf
     notify: dovecot configuration changed
 
   - name: Add smarthost entry for this domain
     ansible.builtin.lineinfile:
       path: /etc/exim4/domain.passwd.client
       line: "\
-        {{ domain.name }}:\
-        {{ domain.smarthost.username }}:\
-        {{ domain.smarthost.userpass }}\
+        {{ domain_name }}:\
+        {{ domain_smarthost_username }}:\
+        {{ domain_smarthost_userpass }}\
         "
-      regexp: "^{{ domain.name }}:"
+      regexp: "^{{ domain_name }}:"
 
   - name: Add mail aliases for users in the home domain
     ansible.builtin.lineinfile:
       path: /etc/aliases
       line: "{{ user.fname }}.{{ user.lname }}: {{ user.fname }}"
       regexp: '^{{ user.fname }}\.{{ user.lname }}:'
-    loop: "{{ domain.users }}"
+    loop: "{{ domain_users }}"
     loop_control:
       loop_var: user
     when: domain_name == home_domain
 
   - name: Add virtual mail users if domain is NOT the home domain
     ansible.builtin.include_tasks: dovecot-user.yml
-    loop: "{{ domain.users }}"
+    loop: "{{ domain_users }}"
     loop_control:
       loop_var: user
-    when: domain.name != home_domain
+    when: domain_name != home_domain
 
   - name: Check if the domain is already registered as a local domain
     shell: >-
       grep '^dc_other_hostnames=' /etc/exim4/update-exim4.conf.conf |
-      grep {{ domain.name }}
+      grep {{ domain_name }}
     ignore_errors: true
     register: local_domain
 
   - name: Register the domain as a local domain if it isn't already
     ansible.builtin.lineinfile:
       path: /etc/exim4/update-exim4.conf.conf
-      line: 'dc_other_hostnames=''\1;{{ domain.name }}'''
+      line: 'dc_other_hostnames=''\1;{{ domain_name }}'''
       regexp: '^dc_other_hostnames=''(.*)''$'
       backrefs: yes
     when: local_domain.rc == 1

@@ -1,5 +1,4 @@
 - name: Deploy the DNS client role
-  become: yes
   block:
 
     # TODO: Move this step to the bootstrap
@@ -24,3 +23,6 @@
         src: resolv.conf.j2
         dest: /etc/resolv.conf
         unsafe_writes: "{{ unsafe_writes }}"
+
+  become: yes
+  tags: dns_client

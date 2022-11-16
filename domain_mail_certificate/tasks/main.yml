@@ -6,7 +6,7 @@
 
         - name: Create domain folder to hold certificates
           ansible.builtin.file:
-            path: /usr/local/etc/certs/{{ domain.name }}
+            path: /usr/local/etc/certs/{{ domain_name }}
             state: directory
 
         - name: Generate self-signed certificate
@@ -14,20 +14,20 @@
             cmd: >-
               openssl req -x509
               -newkey rsa:4096
-              -keyout /usr/local/etc/certs/{{ domain.name }}/key.pem
-              -out /usr/local/etc/certs/{{ domain.name }}/cert.pem
+              -keyout /usr/local/etc/certs/{{ domain_name }}/key.pem
+              -out /usr/local/etc/certs/{{ domain_name }}/cert.pem
               -sha256
               -days 365
-              -subj '/CN={{ domain.name }}'
+              -subj '/CN={{ domain_name }}'
               -addext 'subjectAltName =
-              DNS:imap.{{ domain.name }},
-              DNS:smtp.{{ domain.name }}'
+              DNS:imap.{{ domain_name }},
+              DNS:smtp.{{ domain_name }}'
               -nodes
               && chgrp Debian-exim
-              /usr/local/etc/certs/{{ domain.name }}/key.pem
+              /usr/local/etc/certs/{{ domain_name }}/key.pem
               && chmod g+r
-              /usr/local/etc/certs/{{ domain.name }}/key.pem
-            creates: /usr/local/etc/certs/{{ domain.name }}/cert.pem
+              /usr/local/etc/certs/{{ domain_name }}/key.pem
+            creates: /usr/local/etc/certs/{{ domain_name }}/cert.pem
 
         # TODO: Automate the derivation of the target host
         # TODO: Make it work with the server identity checks for live deployment
@@ -85,9 +85,9 @@
               --non-interactive
               --dns-linode
               --dns-linode-credentials /usr/local/etc/dns-linode-credentials.ini
-              --domain imap.{{ domain.name }}
-              --domain smtp.{{ domain.name }}
-            creates: /etc/letsencrypt/live/{{ domain.name }}
+              --domain imap.{{ domain_name }}
+              --domain smtp.{{ domain_name }}
+            creates: /etc/letsencrypt/live/{{ domain_name }}
 
         # TODO: Add initial deployment and putting in place of renewal hook
 

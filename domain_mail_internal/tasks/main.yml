@@ -34,7 +34,7 @@
         | community.general.json_query(
           "[?contains(roles,'mail_external')].hosts|[0]"
         ) }}
-      users: "{{ domain.users }}"
+      users: "{{ domain_users }}"
     notify: Restart fetchmail
 
   - name: Add operating system users if domain is the home domain
@@ -42,4 +42,4 @@
       name: home_domain_users
 
   become: yes
-  when: domain.name == home_domain
+  when: domain_name == home_domain

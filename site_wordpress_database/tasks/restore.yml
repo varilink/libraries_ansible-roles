@@ -15,7 +15,7 @@
 
     - name: Import database dump
       mysql_db:
-        name: "{{ site.server_name | regex_replace ('\\.', '_') }}"
+        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         state: import
         target: "{{ dump_copy.results[0].dest }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock

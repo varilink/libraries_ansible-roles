@@ -439,7 +439,10 @@ Storage {
   Name = File
   # Clients on the office (internal) network will resolve Address directly to
   # the backup storage host on the office network. External clients will resolve
-  # it to the IP address provided by our ISP.
+  # it to the IP address provided by our ISP. Note the we must use the FQDN
+  # since the hosting service for our external VMs overwrites any edits we make
+  # to their /etc/resolv.conf file meaning that we can't specify our home domain
+  # for searches there.
   Address = "{{ backup_storage_host }}.{{ home_domain }}"
   SDPort = 9103
   Password = "{{ backup_storage_director_password }}"
@@ -464,13 +467,13 @@ Storage {
 Catalog {
   Name = MyCatalog
   dbname = "bacula";
-{% if backup_database_host == backup_director_host %}
-  DB Socket = /var/run/mysqld/mysqld.sock;
-{% else %}
+{% if backup_database_host is defined %}
   DB Address = "{{ backup_database_host }}";
+{% else %}
+  DB Socket = /var/run/mysqld/mysqld.sock;
 {% endif %}
-  dbuser = "{{ backup_database_username }}";
-  dbpassword = "{{ backup_database_password }}"
+  dbuser = "{{ backup_database_user | default('bacula') }}";
+  dbpassword = "{{ backup_database_password | default('bacula') }}"
 }
 
 #-------------------------------------------------------------------------------

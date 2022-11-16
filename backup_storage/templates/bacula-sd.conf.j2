@@ -17,11 +17,11 @@ Storage {                             # definition of myself
 #
 Director {
   Name = {{ backup_director_name }}
-  Password = "{{ backup_director_storage_password }}"
+  Password = "{{ backup_storage_director_password }}"
 }
 Director {
   Name = {{ backup_monitor_name }}
-  Password = "{{ backup_monitor_storage_password }}"
+  Password = "{{ backup_storage_monitor_password }}"
   Monitor = yes
 }
 

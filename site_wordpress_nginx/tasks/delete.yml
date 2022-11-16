@@ -19,4 +19,13 @@
         state: absent
       notify: nginx configuration changed
 
+    - name: Delete WordPress site files
+      ansible.builtin.file:
+        path: "/var/www/{{ wordpress_site_server_name }}"
+        state: absent
+
+    - name: Delete ssl_certificate for Nginx WordPress site
+      ansible.builtin.command: "\
+        certbot delete -n --cert-name {{ wordpress_site_server_name}}"
+
   become: yes

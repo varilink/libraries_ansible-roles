@@ -34,4 +34,14 @@
         dest: /etc/bacula/scripts/wordpress-nginx-backup.sh
         mode: 0644
 
+    - block:
+
+        - name: Install certbot
+            apt:
+              name: [certbot]
+              install_recommends: no
+              update_cache: yes
+
+      when: wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl
+
   become: yes

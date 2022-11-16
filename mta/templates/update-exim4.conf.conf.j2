@@ -6,10 +6,10 @@ dc_relay_domains=''
 dc_minimaldns='false'
 dc_relay_nets='{{ mta_relay_nets }}'
 dc_smarthost='
-{%- if mta_smarthost is defined %}
-{{ mta_smarthost.hostname }}
-{%- if mta_smarthost.port is defined %}
-::{{ mta_smarthost.port }}
+{%- if mta_smarthost_hostname is defined %}
+{{ mta_smarthost_hostname }}
+{%- if mta_smarthost_port is defined %}
+::{{ mta_smarthost_port }}
 {%- endif %}
 {%- endif %}
 '

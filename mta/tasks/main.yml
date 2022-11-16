@@ -32,17 +32,17 @@
       ansible.builtin.lineinfile:
         path: /etc/exim4/passwd.client
         line: "\
-          {{ mta_smarthost.hostname }}:\
-          {{ mta_smarthost.username }}:\
-          {{ mta_smarthost.userpass }}\
+          {{ mta_smarthost_hostname }}:\
+          {{ mta_smarthost_username }}:\
+          {{ mta_smarthost_userpass }}\
           "
-        regex: "^{{ mta_smarthost.hostname }}:"
-      when: mta_smarthost.username is defined
+        regex: "^{{ mta_smarthost_hostname }}:"
+      when: mta_smarthost_username is defined
 
     - name: Redirect emails to root to the home domain admin user
       ansible.builtin.lineinfile:
         path: /etc/aliases
-        line: "root: {{ home_domain_admin_user }}"
+        line: "root: {{ admin_user }}"
       notify:
         - Run newaliases
 

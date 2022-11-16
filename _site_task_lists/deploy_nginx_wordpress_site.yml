@@ -12,6 +12,10 @@
       ansible.builtin.import_role:
         name: site_wordpress_nginx
 
+    - ansible.builtin.import_role:
+        name: site_dns
+      delegate_to: "{{ wordpress_site_dns_host }}"
+
   vars:
     wordpress_site_server_name: "\
       {{ wordpress_site_subdomain }}.{{ domain_name }}"

@@ -67,9 +67,13 @@
         core install
         --url={{ wordpress_site_server_name }}
         --title="{{ domain_organisation }}"
-        --admin_user={{ wordpress_admin_user }}
-        --admin_password={{ wordpress_admin_password }}
-        --admin_email={{ wordpress_admin_email }}
+        --admin_user={{
+          wordpress_site_admin_user | default({{ admin_user }})
+        }}
+        --admin_password={{ wordpress_site_admin_password }}
+        --admin_email={{
+          wordpress_site_admin_email | default({{ admin_user_email }})
+        }}
 
     - name: Activate the wordpress-importer plugin
       # NOTE: Reports changed even if plugin already activated.
@@ -106,8 +110,8 @@
           ansible.builtin.command: >-
             wp --allow-root --path={{ wordpress_site_path }}
             plugin install {{ plugin }}
-            {% if wordpress_site_plugins[plugin].version is defined %}
-            --version={{ wordpress_site_plugins[plugin].version }}
+            {% if wordpress_site_plugins[plugin] %}
+            --version={{ wordpress_site_plugins[plugin] }}
             {% endif %}
             --activate
           # This loop returns the names of all plugins that are indicated as
@@ -123,17 +127,21 @@
             loop_var: plugin
 
         - name: Update any plugins where update is indicated
+          # NOTE: Reports changed even if plugin not updated.
+          # TODO: Try to report "okay" if plugin already at target version.
           ansible.builtin.command: >-
             wp --allow-root --path={{ wordpress_site_path }}
             plugin update {{ plugin }}
-            {% if wordpress_site_plugins[plugin].version is defined %}
-            --version={{ wordpress_site_plugins[plugin].version }}
+            {% if wordpress_site_plugins[plugin] %}
+            --version={{ wordpress_site_plugins[plugin] }}
             {% endif %}
           loop: "{{ wordpress_site_plugins.keys() }}"
           loop_control:
             loop_var: plugin
 
         - name: Activate any plugins that are inactive
+          # NOTE: Reports changed even if all plugins are already activate.
+          # TODO: Convert to loop with skip when current status is active.
           ansible.builtin.command: >-
             wp --allow-root --path={{ wordpress_site_path }}
             plugin activate --all

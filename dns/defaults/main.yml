@@ -1,4 +1,3 @@
 dns_host_patterns:
   - string: all
     description: All hosts
-unsafe_writes: no
