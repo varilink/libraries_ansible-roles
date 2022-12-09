@@ -1,10 +1,23 @@
-
+# dynamic_dns/tasks/main.yml
 
 ---
 
-- name: Deploy dynamic DNS role
-  become: yes
-  block:
+#-------------------------------------------------------------------------------
+# Deploy to base dynamic DNS capability. Dynamic DNS services on a per domain
+# basis can then be configured on this service using domain.yml tasks list in
+# this role.
+#-------------------------------------------------------------------------------
+
+- block:
+
+    # Import the dns_api role to provide the configuration for access the Linode
+    # API service to manipulate DNS records. This is also required by the
+    # mail_certificates role and so is implemented in a separate role to enable
+    # that sharing. We use an import_role task rather than a meta dependency so
+    # that the domain.yml tasks can be invoked without pulling the dns_api role
+    # in again.
+    - ansible.builtin.import_role:
+        name: dns_api
 
     - name: Install APT packages used by the dynamic DNS role
       ansible.builtin.apt:
@@ -19,14 +32,18 @@
           # only to conveniently inspect the crontab.
           - nano
         install_recommends: no
-        update_cache: yes        
 
     - name: Deploy the dynamic-dns script
       ansible.builtin.template:
         src: dynamic-dns.pl.j2
-        dest: /usr/local/sbin/dynamic-dns.pl
-        mode: 0755
+        dest: /usr/local/src/dynamic-dns.pl
+        mode: 0644
 
+    # We may have changed the value of the dynamic_dns_crontab_stride, so we
+    # remove all existing crontab entries before creating new ones. When we do
+    # this we allow for the possibility that there is an existing crontab entry
+    # for every minute past the hour. There may not be but that doesn't matter.
+    # The task will just skip those minutes for which there is no entry.
     - name: Clear the existing crontab entries
       ansible.builtin.cron:
         name: "Dynamic DNS update at {{ item }} minutes past the hour"
@@ -35,7 +52,7 @@
 
     - name: Add crontab entries for the dynamic-dns script
       ansible.builtin.cron:
-        job: /usr/local/sbin/dynamic-dns.pl
+        job: perl /usr/local/src/dynamic-dns.pl
         minute: "{{ item }}"
         name: "Dynamic DNS update at {{ item }} minutes past the hour"
       with_sequence: >-
@@ -48,3 +65,5 @@
         path: "{{ dynamic_dns_domains_dir }}"
         state: directory
         mode: u=rw,g=,o=
+
+  become: yes

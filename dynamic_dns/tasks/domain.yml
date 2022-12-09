@@ -1,0 +1,17 @@
+# domain_dynamic_dns/tasks/domain.yml
+
+---
+
+#-------------------------------------------------------------------------------
+# Deploys the configuration file for a domain that uses the dynamic DNS service.
+#-------------------------------------------------------------------------------
+
+- name: Write the domain configuration file for dynamic DNS updates
+  ansible.builtin.copy:
+    dest: "{{ dynamic_dns_domains_dir }}/{{ domain_name }}.yml"
+    content: "{{ domain_dynamic_dns_config | to_nice_yaml }}"
+  vars:
+    domain_dynamic_dns_config:
+      id: "{{ domain_linode_id }}"
+      records: "{{ domain_linode_dynamic_dns_records }}"
+  become: yes

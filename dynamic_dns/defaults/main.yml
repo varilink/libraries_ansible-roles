@@ -1,2 +1,13 @@
+# dynamic_dns/defaults/main.yml
+
+---
+
+# The default "stride" in minutes for executing the dynamic DNS update script.
+# This default value of 15 results in the script being run at 0, 15, 30 and 45
+# minutes past the hour. If the value was say 20, that would result in the
+# script being run at 0, 24 and 40 minutes past the hour. If you override the
+# value then it must be set to a positive integer that is a divisor of 60.
 dynamic_dns_crontab_stride: 15
+
+# Directory that will hold the per domain, dynamic DNS configuration files.
 dynamic_dns_domains_dir: /usr/local/etc/dynamic-dns-domains
