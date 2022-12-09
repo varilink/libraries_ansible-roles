@@ -6,13 +6,17 @@
       ansible.builtin.import_role:
         name: wordpress
 
-    - name: Install apt package(s) for wordpress host role using Nginx
+    - name: Install APT package(s) for wordpress host role using Nginx
       ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
         name:
           - nginx
           - php-fpm
+        install_recommends: no
+      notify:
+        - Nginx installed
+        - PHP FPM installed
+
+    - ansible.builtin.meta: flush_handlers
 
     - name: Set Nginx server_names_hash_bucket_size to 64
       ansible.builtin.lineinfile:
@@ -20,13 +24,19 @@
         regexp: '^(\s+)(?:# )?server_names_hash_bucket_size 64;$'
         line: '\1server_names_hash_bucket_size 64;'
         backrefs: yes
-      notify: nginx configuration changed
+      notify: Nginx configuration changed
+
+    - name: Get the codename of the Debian release on this host
+      ansible.builtin.command: lsb_release --codename --short
+      register: lsb_release
 
     - name: Configure upstream php-fpm for Nginx
       ansible.builtin.template:
         src: php-fpm.conf.j2
         dest: /etc/nginx/conf.d/php-fpm.conf
-      notify: nginx configuration changed
+      notify: Nginx configuration changed
+      vars:
+        debian_release: "{{ lsb_release.stdout }}"
 
     - name: Install WordPress backup script
       ansible.builtin.copy:
@@ -34,14 +44,10 @@
         dest: /etc/bacula/scripts/wordpress-nginx-backup.sh
         mode: 0644
 
-    - block:
-
-        - name: Install certbot
-            apt:
-              name: [certbot]
-              install_recommends: no
-              update_cache: yes
-
+    - name: Install certbot
+      ansible.builtin.apt:
+        name: [certbot]
+        install_recommends: no
       when: wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl
 
   become: yes

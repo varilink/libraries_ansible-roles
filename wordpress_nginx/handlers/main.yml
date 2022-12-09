@@ -1,16 +1,10 @@
+# wordpress_nginx/handlers/main.yml
+
 ---
 
-- block:
-
-    - name: Determine the status of the nginx service
-      ansible.builtin.service_facts:
-      listen: nginx configuration changed
-
-    - name: Reload the nginx configuration if it is running
-      ansible.builtin.service:
-        name: nginx
-        state: reloaded
-      when: ansible_facts['services']['nginx']['state'] == 'running'
-      listen: nginx configuration changed
-
+- name: Reload Nginx configuration
+  ansible.builtin.service:
+    name: nginx
+    state: reloaded
   become: yes
+  listen: Nginx configuration changed
