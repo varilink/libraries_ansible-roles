@@ -1,0 +1,19 @@
+# database/tasks/configure.yml
+
+---
+
+- name: Expose the database externally if required
+  ansible.builtin.replace:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^(bind-address\s*=\s*)127\.0\.0\.1$'
+    replace: '\g<1>0.0.0.0'
+  when: database_expose_externally
+  notify: MariaDB configuration changed
+  become: yes
+
+# TODO: Add MySQL hardening measures
+# There are plenty of published articles that describe steps that can be taken
+# to harden a MySQL server; for example:
+# https://www.upguard.com/blog/top-11-ways-to-improve-mysql-security
+# It would make sense to automate the implementation of those that we choose to
+# implement in this role, immediately after the database is installed.

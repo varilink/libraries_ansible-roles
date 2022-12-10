@@ -1,0 +1,11 @@
+# database/tasks/install.yml
+
+---
+
+- name: Install apt package(s) for the database role
+  ansible.builtin.apt:
+    name:
+      - mariadb-server
+      - python3-pymysql
+    install_recommends: no
+  become: yes
