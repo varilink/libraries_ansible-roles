@@ -59,6 +59,20 @@
         recurse: yes
         state: directory
 
+    - debug:
+        msg: >-
+          wp --allow-root --path={{ wordpress_site_path }}
+          core install
+          --url={{ wordpress_site_server_name }}
+          --title="{{ domain_organisation }}"
+          --admin_user={{
+            wordpress_site_admin_user | default(admin_user)
+          }}
+          --admin_password={{ wordpress_site_admin_password }}
+          --admin_email={{
+            wordpress_site_admin_email | default(admin_user_email)
+          }}
+
     - name: Install WordPress
       # NOTE: Reports changed even if WordPress already installed.
       # TODO: Try to make it skip if WordPress already installed.

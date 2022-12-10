@@ -1,13 +1,23 @@
+# site_wordpress/tasks/restore.yml
+
+---
+
 - block:
 
+    # NOTE: This tasks runs for a few minutes and doesn't start generating
+    # output on the target until a good way through that time. Be patient.
     - name: Restore files from backup
-      ansible.builtin.synchronize:
-        src: "{{ playbook_dir + '/backup/html' }}"
-        dest: "/var/www/{{ wordpress_site_server_name }}"
-        recursive: yes
-        rsync_opts:
-          - "--exclude=wp-config.php"
-          - "--chown=www-data:www-data"
+      ansible.builtin.unarchive:
+        src: >-
+          {{ lookup('ansible.builtin.fileglob',
+            playbook_dir + '/backup/' + (
+              source_wordpress_site_server_name | regex_replace ('\.', '_')
+              ) + '*.tar.gz'
+          ) }}
+        dest: "/var/www/{{ wordpress_site_server_name }}/html"
+        include: wp-content/uploads
+        group: www-data
+        owner: www-data
 
     - name: Restore database from backup
       ansible.builtin.command:
@@ -15,7 +25,7 @@
           wp --allow-root
           --path=/var/www/{{ wordpress_site_server_name }}/html
           db import -
-        # Use the contents of the database export that with_fileglob found as
+        # Use the contents of the database export that "with_fileglob" found as
         # stdin for the cmd.
         stdin: "{{ lookup('file', item) }}"
         # Find the single .sql file within the backup folder that will contain a
