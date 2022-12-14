@@ -9,5 +9,8 @@
 # value then it must be set to a positive integer that is a divisor of 60.
 dynamic_dns_crontab_stride: 15
 
-# Directory that will hold the per domain, dynamic DNS configuration files.
-dynamic_dns_domains_dir: /usr/local/etc/dynamic-dns-domains
+# Directory that will hold the per record, dynamic DNS configuration files. Each
+# file specifies an A record to be kept in step with our ISP provided IP
+# address by providing the relevant Linode DNS Ids for both the domain and the
+# record.
+dynamic_dns_records_dir: /usr/local/etc/dynamic-dns-records

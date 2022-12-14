@@ -1,17 +1,21 @@
-# domain_dynamic_dns/tasks/domain.yml
+# domain_dynamic_dns/tasks/project.yml
 
 ---
 
 #-------------------------------------------------------------------------------
-# Deploys the configuration file for a domain that uses the dynamic DNS service.
+# Deploys the configuration files for a project that uses the dynamic DNS
+# service. Each A record that must be kept in line with our ISP allocated IP
+# address is configured as a separate YAML file that contains the Linode Id for
+# both the domain and for the associated record.
 #-------------------------------------------------------------------------------
 
-- name: Write the domain configuration file for dynamic DNS updates
+- name: Write the project's configuration file(s) for dynamic DNS A records
   ansible.builtin.copy:
-    dest: "{{ dynamic_dns_domains_dir }}/{{ domain_name }}.yml"
-    content: "{{ domain_dynamic_dns_config | to_nice_yaml }}"
-  vars:
-    domain_dynamic_dns_config:
-      id: "{{ domain_linode_id }}"
-      records: "{{ domain_linode_dynamic_dns_records }}"
+    # Name the configuration file using the FQDN for the A record that is to be
+    # kept updated; for example test.varilink.co.uk.yml.
+    dest: "{{ dynamic_dns_records_dir }}/{{ item.key }}.{{ domain_name }}.yml"
+    content: |
+      domain: {{ domain_linode_id }}
+      record: {{ item.value }}
+  loop: "{{ domain_linode_dynamic_dns_records | dict2items }}"
   become: yes

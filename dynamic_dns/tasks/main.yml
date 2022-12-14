@@ -60,9 +60,9 @@
         end={{ 60 - dynamic_dns_crontab_stride }}
         stride={{ dynamic_dns_crontab_stride }}
 
-    - name: Create a directory to hold dynamic DNS details for each domain
+    - name: Create a directory to hold dynamic DNS record configuration files
       ansible.builtin.file:
-        path: "{{ dynamic_dns_domains_dir }}"
+        path: "{{ dynamic_dns_records_dir }}"
         state: directory
         mode: u=rw,g=,o=
 
