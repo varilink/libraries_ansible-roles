@@ -1,4 +1,0 @@
----
-
-dependencies:
-  - role: reverse_proxy
