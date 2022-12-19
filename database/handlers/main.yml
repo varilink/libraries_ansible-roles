@@ -1,4 +1,9 @@
+# database/handlers/main.yml
+
+---
+
 # NOTE: There is no reload job type under systemctl for the mariadb.service unit
+# and so we must restart the MariaDB service on configuration change.
 - name: Restart MariaDB service
   ansible.builtin.service:
     name: mariadb.service

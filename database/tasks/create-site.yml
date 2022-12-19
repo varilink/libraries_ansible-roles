@@ -1,28 +1,37 @@
+# database/tasks/create-site.yml
+
 ---
+
+#-------------------------------------------------------------------------------
+# Create the database for a WordPress site
+#-------------------------------------------------------------------------------
 
 - block:
 
-    - name: Import database role
-      ansible.builtin.import_role:
-        name: database
+    # TODO: Obfuscate the names of the WordPress site's database and user for
+    # "security through obscurity".
 
     - name: Create database for the WordPress site
       community.mysql.mysql_db:
+        # Name the database by substituting '_' for '.' in the site's server
+        # name; for example database www_varilink_co_uk for a site with the
+        # server name www.varilink.co.uk.
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
-    # domain_wordpress role colocated with domain_wordpress_database role
     - name: Create a local database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        # no host value needed since connection to the database is local
+        # Name the user that the WordPress site will use to access the database
+        # in the same way that we named the database in the previous task.
         password: "{{ wordpress_site_database_password }}"
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
+      # This WordPress site will be co-hosted with its database. We know this
+      # because there is no database host configured for the WordPress site.
       when: wordpress_site_database_host is not defined
 
-    # domain_wordpress role NOT colocated with domain_wordpress_database role
     - name: Create a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
@@ -32,6 +41,8 @@
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
+      # This WordPress site will be hosted separately from ts database. We know
+      # this because there is a database host configured for the WordPress site.
       when: wordpress_site_database_host is defined
 
   become: yes

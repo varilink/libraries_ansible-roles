@@ -2,6 +2,14 @@
 
 ---
 
+#-------------------------------------------------------------------------------
+# Configure a database service after we have installed it.
+#-------------------------------------------------------------------------------
+
+# When the mariadb-server APT package is installed it defaults to only expose
+# the database service on the localhost network interface. If our vars indicate
+# that for this host the database service should be exposed on the external
+# network interface(s) then make that so.
 - name: Expose the database externally if required
   ansible.builtin.replace:
     path: /etc/mysql/mariadb.conf.d/50-server.cnf

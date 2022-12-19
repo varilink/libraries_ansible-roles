@@ -1,0 +1,6 @@
+# database/handlers/none.yml
+
+---
+
+# Empty hanlders file to allow this role to be imported without brining any
+# handlers with it in container environments that don't have a system manager.

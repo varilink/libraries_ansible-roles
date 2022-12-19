@@ -1,34 +1,33 @@
-- name: Proceed to setup for the bacula catalog if mysql is running
-  block:
+# database/tasks/bacula.yml
 
-    - name: Determine if the mysql service is running
-      ansible.builtin.service_facts:
+---
 
-    - block:
+#-------------------------------------------------------------------------------
+# Create a database to hold the bacula catalog for our backup_director role.
+#-------------------------------------------------------------------------------
 
-      - name: Create a database for bacula to use
-        community.mysql.mysql_db:
-          login_unix_socket: /var/run/mysqld/mysqld.sock
-          name: bacula
-          state: present
+- block:
 
-      - name: Create a user for bacula to use
-        community.mysql.mysql_user:
-          # Create the account for the IP address of the host that is the target
-          # for the backup_director role. This relies on the play that contains
-          # the backup_director role applying to a single host only.
-          host: "{{ backup_director_host | default('localhost') }}"
-          login_unix_socket: /var/run/mysqld/mysqld.sock
-          name: "{{ backup_database_user | default('bacula') }}"
-          password: "{{ backup_database_password | default('bacula') }}"
-          priv: 'bacula.*:ALL'
-          state: present
-        # BUG: On subsequent executions of this task an exception occurs:
-        # https://github.com/ansible/ansible/issues/51356
-        # We are using ignore_errors as a workaround for this issue.
-        ignore_errors: yes
+    - name: Create a database for bacula to use
+      community.mysql.mysql_db:
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        name: bacula
+        state: present
 
-      when:
-        - ansible_facts['services']['mysql']['state'] == 'running'
+    - name: Create a user for bacula to use
+      # Create the account for the IP address of the host that is the target for
+      # the backup_director role. This relies on the play that contains the
+      # backup_director role applying to a single host only.
+      community.mysql.mysql_user:
+        host: "{{ backup_director_host | default('localhost') }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        name: "{{ backup_database_user | default('bacula') }}"
+        password: "{{ backup_database_password | default('bacula') }}"
+        priv: 'bacula.*:ALL'
+        state: present
+      # BUG: On subsequent executions of this task an exception occurs:
+      # https://github.com/ansible/ansible/issues/51356
+      # We are using ignore_errors as a workaround for this issue.
+      ignore_errors: yes
 
   become: yes

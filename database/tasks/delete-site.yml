@@ -1,8 +1,14 @@
+# database/tasks/delete-site.yml
+
 ---
+
+#-------------------------------------------------------------------------------
+# Delete the database for a WordPress site
+#-------------------------------------------------------------------------------
 
 - block:
 
-    # domain_wordpress role colocated with domain_wordpress_database role
+    # domain_wordpress role collocated with domain_wordpress_database role
     - name: Drop a local database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
@@ -10,7 +16,7 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
       when: wordpress_site_database_host is not defined
 
-    # domain_wordpress role NOT colocated with domain_wordpress_database role
+    # domain_wordpress role NOT collocated with domain_wordpress_database role
     - name: Drop a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
