@@ -1,5 +1,14 @@
 - block:
 
-    - ansible.builtin.import_tasks: tasks.yml
+    - name: Determine the status of the dnsmasq service
+      ansible.builtin.service_facts:
+      listen: Dnsmasq configuration changed
+
+    - name: Reload the dnsmasq configuration if the service is running
+      ansible.builtin.service:
+        name: dnsmasq
+        state: restarted
+      when: ansible_facts['services']['dnsmasq']['state'] == 'running'
+      listen: Dnsmasq configuration changed
 
   become: yes

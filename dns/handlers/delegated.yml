@@ -1,6 +1,0 @@
-- block:
-
-    - ansible.builtin.import_tasks: tasks.yml
-
-  become: yes
-  delegate_to: "{{ delegated_dns_host }}"

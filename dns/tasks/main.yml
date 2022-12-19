@@ -19,7 +19,7 @@
         regexp: '^#?resolv-file='
         line: resolv-file=/etc/upstream-resolv.conf
       notify:
-        - dnsmasq configuration changed
+        - Dnsmasq configuration changed
 
     - name: Enable expand-hosts in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
@@ -27,7 +27,7 @@
         regexp: '^#?expand-hosts'
         line: expand-hosts
       notify:
-        - dnsmasq configuration changed
+        - Dnsmasq configuration changed
 
     - name: Enable read of additional hosts file in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
@@ -35,7 +35,7 @@
         regexp: '^#?addn-hosts='
         line: addn-hosts=/etc/addn-hosts
       notify:
-        - dnsmasq configuration changed
+        - Dnsmasq configuration changed
 
     - name: Set domain to required value in /etc/dnsmasq.conf
       ansible.builtin.lineinfile:
@@ -43,7 +43,7 @@
         regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ home_domain }})"
         line: domain={{ home_domain }}
       notify:
-        - dnsmasq configuration changed
+        - Dnsmasq configuration changed
 
     - name: Copy skeleton addn-hosts file
       ansible.builtin.copy:
@@ -85,4 +85,3 @@
           }}
 
   become: yes
-  tags: dns

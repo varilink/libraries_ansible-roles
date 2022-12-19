@@ -1,19 +1,8 @@
-- block:
-
-    - name: Include DNS role handlers
-      ansible.builtin.import_role:
-        name: dns
-        tasks_from: none.yml
-        handlers_from: delegated.yml
-      vars:
-        delegated_dns_host: "{{ wordpress_site_dns_host }}"
-
-    - name: Create DNS entries for WordPress site
-      ansible.builtin.lineinfile:
-        path: /etc/addn-hosts
-        line: >-
-          {{ ansible_default_ipv4.address }}
-          {{ wordpress_site_subdomain }}.{{ domain_name }}
-      notify: dnsmasq configuration changed
-
+- name: Create DNS entries for WordPress site
+  ansible.builtin.lineinfile:
+    path: /etc/addn-hosts
+    line: >-
+      {{ ansible_default_ipv4.address }}
+      {{ wordpress_site_subdomain }}.{{ domain_name }}
+  notify: Dnsmasq configuration changed
   become: yes
