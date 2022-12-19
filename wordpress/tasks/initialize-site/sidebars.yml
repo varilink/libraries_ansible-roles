@@ -1,0 +1,10 @@
+- name: Find the currently installed sidebars for this WordPress site
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    sidebar list --format=json
+  changed_when: false
+  register: wp_sidebar_list
+
+- name: Set the variable present_sidebars to hold sidebar details reported by wp
+  set_fact:
+    present_sidebars: "{{ wp_sidebar_list.stdout | from_json }}"

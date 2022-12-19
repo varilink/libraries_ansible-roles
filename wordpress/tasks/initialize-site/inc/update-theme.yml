@@ -1,0 +1,24 @@
+- name: Update to the required version when it does not match installed version
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    theme update --version={{ required.version }}
+  when: required.version is defined and required.version != installed.version
+
+- name: Update to latest version if available when required version not defined
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    theme update {{ installed.name }}
+  # NOTE: We can not use installed.update to access the update attribute of the
+  # installed dictionary object since this is a name clash with the update
+  # method that is provided for all dictionary objects.
+  when: required.version is not defined and installed['update'] == 'available'
+
+- name: >-
+    Activate any already installed WordPress theme that is inactive unless told
+    not to
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    theme activate {{ installed.name }}
+  when: >-
+    installed.status == 'inactive' and
+    (required.status is not defined or required.status == 'active')

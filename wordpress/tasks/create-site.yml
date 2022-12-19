@@ -1,14 +1,32 @@
 - block:
 
-    - name: Create directory to hold site WordPress files
-      ansible.builtin.file:
-        path: "{{ wordpress_site_path }}"
-        state: directory
+  - name: Create directory to hold site WordPress files
+    # NOTE: This will create any missing directories in the path; for example
+    # if the wordpress_site_path is dev.varilink.co.uk then both
+    # /var/www/dev.varilink.co.uk and /var/www/dev.varilink.co.uk/html will be
+    # created, assuming that /var/www already exists but
+    # /var/www/dev.varilink.co.uk did not.
+    ansible.builtin.file:
+      path: "{{ wordpress_site_path }}"
+      state: directory
+
+  - name: Set required ownership of directory to hold site WordPress files
+    # NOTE: We repeat the previous task but this time with owner and group
+    # specified. This is so that any parent directories in the
+    # wordpress_site_path that were created in the previous step retain root
+    # as their owner.
+    ansible.builtin.file:
+      path: "{{ wordpress_site_path }}"
+      state: directory
+      owner: www-data
+      group: www-data
+
+  - block:
 
     - name: Download WordPress files
       ansible.builtin.command:
         cmd: >-
-          wp --allow-root --path={{ wordpress_site_path }}
+          wp --path={{ wordpress_site_path }}
           core download --locale=en_GB
           {% if wordpress_site_version is defined %}
           --version={{ wordpress_site_version }}
@@ -18,11 +36,15 @@
     - name: Create the WordPress config file for local database
       ansible.builtin.command:
         cmd: >-
-          wp --allow-root --path={{ wordpress_site_path }}
+          wp --path={{ wordpress_site_path }}
           config create
           --dbhost=localhost
-          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbname={{
+              wordpress_site_server_name | regex_replace ('\.', '_')
+            }}
+          --dbuser={{
+              wordpress_site_server_name | regex_replace ('\.', '_')
+            }}
           --dbpass={{ wordpress_site_database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
@@ -31,11 +53,15 @@
     - name: Create the WordPress config file for remote database
       ansible.builtin.command:
         cmd: >-
-          wp --allow-root --path={{ wordpress_site_path }}
+          wp --path={{ wordpress_site_path }}
           config create
           --dbhost={{ wordpress_site_database_host }}
-          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbname={{
+              wordpress_site_server_name | regex_replace ('\.', '_')
+            }}
+          --dbuser={{
+              wordpress_site_server_name | regex_replace ('\.', '_')
+            }}
           --dbpass={{ wordpress_site_database_password }}
           --skip-check
         creates: "{{ wordpress_site_path }}/wp-config.php"
@@ -51,115 +77,34 @@
         path: "{{ wordpress_site_path }}/wp-config-sample.php"
         state: absent
 
-    - name: Set correct ownership of all WordPress files
-      ansible.builtin.file:
-        path: "{{ wordpress_site_path }}"
-        owner: www-data
-        group: www-data
-        recurse: yes
-        state: directory
-
-    - debug:
-        msg: >-
-          wp --allow-root --path={{ wordpress_site_path }}
-          core install
-          --url={{ wordpress_site_server_name }}
-          --title="{{ domain_organisation }}"
-          --admin_user={{
-            wordpress_site_admin_user | default(admin_user)
-          }}
-          --admin_password={{ wordpress_site_admin_password }}
-          --admin_email={{
-            wordpress_site_admin_email | default(admin_user_email)
-          }}
+    - name: Check if WordPress is installed
+      ansible.builtin.command: >-
+        wp --path={{ wordpress_site_path }}
+        core is-installed
+      # This task never changes anything.
+      changed_when: False
+      # If WordPress isn't installed then the exit status is 1 (error).
+      ignore_errors: True
+      register: wp_installed
 
     - name: Install WordPress
-      # NOTE: Reports changed even if WordPress already installed.
-      # TODO: Try to make it skip if WordPress already installed.
       ansible.builtin.command: >-
-        wp --allow-root --path={{ wordpress_site_path }}
+        wp --path={{ wordpress_site_path }}
         core install
         --url={{ wordpress_site_server_name }}
-        --title="{{ domain_organisation }}"
-        --admin_user={{
-          wordpress_site_admin_user | default({{ admin_user }})
-        }}
-        --admin_password={{ wordpress_site_admin_password }}
+        --title='{{ domain_organisation }}'
+        --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
+        --admin_password='{{ wordpress_site_admin_password }}'
         --admin_email={{
-          wordpress_site_admin_email | default({{ admin_user_email }})
-        }}
+            wordpress_site_admin_email | default(admin_user_email)
+          }}
+        --locale=en_GB
+        --skip-email
+      # The rc from the `wp core is-installed` command is 0 if it is installed
+      # and 1 if it isn't, so the when check is the reverse of what we might
+      # intuitively expect from reading it.
+      when: wp_installed.rc
 
-    - name: Activate the wordpress-importer plugin
-      # NOTE: Reports changed even if plugin already activated.
-      # TODO: Try to make it skip if plugin already activated.
-      ansible.builtin.command: >-
-        wp --allow-root --path={{ wordpress_site_path }}
-        plugin install wordpress-importer --activate
-
-    - block:
-
-        - name: Find the currently installed plugins
-          ansible.builtin.command:
-            wp --allow-root --path={{ wordpress_site_path }}
-            plugin list --format=json
-          changed_when: false
-          register: installed_plugins
-
-        - name: Uninstall (and deactivate if necessary) plugins not required
-          ansible.builtin.command: >-
-            wp --allow-root --path={{ wordpress_site_path }}
-            plugin uninstall {{ plugin }} --deactivate
-          # This loop returns the names of all plugins that are currently
-          # installed that are NOT in the list of plugins required, as indicated
-          # by the wordpress_site_plugins variable.
-          loop: >-
-            {{
-              ((installed_plugins.stdout | from_json) | map(attribute='name'))
-              | difference(wordpress_site_plugins.keys())
-            }}
-          loop_control:
-            loop_var: plugin
-
-        - name: Install missing plugins that are required
-          ansible.builtin.command: >-
-            wp --allow-root --path={{ wordpress_site_path }}
-            plugin install {{ plugin }}
-            {% if wordpress_site_plugins[plugin] %}
-            --version={{ wordpress_site_plugins[plugin] }}
-            {% endif %}
-            --activate
-          # This loop returns the names of all plugins that are indicated as
-          # required by the wordpress_site_plugins variable but are not yet
-          # installed.
-          loop: >-
-            {{
-              wordpress_site_plugins.keys() | difference(
-                (installed_plugins.stdout | from_json) | map(attribute='name')
-              )
-            }}
-          loop_control:
-            loop_var: plugin
-
-        - name: Update any plugins where update is indicated
-          # NOTE: Reports changed even if plugin not updated.
-          # TODO: Try to report "okay" if plugin already at target version.
-          ansible.builtin.command: >-
-            wp --allow-root --path={{ wordpress_site_path }}
-            plugin update {{ plugin }}
-            {% if wordpress_site_plugins[plugin] %}
-            --version={{ wordpress_site_plugins[plugin] }}
-            {% endif %}
-          loop: "{{ wordpress_site_plugins.keys() }}"
-          loop_control:
-            loop_var: plugin
-
-        - name: Activate any plugins that are inactive
-          # NOTE: Reports changed even if all plugins are already activate.
-          # TODO: Convert to loop with skip when current status is active.
-          ansible.builtin.command: >-
-            wp --allow-root --path={{ wordpress_site_path }}
-            plugin activate --all
-
-      when: wordpress_site_plugins is defined
+    become_user: www-data
 
   become: yes

@@ -1,0 +1,20 @@
+- name: Update to the required version when it does not match installed version
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    plugin update {{ installed.name }} --version={{ required.version }}
+  when: required.version is defined and required.version != installed.version
+
+- name: Update to latest version if available when required version not defined
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    plugin update {{ installed.name }}
+  # NOTE: We can not use installed.update to access the update attribute of the
+  # installed dictionary object since this is a name clash with the update
+  # method that is provided for all dictionary objects.
+  when: required.version is not defined and installed['update'] == 'available'
+
+- name: Activate any already installed WordPress plugin that is inactive
+  ansible.builtin.command: >-
+    wp --path={{ wordpress_site_path }}
+    plugin activate {{ installed.name }}
+  when: installed.status == 'inactive'
