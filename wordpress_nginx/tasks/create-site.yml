@@ -1,25 +1,45 @@
 ---
 
+- ansible.builtin.import_role:
+    name: wordpress
+    tasks_from: create-site
+
 - block:
 
-    - name: Import wordpress_nginx and site_wordpress roles
-      ansible.builtin.include_role:
-        name: "{{ item }}"
-      loop:
-        - wordpress_nginx
-        - site_wordpress
+  - name: Determine if certbot is installed on this host
+    ansible.builtin.shell: which certbot || true
+    register: which_certbot
+    changed_when: false
 
-    - name: Make Nginx site configuration available
-      ansible.builtin.template:
-        src: server.j2
-        dest: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}"
-      notify: Nginx configuration changed
+  - name: Determine if a certbot SSL certificate is present for this site
+    ansible.builtin.shell:
+      # NOTE: The "|| true" is to ensure a zero return code if grep doesn't find
+      # anything. Otherwise this would fail the Ansible task.
+      cmd: >-
+        certbot certificates |
+        grep 'Certificate Name: {{ wordpress_site_server_name }}' || true
+    register: certbot_certificates
+    changed_when: false
+    when: which_certbot.stdout
 
-    - name: Enable Nginx site configuration
-      ansible.builtin.file:
-        src: /etc/nginx/sites-available/{{ wordpress_site_server_name }}
-        path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}
-        state: link
-      notify: Nginx configuration changed
+  - name: Make Nginx site configuration available
+    ansible.builtin.template:
+      src: nginx-site.conf.j2
+      dest: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+    notify: Nginx configuration changed
+    vars:
+      certbot_certificate_installed: |-
+        {%- if which_certbot.stdout and certbot_certificates.stdout %}
+        yes
+        {%- else %}
+        no
+        {%- endif %}
 
-  become: yes
+  - name: Enable Nginx site configuration
+    ansible.builtin.file:
+      src: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+      path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf
+      state: link
+    notify: Nginx configuration changed
+
+become: yes

@@ -1,20 +1,32 @@
+# _site_task_lists/deploy_nginx_wordpress_site.yml
+
+---
+
+#-------------------------------------------------------------------------------
+# This task list deploys a WordPress site that uses Nginx for a WordPress site
+# in which the Nginx and MariaDB services for that site are on the same host.
+#-------------------------------------------------------------------------------
+
+# I only want this task list to be used for a single host in any one play. So,
+# before we go any furhter, check that this play is limited to one host and fail
+# if that's not the case.
 - name: Check for a single host
   ansible.builtin.fail: msg="Single host check failed"
   when: (play_hosts|length) != 1
 
 - block:
 
-    - name: Install WordPress site's database
-      ansible.builtin.import_role:
-        name: site_wordpress_database
-
-    - name: Install WordPress site's files and Nginx configuration
-      ansible.builtin.import_role:
-        name: site_wordpress_nginx
+    - ansible.builtin.import_role:
+        name: database
+        tasks_from: create-site.yml
 
     - ansible.builtin.import_role:
-        name: site_dns
-      delegate_to: "{{ wordpress_site_dns_host }}"
+        name: wordpress_nginx
+        tasks_from: create-site.yml
+
+#    - ansible.builtin.import_role:
+#        name: site_dns
+#      delegate_to: "{{ wordpress_site_dns_host }}"
 
   vars:
     wordpress_site_server_name: "\

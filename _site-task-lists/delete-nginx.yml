@@ -6,18 +6,13 @@
 
     - name: Delete WordPress site's files and Nginx configuration
       ansible.builtin.import_role:
-        name: site_wordpress_nginx
-        tasks_from: delete.yml
+        name: wordpress_nginx
+        tasks_from: delete-site.yml
 
     - name: Delete WordPress site's database
       ansible.builtin.import_role:
-        name: site_wordpress_database
-        tasks_from: delete.yml
-
-    - ansible.builtin.import_role:
-        name: site_dns
-        tasks_from: delete.yml
-      delegate_to: "{{ wordpress_site_dns_host }}"
+        name: database
+        tasks_from: delete-site.yml
 
   vars:
     wordpress_site_server_name: "\

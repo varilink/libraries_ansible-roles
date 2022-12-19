@@ -2,30 +2,44 @@
 
 - block:
 
-    - name: Import the wordpress_nginx role for its handlers only
-      ansible.builtin.import_role:
-        name: wordpress_nginx
-        tasks_from: none.yml
-
     - name: Disable Nginx site configuration
       ansible.builtin.file:
-        path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}
+        path: "/etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf"
         state: absent
-      notify: nginx configuration changed
+      notify: Nginx configuration changed
 
     - name: Make Nginx site configuration unavailable
       ansible.builtin.file:
-        path: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}"
+        path: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
         state: absent
-      notify: nginx configuration changed
+      notify: Nginx configuration changed
 
-    - name: Delete WordPress site files
-      ansible.builtin.file:
-        path: "/var/www/{{ wordpress_site_server_name }}"
-        state: absent
+    - name: Determine if certbot is installed on this host
+      ansible.builtin.shell: which certbot || true
+      register: which_certbot
+      changed_when: False
 
-    - name: Delete ssl_certificate for Nginx WordPress site
-      ansible.builtin.command: "\
-        certbot delete -n --cert-name {{ wordpress_site_server_name}}"
+    - block:
+
+        - name: Determine if a certbot SSL certificate is present for this site
+          ansible.builtin.shell:
+            # NOTE: The "|| true" is to ensure a zero return code if grep
+            # doesn't find anything. Otherwise this would fail the Ansible task.
+            cmd: >-
+              certbot certificates |
+              grep 'Certficate Name: {{ wordpress_site_server_name }}' || true
+          register: certbot_certificates
+
+        - name: Delete ssl_certificate for Nginx WordPress site
+          ansible.builtin.command: "\
+            certbot delete -n --cert-name {{ wordpress_site_server_name}}"
+          when: certbot_certificates.stdout
+
+      when: which_certbot.stdout
 
   become: yes
+
+- name: Import the wordpress role for its delete tasks
+  ansible.builtin.import_role:
+    name: wordpress
+    tasks_from: delete.yml

@@ -11,7 +11,11 @@ server {
     break;
   }
 
-{% if wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl %}
+{%
+  if wordpress_site_uses_ssl is defined and
+     wordpress_site_uses_ssl and
+     certbot_certificate_installed == 'yes'
+%}
   location / {
     return 301 https://{{ wordpress_site_server_name }};
   }
