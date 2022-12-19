@@ -1,0 +1,17 @@
+- block:
+
+  - name: Disable site in Nginx service
+    ansible.builtin.file:
+      path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf
+      state: absent
+    notify:
+      - Nginx configuration changed
+
+  - name: Make site unavailable in Nginx service
+    ansible.builtin.file:
+      path: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+      state: absent
+    notify:
+      - Nginx configuration changed
+
+  become: yes

@@ -1,0 +1,23 @@
+- name: Prompt for required subdomain for host of more than one subdomain
+  pause:
+    prompt: Please enter required subdomain (for example "test" or "staging")
+  register: subdomain_prompt
+
+- name: Validate the subdomain that was provided by the vars_prompt
+  ansible.builtin.fail:
+    msg: Invalid subdomain
+  when: subdomain_prompt.user_input not in wordpress_sites.keys()
+
+- ansible.builtin.set_fact:
+    wordpress_site_subdomain: "{{ subdomain_prompt.user_input }}"
+
+- name: Set wordpress_site_ variables from selected subdomain values
+  ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  loop: >-
+    {{ wordpress_sites[wordpress_site_subdomain] | dict2items }}
+    +
+    {% if wordpress_sites_private is defined %}
+      {{ wordpress_sites_private[wordpress_site_subdomain] | dict2items }}
+    {% else %}
+      []
+    {% endif %}

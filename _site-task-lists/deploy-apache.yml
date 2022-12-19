@@ -2,23 +2,22 @@
   fail: msg="Single host check failed"
   when: (play_hosts|length) != 1
 
-- name: "wordpress_site_subdomain"
-  prompt: "Select the WordPress site subdomain"
-  when: wordpress_sites_public is defined
-
 - block:
 
-    - name: Install WordPress site's database
-      ansible.builtin.import_role:
-        name: site_wordpress_database
+  - name: Install WordPress site's database
+    ansible.builtin.import_role:
+      name: database
+      tasks_from: create-site.yml
 
-    - name: Install WordPress site's files and Apache configuration
-      ansible.builtin.import_role:
-        name: site_wordpress_apache
+  - name: Install WordPress site's files and Apache configuration
+    ansible.builtin.import_role:
+      name: wordpress_apache
+      tasks_from: create-site.yml
 
-    - name: Install WordPress site's reverse proxy
-      ansible.builtin.import_role:
-        name: site_reverse_proxy
+  - name: Install WordPress site's reverse proxy
+    ansible.builtin.import_role:
+      name: reverse_proxy
+      tasks_from: create-site.yml
 
   vars:
     wordpress_site_server_name: "\

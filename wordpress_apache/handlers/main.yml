@@ -4,13 +4,20 @@
 
     - name: Determine the status of the apache2 service
       ansible.builtin.service_facts:
-      listen: apache2 configuration changed
+      listen: Apache2 configuration changed
 
     - name: Reload the apache2 configuration if it is running
       ansible.builtin.service:
         name: apache2
         state: reloaded
       when: ansible_facts['services']['apache2']['state'] == 'running'
-      listen: apache2 configuration changed
+      listen: Apache2 configuration changed
+
+    - name: Start the apache2 service if it isn't running
+      ansible.builtin.service:
+        name: apache2
+        state: started
+      when: ansible_facts['services']['apache2']['state'] != 'running'
+      listen: Apache2 configuration changed
 
   become: yes

@@ -14,23 +14,20 @@
       ansible.builtin.file:
         path: /etc/apache2/sites-enabled/000-default.conf
         state: absent
-      notify: apache2 configuration changed
+      notify: Apache2 configuration changed
 
-    # I always use Apache behind and Nginx proxy. The Nginx proxy listens on
-    # port 80, and if HTTPS is supported, also on port 443. Apache listens on
-    # custom ports, one per site, and supports HTTP only.
-    - name: Stop Apache listening on port 80
+    - name: Listening on port 8080 on the local interface using http protocol
       ansible.builtin.lineinfile:
         path: /etc/apache2/ports.conf
-        line: "# Custom site Listen entries"
-        regexp: '^Listen 80|# Custom site Listen entries$'
-      notify: apache2 configuration changed
+        line: 'Listen 127.0.0.1:8080 http'
+        regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
+      notify: Apache2 configuration changed
 
     - name: Enable apache2 rewrite module
       community.general.apache2_module:
         name: rewrite
         state: present
-      notify: apache2 configuration changed
+      notify: Apache2 configuration changed
 
     - name: Install WordPress backup script
       ansible.builtin.copy:
