@@ -39,26 +39,52 @@
         dest: /usr/local/src/dynamic-dns.pl
         mode: 0644
 
-    # We may have changed the value of the dynamic_dns_crontab_stride, so we
-    # remove all existing crontab entries before creating new ones. When we do
-    # this we allow for the possibility that there is an existing crontab entry
-    # for every minute past the hour. There may not be but that doesn't matter.
-    # The task will just skip those minutes for which there is no entry.
-    - name: Clear the existing crontab entries
+    - name: \"
+        Find the times past the hour of current schedule for dynamic-dns script"
+      ansible.builtin.shell: >-
+        crontab -l | grep 'perl /usr/local/src/dynamic-dns.pl' |
+        tr -s ' ' | cut -d' ' -f1
+      changed_when: false
+      register: crontab_list
+
+    - name: Set a variable holding the current schedule
+      # The current schedule is an array of strings that are the times past the
+      # hour that cron will run the dynamic-dns.pl script; for example
+      # ["0", "15", "30", "45"]
+      ansible.builtin.set_fact:
+        current_schedule: "{{ crontab_list.stdout_lines }}"
+
+    - name: Set a variable holding the desired schedule
+      # The desired schedule is an array of strings that are the times past the
+      # hour that we want cron to run the dynamic-dns.pl script; for example
+      # ["0", "15", "30", "45"]
+      ansible.builtin.set_fact:
+        desired_schedule: >-
+          {{
+            (lookup(
+              'sequence',
+              '0' + '-' + ((60 - stride) | string) + '/' + (stride | string)
+            )).split(',')
+          }}
+      vars:
+        stride: "{{ dynamic_dns_crontab_stride }}"
+
+    - name: >-
+        Delete crontab entires for times in the current schedule that aren't in
+        the desired schedule
       ansible.builtin.cron:
         name: "Dynamic DNS update at {{ item }} minutes past the hour"
         state: absent
-      with_sequence: start=0 end=59 stride=1
+      loop: "{{ current_schedule | difference(desired_schedule) }}"
 
-    - name: Add crontab entries for the dynamic-dns script
+    - name: >-
+        Add crontab entries for times in the desired schedule that aren't in the
+        current schedule
       ansible.builtin.cron:
         job: perl /usr/local/src/dynamic-dns.pl
         minute: "{{ item }}"
         name: "Dynamic DNS update at {{ item }} minutes past the hour"
-      with_sequence: >-
-        start=0
-        end={{ 60 - dynamic_dns_crontab_stride }}
-        stride={{ dynamic_dns_crontab_stride }}
+      loop: "{{ desired_schedule | difference(current_schedule) }}"
 
     - name: Create a directory to hold dynamic DNS record configuration files
       ansible.builtin.file:

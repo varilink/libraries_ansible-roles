@@ -26,22 +26,10 @@ if ( @ARGV > 0 ) {
   exit;
 }
 
-# Read the Linode API personal access token. This should be scoped for domain
-# updates only. The format of the file that the token is stored in is as
-# required by the DNS Linode plugin to certbot, since the token is shared with
-# the process that obtains SSL certificates for imap and smtp connections to our
-# customer and home domains' mail services.
-my $config = Config::Tiny->read( '/usr/local/etc/dns-linode-credentials.ini' );
-my $dns_linode_key = $config->{_}->{dns_linode_key};
-
-# Create a user agents and set some defaults for every request that will use it.
-my $headers = new HTTP::Headers;
-$headers->header( 'Authorization' => "Bearer $dns_linode_key" );
-my $user_agent = new LWP::UserAgent( ssl_opts => { verify_hostname => 1 } );
-$user_agent->default_headers( $headers );
-
-# Variable to receive responses to API requests.
-my $response;
+opendir ( my $dh , '{{ dynamic_dns_records_dir }}' )
+  || die "Can't opendir {{ dynamic_dns_records_dir }}: $!";
+my @record_files = grep ( /\.yml$/ , readdir ( $dh ) );
+closedir $dh;
 
 # Open the syslog for informational reporting.
 openlog(
@@ -53,93 +41,124 @@ openlog(
 # Report to the syslog that we've started a scheduled run of this script.
 syslog( LOG_INFO, 'Started check for Dynamic DNS updates' );
 
-opendir ( my $dh , '{{ dynamic_dns_records_dir }}' )
-  || die "Can't opendir {{ dynamic_dns_records_dir }}: $!";
-my @record_files = grep ( /\.yml$/ , readdir ( $dh ) );
-closedir $dh;
+# Read the Linode API personal access token. This should be scoped for domain
+# updates only. The format of the file that the token is stored in is as
+# required by the DNS Linode plugin to certbot, since the token is shared with
+# the process that obtains SSL certificates for imap and smtp connections to our
+# customer and home domains' mail services.
+my $config = Config::Tiny->read( '/usr/local/etc/dns-linode-credentials.ini' );
 
-foreach my $record_file ( @record_files ) {
+if ( Config::Tiny->errstr ) {
 
-  syslog( LOG_INFO, "Processing record file $record_file" );
+  print STDERR
+    'Is dynamic-dns.pl being run without Linode integration configured?',
+    "\n";
 
-  my $ids = LoadFile( "{{ dynamic_dns_records_dir }}/$record_file" );
+  foreach my $record_file ( @record_files ) {
 
-  # Invoke the Domain View API for the domain id specified in the record file.
-  $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
-    $ids->{ domain }
-  );
+    syslog( LOG_INFO, "Processing record file $record_file" );
 
-  if ( ! $response->is_success ) {
+  } # foreach my record_file ( @record_files )
 
-    # Report error executing the Domain View API for this record file. NOTE: Any
-    # output to STDERR from a script invoked via cron will be emailed to the
-    # admin user's email address. We use this mechanism to report errors rather
-    # than sending them to the log so that they're brought to the immediate
-    # attention of the admin user.
-    print STDERR $response->status_line,
-      ' viewing domain from record file ', $record_file,
-      "\n";
-    next;
+} else {
 
-  }
+  my $dns_linode_key = $config->{_}->{dns_linode_key};
 
-  # Invoke the Domain Record View API for the domain id and record id specified
-  # in the record file.
-  $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
-    $ids->{ domain } . '/records/' . $ids->{ record }
-  );
+  # Create a user agent and set defaults for every request that will use it.
+  my $headers = new HTTP::Headers;
+  $headers->header( 'Authorization' => "Bearer $dns_linode_key" );
+  my $user_agent = new LWP::UserAgent( ssl_opts => { verify_hostname => 1 } );
+  $user_agent->default_headers( $headers );
 
-  if ( $response->is_success ) {
+  # Variable to receive responses to API requests.
+  my $response;
 
-    # Capture the current target IP address so that we can determine if it has
-    # been changed or not.
-    my $original_target = decode_json( $response->content )->{ target };
+  foreach my $record_file ( @record_files ) {
 
-    # Set the content for the Domain Record Update. The special variable
-    # remote_addr will correspond to the current IP address provided to our
-    # office network by our ISP as Linode sees it on the incoming API request.
-    my $content = encode_json( { target => '[remote_addr]' } );
+    syslog( LOG_INFO, "Processing record file $record_file" );
 
-    # Invoke the Domain Record Update API for the current domain record.
-    $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
-      $ids->{ domain } . '/records/' . $ids->{ record },
-      'Content-Type' => 'application/json',
-      'Content' => $content
+    my $ids = LoadFile( "{{ dynamic_dns_records_dir }}/$record_file" );
+
+    # Invoke the Domain View API for the domain id specified in the record file.
+    $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+      $ids->{ domain }
+    );
+
+    if ( ! $response->is_success ) {
+
+      # Report error executing the Domain View API for this record file. NOTE:
+      # Any output to STDERR from a script invoked via cron will be emailed to
+      # the admin user's email address. We use this mechanism to report errors
+      # rather than sending them to the log so that they're brought to the
+      # immediate attention of the admin user.
+      print STDERR $response->status_line,
+        ' viewing domain from record file ', $record_file,
+        "\n";
+      next;
+
+    }
+
+    # Invoke the Domain Record View API for the domain id and record id
+    # specified in the record file.
+    $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+      $ids->{ domain } . '/records/' . $ids->{ record }
     );
 
     if ( $response->is_success ) {
 
-      if ( decode_json( $response->content )->{ target } ne $original_target ) {
+      # Capture the current target IP address so that we can determine if it has
+      # been changed or not.
+      my $original_target = decode_json( $response->content )->{ target };
 
-        # The domain record target was changed by the Domain Record Update API
-        # call. Report this at LOG_NOTICE level as a "normal, but significant,
-        # condition".
-        syslog( LOG_NOTICE,
-          'The target was changed from %s to %s for record file %s',
-          (
-            $original_target,
-            decode_json( $response->content )->{ target },
-            $record_file
-          )
-        );
+      # Set the content for the Domain Record Update. The special variable
+      # remote_addr will correspond to the current IP address provided to our
+      # office network by our ISP as Linode sees it on the incoming API request.
+      my $content = encode_json( { target => '[remote_addr]' } );
+
+      # Invoke the Domain Record Update API for the current domain record.
+      $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
+        $ids->{ domain } . '/records/' . $ids->{ record },
+        'Content-Type' => 'application/json',
+        'Content' => $content
+      );
+
+      if ( $response->is_success ) {
+
+        if (
+          decode_json( $response->content )->{ target } ne $original_target
+        ) {
+
+          # The domain record target was changed by the Domain Record Update API
+          # call. Report this at LOG_NOTICE level as a "normal, but significant,
+          # condition".
+          syslog( LOG_NOTICE,
+            'The target was changed from %s to %s for record file %s',
+            (
+              $original_target,
+              decode_json( $response->content )->{ target },
+              $record_file
+            )
+          );
+
+        }
+
+      } else {
+
+        print STDERR $response->status_line,
+          ' updating record from record file ', $record_file,
+          "\n";
 
       }
 
     } else {
 
-      print STDERR $response->status_line,
-        ' updating record from record file ', $record_file,
-        "\n";
+        print STDERR $response->status_line,
+          ' viewing record from record file ', $record_file,
+          "\n";
 
     }
 
-  } else {
-
-      print STDERR $response->status_line,
-        ' viewing record from record file ', $record_file,
-        "\n";
-
-  }
+  } # foreach my record_file ( @record_files )
 
 }
 
