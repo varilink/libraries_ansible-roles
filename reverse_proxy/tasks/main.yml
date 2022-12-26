@@ -5,11 +5,13 @@
 - name: Install reverse proxy role
   block:
 
-    - name: Install apt package(s) for reverse proxy role
+    - name: Install APT package(s) for reverse proxy role
       ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
         name: nginx
+        install_recommends: no
+      notify: Nginx installed
+
+    - ansible.builtin.meta: flush_handlers
 
     # Setup in to obtain Let's Encrypt certificates if SSL if required on this
     # host. We use SSL on any host that will provide externally facing websites
@@ -25,7 +27,7 @@
         # executes certbot's renew subcommand. The equivalent CRON setup is then
         # disabled since the CRON job executes certbot's renew subcommand only
         # if it does NOT find /run/systemd/system to be present.
-        - name: Install certbot apt package
+        - name: Install certbot APT package
           ansible.builtin.apt:
             install_recommends: no
             name: certbot
