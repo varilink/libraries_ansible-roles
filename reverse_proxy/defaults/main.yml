@@ -1,2 +1,2 @@
-reverse_proxy_uses_ssl: true
-wordpress_site_uses_ssl: "{{ reverse_proxy_uses_ssl }}"
+host_uses_ssl: true
+wordpress_site_uses_ssl: "{{ host_uses_ssl }}"

@@ -11,7 +11,7 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
-{%- if wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl %}
+{%- if wordpress_site_uses_ssl and certbot_certificate_installed %}
 
 
   location /.well-known/acme-challenge/ {
@@ -64,7 +64,7 @@ server {
   ssl_certificate_key /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/privkey.pem;
 
-{% endif %}{# reverse_proxy_uses_ssl #}
+{% endif %}
 
 
   location / {

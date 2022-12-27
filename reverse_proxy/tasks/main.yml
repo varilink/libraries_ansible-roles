@@ -11,14 +11,11 @@
         install_recommends: no
       notify: Nginx installed
 
-    - ansible.builtin.meta: flush_handlers
-
     # Setup in to obtain Let's Encrypt certificates if SSL if required on this
     # host. We use SSL on any host that will provide externally facing websites
     # but we might not do so on a server that hosts internally facing websites
     # for development only for example.
-    - name: Setup Let's Encrypt if SSL is required for this host
-      block:
+    - block:
 
         # NOTE: certbot renewals
         # If systemd is available, installing the certbot apt package creates
@@ -43,6 +40,6 @@
             group: root
             mode: '755'
 
-      when: reverse_proxy_uses_ssl
+      when: host_uses_ssl
 
   become: yes

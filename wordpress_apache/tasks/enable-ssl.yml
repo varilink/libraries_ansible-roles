@@ -1,0 +1,33 @@
+- block:
+
+  - name: Configure WordPress to sit behind SSL enabled proxy
+    ansible.builtin.blockinfile:
+      path: "{{ wordpress_site_path }}/wp-config.php"
+      block: |
+        define('FORCE_SSL_ADMIN', false);
+        define('FS_METHOD', 'direct');
+        $_SERVER['HTTPS']='on';
+        if ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) ) {
+          $xffaddrs = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+          $_SERVER['REMOTE_ADDR'] = $xffaddrs[0];
+        }
+
+  - name: Change URLs within WordPress database from http:// to https://
+    ansible.builtin.command:
+      cmd: 
+        wp --path={{ wordpress_site_path }}
+        search-replace
+        http://{{ wordpress_site_server_name }}
+        https://{{ wordpress_site_server_name }}
+    become_user: www-data
+    changed_when: false
+    register: wp_search_replace
+
+  become: yes
+
+- name: Report the number of changes made by the wp search-replace command
+  ansible.builtin.debug:
+    msg: "{{ wp_search_replace.stdout_lines | last }}"
+  changed_when: "\
+    wp_search_replace.stdout_lines | last != 'Success: Made 0 replacements.'"
+  

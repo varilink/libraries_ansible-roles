@@ -19,6 +19,11 @@
       name: reverse_proxy
       tasks_from: create-site.yml
 
+  - ansible.builtin.include_role:
+      name: wordpress_apache
+      tasks_from: enable-ssl.yml
+    when: wordpress_site_uses_ssl
+
   vars:
     wordpress_site_server_name: "\
       {{ wordpress_site_subdomain }}.{{ domain_name }}"

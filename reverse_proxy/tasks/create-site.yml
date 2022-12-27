@@ -1,6 +1,46 @@
+# reverse_proxy/tasks/create-site.yml
+# -----------------------------------
+# Create an Nginx site corresponding to a WordPress site that sits behind an
+# Nginx reverse proxy.
+
+---
+
+- name: Fail if WordPress site uses SSL but reverse proxy does not support SSL
+  # A reverse proxy can be configured to support SSL or not via the
+  # host_uses_ssl variable. A WordPress site can be configured to use SSL or not
+  # via the wordpress_site_uses_ssl variable. If a WordPress site is configured
+  # to use SSL via a reverse proxy that is not configured to support SSL, then
+  # fail.
+  ansible.builtin.fail:
+    msg: >-
+      Invalid request to install a WordPress site that uses SSL via a reverse
+      proxy that does not support SSL
+  when: wordpress_site_uses_ssl and not host_uses_ssl
+
+- name: >-
+    If WordPress site uses SSL then see if a certbot SSL certificate is already
+    installed on the reverse proxy for that site
+  ansible.builtin.shell: >-
+    certbot certificates |
+    grep 'Certificate Name: {{ wordpress_site_server_name }}' || true
+  # NOTE: The "|| true" is to ensure a zero return code if grep doesn't find
+  # anything. Otherwise this would fail the Ansible task.
+  become: yes
+  register: certbot_certificates
+  changed_when: false
+  when: wordpress_site_uses_ssl
+
+- ansible.builtin.set_fact:
+    certbot_certificate_installed: |-
+      {%- if wordpress_site_uses_ssl and certbot_certificates.stdout %}
+      yes
+      {%- else %}
+      no
+      {%- endif %}
+
 - block:
 
-  - name: Template site nginx configuration to sites-available
+  - name: Template site Nginx configuration to sites-available
     ansible.builtin.template:
       src: nginx.conf.j2
       dest: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
@@ -16,3 +56,38 @@
       - Nginx configuration changed
 
   become: yes
+
+- meta: flush_handlers
+  # Activates the site for webroot authentication to take place if required.
+  # Note that flush_handlers does not support the when conditional.
+
+- block:
+
+  # If the WordPress site uses SSL but no certbot certificate is yet installed
+  # on the reverse proxy for that WordPress site, then we will need to obtain
+  # one.
+
+  - block:
+
+    - name: Install certbot certificate
+      ansible.builtin.command: |-
+        certbot -n certonly
+        --webroot -w {{ wordpress_site_path }}
+        -d {{ wordpress_site_server_name }}
+        {% if wordpress_site_subdomain == 'www' %}
+         -d {{ domain_name }}
+        {% endif %}
+
+    - name: Template site nginx configuration to sites-available
+        
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+      notify:
+        - Nginx configuration changed
+      vars:
+        certbot_certificate_installed: yes
+
+    become: yes
+
+  when: wordpress_site_uses_ssl and not certbot_certificate_installed

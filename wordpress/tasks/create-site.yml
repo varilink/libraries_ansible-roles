@@ -33,12 +33,12 @@
           {% endif %}
         creates: "{{ wordpress_site_path }}/index.php"
 
-    - name: Create the WordPress config file for local database
+    - name: Create the WordPress config file
       ansible.builtin.command:
         cmd: >-
           wp --path={{ wordpress_site_path }}
           config create
-          --dbhost=localhost
+          --dbhost={{ wordpress_site_database_host | default('localhost') }}
           --dbname={{
               wordpress_site_server_name | regex_replace ('\.', '_')
             }}
@@ -46,26 +46,12 @@
               wordpress_site_server_name | regex_replace ('\.', '_')
             }}
           --dbpass={{ wordpress_site_database_password }}
+          --extra-php
           --skip-check
+        stdin: |
+          # BEGIN ANSIBLE MANAGED BLOCK
+          # END ANSIBLE MANAGED BLOCK
         creates: "{{ wordpress_site_path }}/wp-config.php"
-      when: wordpress_site_database_host is not defined
-
-    - name: Create the WordPress config file for remote database
-      ansible.builtin.command:
-        cmd: >-
-          wp --path={{ wordpress_site_path }}
-          config create
-          --dbhost={{ wordpress_site_database_host }}
-          --dbname={{
-              wordpress_site_server_name | regex_replace ('\.', '_')
-            }}
-          --dbuser={{
-              wordpress_site_server_name | regex_replace ('\.', '_')
-            }}
-          --dbpass={{ wordpress_site_database_password }}
-          --skip-check
-        creates: "{{ wordpress_site_path }}/wp-config.php"
-      when: wordpress_site_database_host is defined
 
     - name: Deny visibility of WordPress config file to others
       ansible.builtin.file:

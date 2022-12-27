@@ -14,4 +14,29 @@
     notify:
       - Nginx configuration changed
 
+  - name: See if a certbot SSL certificate is installed for this site
+    ansible.builtin.shell: >-
+      certbot certificates |
+      grep 'Certificate Name: {{ wordpress_site_server_name }}' || true
+    # NOTE: The "|| true" is to ensure a zero return code if grep doesn't find
+    # anything. Otherwise this would fail the Ansible task.
+    register: certbot_certificates
+    changed_when: false
+
   become: yes
+
+- ansible.builtin.set_fact:
+    certbot_certificate_installed: |-
+      {%- if wordpress_site_uses_ssl and certbot_certificates.stdout %}
+      yes
+      {%- else %}
+      no
+      {%- endif %}
+
+- name: >-
+    If there is a certbot certificate installed for this WordPress site then
+    delete it
+  ansible.builtin.command: "\
+    certbot -n --cert-name {{ wordpress_site_server_name }} delete"
+  become: yes
+  when: certbot_certificate_installed
