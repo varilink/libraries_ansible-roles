@@ -1,10 +1,10 @@
+# ------------------------------------------------------------------------------
 # database/tasks/bacula.yml
+# ------------------------------------------------------------------------------
+
+# Create a database to hold the bacula catalog for our backup_director role.
 
 ---
-
-#-------------------------------------------------------------------------------
-# Create a database to hold the bacula catalog for our backup_director role.
-#-------------------------------------------------------------------------------
 
 - block:
 
@@ -12,7 +12,6 @@
       community.mysql.mysql_db:
         login_unix_socket: /var/run/mysqld/mysqld.sock
         name: bacula
-        state: present
 
     - name: Create a user for bacula to use
       # Create the account for the IP address of the host that is the target for
@@ -22,12 +21,7 @@
         host: "{{ backup_director_host | default('localhost') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
         name: "{{ backup_database_user | default('bacula') }}"
-        password: "{{ backup_database_password | default('bacula') }}"
         priv: 'bacula.*:ALL'
-        state: present
-      # BUG: On subsequent executions of this task an exception occurs:
-      # https://github.com/ansible/ansible/issues/51356
-      # We are using ignore_errors as a workaround for this issue.
-      ignore_errors: yes
+        password: "{{ backup_database_password | default('bacula') }}"
 
   become: yes

@@ -1,8 +1,10 @@
+# ------------------------------------------------------------------------------
 # database/tasks/install.yml
+# ------------------------------------------------------------------------------
 
 ---
 
-- name: Install apt package(s) for the database role
+- name: Install APT package(s) required by the database role
   ansible.builtin.apt:
     name:
       - mariadb-server

@@ -1,15 +1,23 @@
+# ------------------------------------------------------------------------------
 # database/tasks/configure.yml
+# ------------------------------------------------------------------------------
 
----
-
-#-------------------------------------------------------------------------------
 # Configure a database service after we have installed it.
-#-------------------------------------------------------------------------------
 
 # When the mariadb-server APT package is installed it defaults to only expose
 # the database service on the localhost network interface. If our vars indicate
 # that for this host the database service should be exposed on the external
 # network interface(s) then make that so.
+
+# TODO: Add MySQL hardening measures
+# There are plenty of published articles that describe steps that can be taken
+# to harden a MySQL server; for example:
+# https://www.upguard.com/blog/top-11-ways-to-improve-mysql-security
+# It would make sense to automate the implementation of those that we choose to
+# implement in this role, immediately after the database is installed.
+
+---
+
 - name: Expose the database externally if required
   ansible.builtin.replace:
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
@@ -18,10 +26,3 @@
   when: database_expose_externally
   notify: MariaDB configuration changed
   become: yes
-
-# TODO: Add MySQL hardening measures
-# There are plenty of published articles that describe steps that can be taken
-# to harden a MySQL server; for example:
-# https://www.upguard.com/blog/top-11-ways-to-improve-mysql-security
-# It would make sense to automate the implementation of those that we choose to
-# implement in this role, immediately after the database is installed.
