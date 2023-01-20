@@ -1,6 +1,4 @@
-- name: Apply Dropbox synchronisation exclusions
-  become: yes
-  block:
+- block:
 
   - name: Fix Dropbox folder permissions
     ansible.builtin.file:
@@ -47,3 +45,5 @@
     loop_control:
       label: "{{ item.item.path }}"
     when: item.skipped is not defined
+
+  become: yes

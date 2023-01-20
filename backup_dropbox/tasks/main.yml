@@ -1,44 +1,48 @@
-- name: Install apt package(s) required for the backup dropbox role
-  ansible.builtin.apt:
-    name:
-      - ca-certificates
-      - gosu
-      - python3
-      - wget
-    install_recommends: no
+- block:
 
-- name: Create backup archive media directory
-  ansible.builtin.file:
-    path: "{{ backup_archive_media_directory }}"
-    state: directory
-    owner: bacula
-    group: bacula
+  - name: Install apt package(s) required for the backup dropbox role
+    ansible.builtin.apt:
+      name:
+        - ca-certificates
+        - gosu
+        - python3
+        - wget
+      install_recommends: no
 
-- name: Install Dropbox Headless
-  ansible.builtin.shell:
-    cmd: >-
-      gosu bacula bash -c
-      'cd ~ &&
-      wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64"
-      | tar xzf -'
-    creates: ~bacula/.dropbox-dist/dropboxd
+  - name: Create backup archive media directory
+    ansible.builtin.file:
+      path: "{{ backup_archive_media_directory }}"
+      state: directory
+      owner: bacula
+      group: bacula
 
-- name: Ensure we can monitor entire Dropbox folder hierarchy
-  ansible.builtin.lineinfile:
-    path: /etc/sysctl.conf
-    line: fs.inotify.max_user_watches=100000
-  notify: sysctl configuration changed
+  - name: Install Dropbox Headless
+    ansible.builtin.shell:
+      cmd: >-
+        gosu bacula bash -c
+        'cd ~ &&
+        wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64"
+        | tar xzf -'
+      creates: ~bacula/.dropbox-dist/dropboxd
 
-- name: Install Dropbox python helper script
-  ansible.builtin.get_url:
-    url: https://linux.dropbox.com/packages/dropbox.py
-    dest: ~bacula/dropbox.py
-    owner: bacula
-    group: bacula
-    mode: 0755
+  - name: Ensure we can monitor entire Dropbox folder hierarchy
+    ansible.builtin.lineinfile:
+      path: /etc/sysctl.conf
+      line: fs.inotify.max_user_watches=100000
+    notify: sysctl configuration changed
 
-# NOTE: There is no point configuring Dropbox to autostart at login.
-# This step is present in the Dropbox install instructions but then we're not
-# using it in an interactive account here so it's irrelevant.
-#- name: Configure Dropbox to autostart at login
-#  shell: gosu bacula bash -c '~/dropbox.py autostart y'
+  # NOTE: For some reason this request intermittently gives a 404 response. If
+  # this occurs the simply run the playbook again, since the issue will resolve
+  # itself at random.
+  - name: Install Dropbox python helper script
+    ansible.builtin.get_url:
+      url: https://linux.dropbox.com/packages/dropbox.py
+      dest: ~bacula/dropbox.py
+      owner: bacula
+      group: bacula
+      mode: 0755
+
+  - name: Configure Dropbox to autostart at login
+    ansible.builtin.shell: gosu bacula bash -c '~/dropbox.py autostart y'
+
+  become: yes
