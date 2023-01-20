@@ -1,9 +1,41 @@
-# Restart the bacula director to reflect a change to its configuration.
-# Note that setting a status of reloaded does not appear to work for this
-# service. However, restarting it is no issue as it doesn't result in any loss
-# of service to customers.
-- name: restart bacula director
-  ansible.builtin.service:
-    name: bacula-director.service
-    state: restarted
+# backup_director/handlers/main.yml
+
+---
+
+# When the backup_director role installs the required APT packages, the
+# bacula-director service is not started since at that point we haven't yet
+# configured the service with the correct details to access the catalog
+# database. When we configure the bacula-director service, we notify that the
+# "Bacula director configuration changed" event has happened.
+#
+# Subsequently, we may choose to reconfigure the bacula-director service, in
+# which case we will again notify that the "Bacula director configuration
+# changed" event has happened. We can therefore clearly see that when these
+# handlers receive notification that the "Bacula director configuration changed"
+# event has happened, the bacula-director service may or many not be running,
+# and in the circumstance that it isn't already running it is the action of
+# configuring the service that we want to start it running.
+
+- block:
+
+    - name: Determine the current state of the bacula director service
+      ansible.builtin.service_facts:
+      listen: Bacula director configuration changed
+
+    - name: Reload bacula director configuration if the service is running
+      ansible.builtin.service:
+        name: bacula-director
+        state: reloaded
+      when: >-
+        ansible_facts['services']['bacula-director']['state']
+        == 'running'
+      listen: Bacula director configuration changed
+
+    - name: Start bacula director service if it isn't running
+      ansible.builtin.service:
+        name: bacula-director
+        # "started" is an idempotent action that won't run unless necessary
+        state: started
+      listen: Bacula director configuration changed
+
   become: yes

@@ -1,0 +1,63 @@
+# backup_director/tasks/configure.yml
+# -----------------------------------
+
+---
+
+- block:
+
+    - name: Give members of the bacula group access to the bacula home folder
+      ansible.builtin.file:
+        path: /var/lib/bacula
+        mode: u=rwx,g=rx,o=
+
+    - name: >-
+        Find all the Bacula FileSet files that are provided for roles in this
+        roles library
+      local_action:
+        module: ansible.builtin.find
+        paths: [ "{{ role_path }}/.." ]
+        patterns: [ "bacula-fileset.conf" ]
+        recurse: yes
+      register: fileset_find_result
+
+    - set_fact:
+        fileset_files: "{{ fileset_find_result.files | map(attribute='path') }}"
+
+    - name: Template bacula-dir.conf
+      ansible.builtin.template:
+        src: bacula-dir.conf.j2
+        dest: /etc/bacula/bacula-dir.conf
+        owner: root
+        group: bacula
+        mode: 0640
+      vars:
+        # Every host in the inventory is backed up. For brevity, define variable
+        # for this query as it is referenced three times in the template file.
+        hostnames: "{{ query('inventory_hostnames', 'backup_clients') }}"
+      notify: Bacula director configuration changed
+
+    - name: Create folder to hold filesets for roles
+      ansible.builtin.file:
+        path: /etc/bacula/role-filesets
+        state: directory
+        owner: root
+        group: bacula
+        mode: 0750
+
+    - name: Copy role snippets for inclusion in client specific filesets
+      # Copy files/bacula-fileset.conf files within roles to the role-filesets/
+      # directory within the Bacula configuration directory. Name the files
+      # role_name.conf at the destination.
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ '/etc/bacula/role-filesets/' + role + '.conf' }}"
+      vars:
+        role: >-
+          {{
+            item | regex_search('(\w+)/files/bacula-fileset\.conf$', '\1') |
+            first
+          }}
+      loop: "{{ fileset_files }}"
+      notify: Bacula director configuration changed
+
+  become: yes

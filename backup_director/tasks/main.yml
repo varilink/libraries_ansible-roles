@@ -1,95 +1,12 @@
-- name: Deploy the backup director role
-  become: yes
-  block:
+# ------------------------------
+# backup_director/tasks/main.yml
+# ------------------------------
 
-    - name: Add buster backports to the sources list
-      ansible.builtin.lineinfile:
-        path: /etc/apt/sources.list
-        line: deb http://deb.debian.org/debian buster-backports main
+---
 
-    # BUG: ERROR 1044 and 1064 messages on creation of Bacula MySQL tables
-    # When we test this role using the Docker container approach defined in the
-    # varilink/services-docker repository, at the point of creation of the
-    # Bacula MySQL tables errors 1044 and 1064 are reported. However the
-    # creation of the tables succeeds. Note that the creation of the Bacula
-    # MySQL tables does not happen at the point of package installation in the
-    # containers, whereas it does for a server install. Again, see the
-    # varilink/services-docker repository and observe whether this same bug is
-    # present for a server install or not.
-    - name: Install apt package(s) required by the backup director role
-      ansible.builtin.apt:
-        name:
-          - bacula-director
-          - bacula-director-mysql
-        install_recommends: no
-        update_cache: yes
-        default_release: buster-backports
+- ansible.builtin.import_role:
+    name: mta
 
-    - name: Determine the roles that have a Bacula FileSet include file defined
-      local_action:
-        module: ansible.builtin.find
-        paths: [ "{{ role_path }}/.." ]
-        patterns: [ "bacula-fileset.conf" ]
-        recurse: yes
-      register: include
+- ansible.builtin.import_tasks: install.yml
 
-    - name: Template bacula-dir.conf
-      ansible.builtin.template:
-        src: bacula-dir.conf.j2
-        dest: /etc/bacula/bacula-dir.conf
-        owner: root
-        group: bacula
-        mode: 0640
-      vars:
-        # Every host in the inventory is backed up. For brevity, define variable
-        # for this query as it is referenced three times in the template file.
-        hostnames: "{{ query('inventory_hostnames', 'all') }}"
-        include_files: "{{ include.files }}"
-        # Load the contents of hosts.yml into the variable "playbook"
-        playbook: >-
-          {{
-          lookup('file', playbook_dir + '/deploy-host-roles.yml') | from_yaml
-          }}
-      notify: restart bacula director
-
-    - name: Create folder to hold filesets for roles
-      ansible.builtin.file:
-        path: /etc/bacula/role-filesets
-        state: directory
-        owner: root
-        group: bacula
-        mode: 0750
-
-    - name: Copy role snippets for inclusion in client specific filesets
-      # Copy files/bacula-fileset.conf files within roles to the role-filesets/
-      # directory within the Bacula configuration directory. Name the files
-      # role_name.conf at the destination.
-      ansible.builtin.copy:
-        src: "{{ role_path + '/../' + item.path }}"
-        dest: >-
-          {{ '/etc/bacula/role-filesets/' + item.path|regex_search('^[\w]+') +
-          '.conf' }}
-      # The filetree contains all the files in the roles/ directory. We only
-      # want files/bacula-fileset.conf files.
-      when: item.path is regex('[\w]+/files/bacula-fileset.conf')
-      # Get the filetree for roles/ directory. The role_path variable holds the
-      # path to the current role, which is backup_director. So, the roles/
-      # directory will be the directory above this in the filetree hierarchy.
-      with_community.general.filetree: "{{ role_path }}/.."
-      # The filetree output gives us lots of information about each file that we
-      # don't need, limit the filetree loop output to only the path for brevity.
-      loop_control:
-        label: "{{ item.path }}"
-      notify: restart bacula director
-
-    - name: Install and setup Dropbox for backup use
-      ansible.builtin.import_role:
-        name: backup_dropbox
-
-    - name: Deploy check-director-dropbox-status.sh script
-      ansible.builtin.copy:
-        src: check-director-dropbox-status.sh
-        dest: /etc/bacula/scripts/
-        owner: root
-        group: root
-        mode: u=rwx,g=rx,o=rx
+- ansible.builtin.import_tasks: configure.yml

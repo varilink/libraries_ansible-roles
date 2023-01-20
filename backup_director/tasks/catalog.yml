@@ -1,11 +1,45 @@
-- name: Re-initialize the catalog database
-  block:
+# backup_director/tasks/catalog.yml
 
-    - name: Drop and recreate catalog database
+---
+
+# Make the Bacula tables in the MariaDB database that hold the catalog for the
+# bacula-director service. A scripts is provided by the bacula-director-mysql
+# package for this. Once the database has been created and the bacula-director
+# service has been correctly configured to access that database, then this
+# script can be run from the bacula-director host.
+
+- block:
+
+    - name: Fix syntax error in make_mysql_tables
+      # The make_mysql_tables script that is provided with the
+      # bacula-director-mysql package in the buster-backports suite has a syntax
+      # error as far as the MariaDB version in the mariadb-server package in the
+      # buster suite is concerned. So, we must fix that syntax error before we
+      # use it.
+      ansible.builtin.lineinfile:
+        path: /usr/share/bacula-director/make_mysql_tables
+        line: '   \`{{ item }}\` INTEGER DEFAULT 0,'
+        regexp: '^   \\?`{{ item }}\\?` INTEGER DEFAULT 0,$'
+      loop:
+        - MinValue
+        - MaxValue
+
+    - name: Test if Bacula catalog tables are already present in database
+      # If this mysql query succeeds then mysql_result.stderr will be an empty
+      # string and mysql_result.stdout will be a stringified positive integer.
+      # This indicates that the Bacula catalog tables are present. If this mysql
+      # query fails then mysql_result.stdout will be an empty string and
+      # mysql_result.stderr will be a string starting "ERROR ". This indicates
+      # that the Bacula catalog tables are not present and must be made.
       ansible.builtin.shell: >-
-        cd /usr/share/bacula-director &&
-        db_name=bacula ./drop_mysql_tables
-        db_name=bacula ./make_mysql_tables
-      notify: restart bacula director
+        mysql --skip-column-names --silent bacula
+        -e 'SELECT VersionId FROM Version' || true
+      changed_when: false
+      register: mysql_result
+
+    - name: Make Bacula catalog tables
+      ansible.builtin.shell: "\
+        db_name=bacula /usr/share/bacula-director/make_mysql_tables"
+      when: not mysql_result.stdout and mysql_result.stderr is regex('^ERROR ')
 
   become: yes

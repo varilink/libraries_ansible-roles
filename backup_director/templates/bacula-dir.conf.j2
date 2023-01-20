@@ -284,15 +284,6 @@ FileSet {
 
   }
 
-  {#-
-  Use an array variable "roles" to capture all the roles that are applicable to
-  the current host.
-  #}
-
-  {%- set roles = [] %}
-
-  {% include 'includes/roles.j2' %}
-
 # Include files for each role deployed to this host for which a file is provided
   {%- for role in hosts_to_roles_map[hostname] %}
     {%- for fileset_file in fileset_files %}
@@ -431,13 +422,18 @@ Storage {
   # since the hosting service for our external VMs overwrites any edits we make
   # to their /etc/resolv.conf file meaning that we can't specify our home domain
   # for searches there.
+{% if backup_storage_host is defined %}
   Address = "{{ backup_storage_host }}.{{ home_domain }}"
+{% else %}
+  Address = localhost
+{% endif %}
   SDPort = 9103
   Password = "{{ backup_storage_director_password }}"
   Device = FileStorage
   Media Type = File
 }
 
+{% if backup_linked_to_dropbox %}
 Storage {
    Name = FileCopy
    Address = "{{ backup_storage_host }}"
@@ -446,6 +442,7 @@ Storage {
    Device = FileStorageCopy
    Media Type = File
 }
+{% endif %}
 
 #-------------------------------------------------------------------------------
 # Catalog
@@ -509,7 +506,9 @@ Pool {
   AutoPrune = yes
   Recycle = yes
   VolumeRetention = 3d
+{% if backup_linked_to_dropbox %}
   Next Pool = CatalogCopy
+{% endif %}
 }
 
 Pool {
@@ -523,7 +522,9 @@ Pool {
   AutoPrune = yes
   Recycle = yes
   Volume Retention = 10d
+{% if backup_linked_to_dropbox %}
   Next Pool = DailyCopy
+{% endif %}
 }
 
 Pool {
@@ -537,7 +538,9 @@ Pool {
   AutoPrune = yes
   Recycle = yes
   VolumeRetention = 30d
+{% if backup_linked_to_dropbox %}
   Next Pool = WeeklyCopy
+{% endif %}
 }
 
 Pool {
@@ -563,7 +566,9 @@ Pool {
   # which was 31 weeks or 91 days previous.
   # Volume retention period is set to 90 days.
   VolumeRetention = 90d
+{% if backup_linked_to_dropbox %}
   Next Pool = WeeklyCopy
+{% endif %}
 }
 
 Pool {
@@ -617,6 +622,7 @@ Pool {
   VolumeRetention = 90d
 }
 
+{% if backup_linked_to_dropbox %}
 Pool {
   Name = CatalogCopy
   Pool Type = Copy
@@ -654,6 +660,7 @@ Pool {
   VolumeRetention = 6d
   Storage = FileCopy
 }
+{% endif %}
 
 #-------------------------------------------------------------------------------
 # Console
@@ -670,7 +677,11 @@ BackupCatalog, DailyCatalogCopy, DailyCatalogCopy
   ClientACL = {% for hostname in hostnames %}{% if loop.index != 1 %}
 , {% endif %}{{ hostname }}{% endfor %}
 
+{% if backup_linked_to_dropbox %}
   StorageACL = File, FileCopy
+{% else %}
+  StorageACL = File
+{% endif %}
 {% if  backup_director_schedules_active %}
   ScheduleACL = Catalog, DailyCatalogCopy, DailyOffSite, DailyOnSite, DailyCopy
 {% endif %}

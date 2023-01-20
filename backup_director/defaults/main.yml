@@ -1,3 +1,12 @@
-# By default ruh scheduled jobs but allow this to be overridden in testing
-# scenarios when we might not want jobs to be run automatically.
+# backup_director/defaults/main.yml
+
+---
+
+# Run scheduled jobs by default but allow this to be overridden in testing
+# environments where we might not want jobs to run automatically.
 backup_director_schedules_active: true
+
+# Don't integrate the backup service with Dropbox for off-site copies of the
+# backups of on-site hosts by default. This can still then be explicitly enabled
+# if required.
+backup_linked_to_dropbox: false

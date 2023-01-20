@@ -1,0 +1,13 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/dropbox.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Deploy check-director-dropbox-status.sh script
+  ansible.builtin.copy:
+    src: check-director-dropbox-status.sh
+    dest: /etc/bacula/scripts/
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx

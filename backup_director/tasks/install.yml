@@ -1,0 +1,99 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+# Installs the APT packages required by the backup_director role. Across our
+# various environments we have backup clients on stretch, buster and bullseye
+# hosts and backup directors on buster and bullseye hosts. Therefore, if the
+# backup_director role is installed on a buster host then we must install it
+# from buster-backports for compatibility with backup clients on bullseye hosts.
+
+# Ansible runs APT in non-interactive mode, which means that the install of
+# these packages completes without a configured catalog database in place, since
+# the configuration of a catalog database requires manual intervention. Of
+# course this also means that systemd can't start the bacula-director service
+# immediately after the install. This is unlike the other APT install tasks,
+# after which any associated systemd service is automatically started. This is
+# fine, we will go on to configure the database and start the bacula-director
+# service in subsequent tasks.
+
+# This also means that splitting the main task into install and configure steps
+# is superfluous for this role, since we do that to allow the role to be
+# imported in an environment that doesn't have a service manager; for example, a
+# Docker container. Such an environment can then mimic the behaviour of an
+# environment that does contain a service manager by simulating the service
+# startup that happens after the install. However, we retain that pattern here
+# for consistency with other roles.
+
+---
+
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
+- block:
+
+    - ansible.builtin.import_role:
+        name: database
+
+    - ansible.builtin.import_role:
+        name: database
+        tasks_from: bacula
+
+  when: backup_director_host is not defined
+
+- block:
+
+    - name: >-
+        Determine if the password for Bacula to use when connecting to the
+        database is set or not
+      ansible.builtin.debconf:
+        name: bacula-director-mysql
+      register: debconf_show_result
+
+    - name: Preseed the bacula users password in the database
+      ansible.builtin.debconf:
+        name: bacula-director-mysql
+        question: bacula-director-mysql/mysql/app-pass
+        value: "{{ backup_database_password | default('bacula') }}"
+        vtype: password
+      when: >-
+        debconf_show_result.current['bacula-director-mysql/mysql/app-pass']
+        is not defined
+
+    - name: >-
+        Install APT package(s) required by the backup_director role from
+        bullseye
+      ansible.builtin.apt:
+        name:
+          - bacula-director
+          - bacula-director-mysql
+        install_recommends: no
+      when: lsb_release.stdout == 'bullseye'
+
+    - block:
+
+        - name: Add buster-backports to the sources list
+          ansible.builtin.lineinfile:
+            path: /etc/apt/sources.list
+            line: deb http://deb.debian.org/debian buster-backports main
+
+        - name: "\
+            Update APT cache to reflect the addition of buster-backports source"
+          ansible.builtin.apt:
+            update_cache: yes
+
+        - name: >-
+            Install APT package(s) required by the backup_director role from
+            buster-backports
+          ansible.builtin.apt:
+            name:
+              - bacula-director
+              - bacula-director-mysql
+            install_recommends: no
+            default_release: buster-backports
+
+      when: lsb_release.stdout == 'buster'
+
+  become: yes
