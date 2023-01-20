@@ -1,18 +1,12 @@
-# Restart the dovecot service if its configuration has been changed.
+# ------------------------------------------------------------------------------
+# mail/handlers/main.yml
+# ------------------------------------------------------------------------------
 
 ---
 
-- block:
-
-    - name: Determine the status of the dovecot service
-      ansible.builtin.service_facts:
-      listen: dovecot configuration changed
-
-    - name: Restart the dovecot service if it is running
-      ansible.builtin.service:
-        name: dovecot
-        state: restarted
-      when: ansible_facts['services']['dovecot']['state'] == 'running'
-      listen: dovecot configuration changed
-
+- name: Reload the Dovecot configuration when it has changed
+  ansible.builtin.service:
+    name: dovecot
+    state: reloaded
   become: yes
+  listen: Dovecot configuration changed

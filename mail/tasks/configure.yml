@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# mail/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Set Dovecot mail location to Maildir
+  ansible.builtin.lineinfile:
+    path: /etc/dovecot/conf.d/10-mail.conf
+    regexp: '^mail_location = '
+    line: mail_location = maildir:~/Maildir
+  become: yes

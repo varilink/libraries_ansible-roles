@@ -1,12 +1,5 @@
 # ------------------------------------------------------------------------------
-# mail/tasks/main.yml
+# mail/handlers/none.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- ansible.builtin.import_role:
-    name: mta
-
-- ansible.builtin.import_tasks: install.yml
-
-- ansible.builtin.import_tasks: configure.yml

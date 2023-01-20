@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# mail/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT package(s) required by Dovecot
+  ansible.builtin.apt:
+    name:
+      - dovecot-imapd
+    install_recommends: no
+  become: yes
