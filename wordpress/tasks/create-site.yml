@@ -64,7 +64,7 @@
         state: absent
 
     - name: Check if WordPress is installed
-      ansible.builtin.command: >-
+      ansible.builtin.shell: >-
         wp --path={{ wordpress_site_path }}
         core is-installed
       # This task never changes anything.
