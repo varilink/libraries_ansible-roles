@@ -3,17 +3,14 @@
 
 ---
 
-- block:
-
-  - name: Determine current status of the Radicale service
-    service_facts:
-    listen: "Restart radicale"
-
-  - name: Restart Radicale if it is running
-    service:
-      name: radicale
-      state: restarted
-    when: ansible_facts['services']['radicale']['state'] == 'running'
-    listen: "Restart radicale"
-
+- name: Restart Radicale to reflect configuration change
+  service:
+    name: radicale
+    state: restarted
   become: yes
+  listen: Radicale configuration changed
+
+- debug:
+    msg: If you are seeing this message then something has gone wrong
+  listen: Bacula file daemon installed
+  when: false

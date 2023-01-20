@@ -1,0 +1,17 @@
+# ------------------------------------------------------------------------------
+# calendar/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# NOTE: This will install Radicale version 2 in buster and version 3 in
+# bullseye. It's important to refer to the documentation for the correct
+# version:
+# https://radicale.org/v2.html
+# https://radicale.org/v3.html
+- name: Install APT package(s) required by the calendar role
+  ansible.builtin.apt:
+    name:
+      - radicale
+    install_recommends: no
+  become: yes
