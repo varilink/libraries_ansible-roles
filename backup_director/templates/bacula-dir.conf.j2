@@ -100,16 +100,7 @@ both on the office network.
 
   {%- endif %}{# hostname in groups['external'] #}
 
-  {#-
-  Use an array variable "roles" to capture all the roles that are applicable to
-  the current host.
-  #}
-
-  {%- set roles = [] %}
-
-  {%- include 'includes/roles.j2' %}
-
-  {%- if 'backup_storage' in roles %}
+  {%- if 'backup_storage' in hosts_to_roles_map[hostname] %}
 
   Client Run After Job = "/etc/bacula/scripts/check-storage-dropbox-status.sh"
   {%- endif %}
@@ -303,13 +294,10 @@ FileSet {
   {% include 'includes/roles.j2' %}
 
 # Include files for each role deployed to this host for which a file is provided
-  {%- for role in roles | unique | sort %}
-    {%- for include_file in include_files %}
+  {%- for role in hosts_to_roles_map[hostname] %}
+    {%- for fileset_file in fileset_files %}
       {%-
-        if (
-          include_file.path |
-          regex_search(role + '/files/bacula-fileset\.conf$')
-        )
+        if fileset_file | regex_search(role + '/files/bacula-fileset\.conf$')
       %}
 
 @/etc/bacula/role-filesets/{{ role }}.conf
