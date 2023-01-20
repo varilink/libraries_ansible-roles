@@ -1,9 +1,16 @@
-- name: Gather IP address for each host matching a pattern
+# dns/tasks/hosts-pattern.yml
+
+---
+
+- name: >-
+    Gather IP address for each host matching the pattern where we don't already
+    have it
   ansible.builtin.setup:
   delegate_to: "{{ matching_host }}"
-  delegate_facts: True
+  delegate_facts: true
+  ignore_unreachable: true
   when: hostvars[matching_host]['ansible_default_ipv4'] is not defined
   with_inventory_hostnames:
-    - "{{ pattern.string }}"
+    - "{{ host_pattern.string }}"
   loop_control:
     loop_var: matching_host

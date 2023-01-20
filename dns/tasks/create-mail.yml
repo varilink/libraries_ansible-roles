@@ -1,0 +1,9 @@
+- name: Create DNS entries for domain email service
+  ansible.builtin.lineinfile:
+    path: /etc/addn-hosts
+    line: >-
+      {{ ansible_default_ipv4.address }}
+      {{ item }}.{{ domain_name }}
+  notify: Dnsmasq configuration changed
+  become: yes
+  loop: [imap, smtp]

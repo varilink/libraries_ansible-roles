@@ -1,0 +1,10 @@
+# dns/tasks/install.yml
+
+---
+
+- name: Install APT package(s) required by the DNS internal role
+  ansible.builtin.apt:
+    name:
+      - dnsmasq
+    install_recommends: no
+  become: yes

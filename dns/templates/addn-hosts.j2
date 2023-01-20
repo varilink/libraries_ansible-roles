@@ -1,9 +1,32 @@
-{% for pattern in dns_host_patterns %}
-{# hosts pattern #}
+{#
+This template is used to populate an Ansible managed block within the
+/etc/addn-hosts file that we configure Dnsmasq to read for local lookups. It
+populates that block with lookups for hosts and services that run on those hosts
+where those services require a lookup.
 
+This template requires that a couple of variables be set in the inventory as
+follows:
+
+dns_host_patterns
+This variable should define an array of patterns to be matched to hosts in the
+inventory where the DNS server that this template is deployed to is required to
+provide a lookup for those matching hosts. Each item in the array is a
+dictionary object containing the attributes "string" (the pattern) and
+"description" (a description of the pattern); for example "external" and
+"External hosts".
+
+hosts_to_roles_map
+This variable should be a dictionary object in which each key is the name of a
+host in the inventory and the associated value is a list of role names that are
+deployed to that host.
+
+#}
+
+{%- for pattern in dns_host_patterns %}
+{# start a hosts' pattern #}
+
+{# output the current pattern's description for reference in the file #}
 # {{ pattern.description }}
-
-{# for line feed #}
 
   {%-
     for hostname in
@@ -11,63 +34,63 @@
   %}
   {#- hostname in target DNS group #}
 
+    {%- set host_record_written = true %}
+
     {%-
       if hostvars[hostname].ansible_host is defined
       and hostvars[hostname].ansible_host | regex_search('^\w+$')
+      and hostvars[hostname].ansible_default_ipv4.address is defined
     %}
+
+      {#-
+      ansible_host is defined and it's a word, not an IP address, which means
+      it must be an alias for the true hostname. So use the true hostname, as
+      defined by ansible_host, and the ansible_default_ipv4.address variable,
+      if it is defined, for the lookup.
+      #}
 
 # {{ hostname }}
 {{ hostvars[hostname].ansible_default_ipv4.address
 }} {{ hostvars[hostname].ansible_host }}
 
-    {%- else %}
+    {%- elif hostvars[hostname].ansible_default_ipv4.address is defined %}
+
+      {#-
+      There is no aliasing going on, so we know that the hostname in the
+      inventory is the true hostname. So use that for the lookup along with the
+      ansible_default_ipv4.address variable, if it is defined, for the lookup.
+      #}
 
 {{ hostvars[hostname].ansible_default_ipv4.address }} {{ hostname }}
 
+    {%- else %}
+
+      {%- set host_record_written = false %}
+
     {%- endif %}
 
-    {%- for play in playbook %}
-    {#- play in playbook #}
+    {%-
+      if host_record_written and hostname in hosts_to_roles_map
+    %}
 
-      {%- if hostname in lookup('inventory_hostnames', play['hosts']) %}
-      {#- host is targetted by play #}
+      {%- for host_role in hosts_to_roles_map[hostname] %}
 
-        {%- if 'roles' in play %}
-        {#- play is based on roles #}
+        {%- for service in dns_service_lookups %}
 
-          {%- for role in play['roles'] %}
-          {#- role in play #}
+          {%- if service.role == host_role %}
 
-            {%- if role is string %}
-              {%- set role_name = role %}
-            {%- else %}
-              {%- set role_name = role['role'] %}
-            {%- endif -%}
+            {{- ' ' + service.name }}
 
-            {%- if role_name == 'backup_director' %}
- bacula-dir
-            {%- elif role_name == 'backup_storage' %}
- bacula-sd
-            {%- elif role_name == 'calendar' %}
- caldav
-            {%- elif role_name == 'mail_internal' %}
- smtp
-            {%- endif %}
+          {%- endif %}
 
-          {#- role in play #}
-          {%- endfor %}
+        {%- endfor %}
 
-        {#- play is based on roles #}
-        {%- endif %}
+      {%- endfor %}
 
-      {#- host is targetted by play #}
-      {%- endif %}
-
-    {#- play in playbook #}
-    {%- endfor %}
+    {%- endif %}
 
   {#- hostname in target DNS group #}
   {%- endfor %}
 
-{# hosts pattern #}
+{#- end a hosts' pattern #}
 {% endfor %}

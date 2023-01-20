@@ -1,0 +1,9 @@
+dns_service_lookups:
+  - name: bacula-dir
+    role: backup_director
+  - name: bacula-sd
+    role: backup_storage
+  - name: caldav
+    role: calendar
+  - name: smtp
+    role: mail_internal
