@@ -1,9 +1,11 @@
 # ------------------------------------------------------------------------------
-# reverse_proxy/tasks/main.yml
+# reverse_proxy/tasks/install.yml
 # ------------------------------------------------------------------------------
 
 ---
 
-- ansible.builtin.import_tasks: install.yml
-
-- ansible.builtin.import_tasks: configure.yml
+- name: Install APT package(s) for reverse proxy role
+  ansible.builtin.apt:
+    name: nginx
+    install_recommends: no
+  become: yes

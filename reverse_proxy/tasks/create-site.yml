@@ -1,5 +1,7 @@
+# ------------------------------------------------------------------------------
 # reverse_proxy/tasks/create-site.yml
-# -----------------------------------
+# ------------------------------------------------------------------------------
+
 # Create an Nginx site corresponding to a WordPress site that sits behind an
 # Nginx reverse proxy.
 
