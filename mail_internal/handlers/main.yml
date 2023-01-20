@@ -1,9 +1,11 @@
-- block:
+# ------------------------------------------------------------------------------
+# mail_internal/handlers/main.yml
+# ------------------------------------------------------------------------------
 
-  - name: Restart fetchmail
-    ansible.builtin.service:
-      name: fetchmail
-      state: restarted
-    ignore_errors: yes
+---
 
+- name: Restart fetchmail on configuration change
+  ansible.builtin.service:
+    name: fetchmail
+    state: restarted
   become: yes

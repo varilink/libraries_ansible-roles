@@ -1,0 +1,6 @@
+mta_configtype: smarthost
+mta_other_hostnames: "{{ home_domain }}"
+mta_local_interfaces: '0.0.0.0'
+mta_hide_mailname: 'false'
+mta_localdelivery: 'maildir_home'
+mta_relay_nets: "{{ office_subnet }}"
