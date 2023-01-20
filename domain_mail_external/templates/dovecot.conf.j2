@@ -1,9 +1,0 @@
-local_name imap.{{ domain_name }} {
-{% if mail_uses_ca %}
-  ssl_cert = </etc/letsencrypt/live/{{ domain_name }}/cert.pem
-  ssl_key = </etc/letsencrypt/live/{{ domain_name }}/privkey.pem
-{% else %}
-  ssl_cert = </usr/local/etc/certs/{{ domain_name }}/cert.pem
-  ssl_key = </usr/local/etc/certs/{{ domain_name }}/key.pem
-{% endif %}
-}

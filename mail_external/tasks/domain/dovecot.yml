@@ -1,0 +1,55 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/domain/dovecot.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: >-
+        Create directory to hold Dovecot local configuration file for the domain
+      ansible.builtin.file:
+        path: /etc/dovecot/domains/{{ domain_name }}
+        state: directory
+
+    - name: Add Dovecot "local" configuration file for the domain
+      ansible.builtin.template:
+        src: dovecot-local.conf.j2
+        dest: /etc/dovecot/domains/{{ domain_name }}/local.conf
+      notify: Dovecot configuration changed
+
+    - name: >-
+        Generate Dovecot certificate and key files when we're not using a
+        certification authority for the domain
+      # The openssl req options here are modelled on the mkcert.sh script,
+      # which in Debian is located at:
+      # /usr/share/dovecot/mkcert.sh
+      # The only difference is that we've set -days to 1095 rather than 365.
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -new -x509 -nodes -days 1095
+          -out /etc/dovecot/domains/{{ domain_name }}/cert.pem
+          -keyout /etc/dovecot/domains/{{ domain_name }}/key.pem
+          -subj '{{ subject }}'
+        creates: /etc/dovecot/domains/{{ domain_name }}/cert.pem
+      vars:
+        subject: |-
+          /CN=imap.{{ domain_name }}
+          {%- if domain_country is defined %}
+          /C={{ domain_country }}
+          {%- endif %}
+          {%- if domain_state is defined %}
+          /ST={{ domain_state }}
+          {%- endif %}
+          {%- if domain_locality is defined %}
+          /L={{ domain_locality }}
+          {%- endif %}
+          {%- if domain_organisation is defined %}
+          /O={{ domain_organisation }}
+          {%- endif %}
+          {%- if domain_organisation_unit is defined %}
+          /OU={{ domain_organisation_unit }}
+          {%- endif %}
+      when: not mail_uses_ca
+
+  become: yes

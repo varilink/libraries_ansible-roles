@@ -1,0 +1,20 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/domain.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# Add the domain to the Dovecot service's configuration
+- ansible.builtin.import_tasks: domain/dovecot.yml
+
+# Add the domain to the Exim service's configuration
+- ansible.builtin.import_tasks: domain/exim.yml
+
+# Create mail accounts for the domain users
+- ansible.builtin.include_role:
+    name: mail
+    tasks_from: user
+    handlers_from: none
+  loop: "{{ domain_users }}"
+  loop_control:
+    loop_var: user
