@@ -1,9 +1,31 @@
-- name: Enable DNS API role
-  become: yes
-  block:
+# dns_api/tasks/main.yml
 
-    - name: Template out the dns-linode-credentials.ini file
-      ansible.builtin.template:
-        src: dns-linode-credentials.ini.j2
-        dest: /usr/local/etc/dns-linode-credentials.ini
-        mode: 0600
+---
+
+# ------------------------------------------------------------------------------
+# Deploy the file that provide DNS Linode API credentials that are used by both
+# the dynamic_dns and the mail_certificates roles.
+# ------------------------------------------------------------------------------
+
+- block:
+
+  - name: >-
+      Template out the dns-linode-credentials.ini file if dns_linode_key is
+      defined
+    ansible.builtin.template:
+      src: dns-linode-credentials.ini.j2
+      dest: /usr/local/etc/dns-linode-credentials.ini
+      mode: 0600
+    # This role can be used without the dns_linode_key defined, so that we can
+    # test it insofar as is possible without enabling the Linode integration.
+    when: dns_linode_key is defined
+
+  - name: >-
+      Remove the dns-linode-credentials.ini file if dns_linode_key is not
+      defined
+    ansible.builtin.file:
+      path: /usr/local/etc/dns-linode-credentials.ini
+      state: absent
+    when: dns_linode_key is not defined
+
+  become: yes
