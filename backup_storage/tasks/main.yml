@@ -1,54 +1,9 @@
-- name: Deploy the backup storage role
-  become: yes
-  block:
+# ------------------------------------------------------------------------------
+# backup_storage/tasks/main.yml
+# ------------------------------------------------------------------------------
 
-    # We operate the storage daemon currently on Debian buster. Since we have
-    # backup clients in our server estate running on Debian bullseye, we must
-    # install the storage daemon from buster-backports.
-    - name: Add buster backports to the sources list
-      ansible.builtin.blockinfile:
-        path: /etc/apt/sources.list
-        block: |
-          # buster-backports
-          deb http://deb.debian.org/debian buster-backports main
+---
 
-    - name: Update the APT cache
-      ansible.builtin.apt:
-        update_cache: yes
+- ansible.builtin.import_tasks: install.yml
 
-    - name: Install apt package(s) required for the backup storage role
-      ansible.builtin.apt:
-        name:
-          - bacula-bscan
-          - bacula-common-mysql
-          - bacula-sd
-        install_recommends: no
-        default_release: buster-backports
-
-    - name: Create folder for storage archive
-      ansible.builtin.file:
-        group: bacula
-        owner: bacula
-        path: "{{ backup_archive_media_directory }}"
-        state: directory
-
-    - name: Template out the bacula-sd.conf for the backup server
-      ansible.builtin.template:
-        src: "templates/bacula-sd.conf.j2"
-        dest: /etc/bacula/bacula-sd.conf
-        mode: '0640'
-        owner: root
-        group: bacula
-      notify: bacula storage daemon configuration changed
-
-    - name: Deploy check-storage-dropbox-status.sh script
-      ansible.builtin.template:
-        src: check-storage-dropbox-status.sh.j2
-        dest: /etc/bacula/scripts/check-storage-dropbox-status.sh
-        owner: root
-        group: root
-        mode: u=rwx,g=rx,o=rx
-
-    - name: Install and setup Dropbox for backup use
-      ansible.builtin.import_role:
-        name: backup_dropbox
+- ansible.builtin.import_tasks: configure.yml

@@ -42,6 +42,7 @@ Device {
   AlwaysOpen = no
 }
 
+{% if backup_linked_to_dropbox %}
 Device {
   Name = FileStorageCopy
   Media Type = File
@@ -52,6 +53,7 @@ Device {
   RemovableMedia = no;
   AlwaysOpen = no;
 }
+{% endif %}
 
 Messages {
   Name = Standard

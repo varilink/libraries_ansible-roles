@@ -1,0 +1,30 @@
+# ------------------------------------------------------------------------------
+# backup_storage/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Create the directory for our backup storage archive
+      ansible.builtin.file:
+        group: bacula
+        owner: bacula
+        path: "{{ backup_archive_media_directory }}"
+        state: directory
+
+    - name: Template out the bacula-sd.conf for the backup storage daemon
+      ansible.builtin.template:
+        src: "templates/bacula-sd.conf.j2"
+        dest: /etc/bacula/bacula-sd.conf
+        mode: '0640'
+        owner: root
+        group: bacula
+      notify: Bacula storage daemon configuration changed
+
+    - name: Give members of the bacula group access to the bacula home folder
+      ansible.builtin.file:
+        path: /var/lib/bacula
+        mode: u=rwx,g=rx,o=
+
+  become: yes

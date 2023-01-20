@@ -1,0 +1,13 @@
+# ------------------------------------------------------------------------------
+# backup_storage/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# We use "Media Type" of "File" for our archive media. This is the directory
+# where by default the bacula storage daemon will write the archive files. 
+backup_archive_media_directory: /var/local/bacula
+
+# Whether or not to enable integration with Dropbox for copying backups of
+# on-site hosts to for disaster recovery purposes.
+backup_linked_to_dropbox: false
