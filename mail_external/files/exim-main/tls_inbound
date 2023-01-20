@@ -31,12 +31,14 @@ MAIN_TLS_CERTIFICATE =\
       ${if exists {/etc/letsencrypt/live/${substr_5:$tls_sni}/}\
         {/etc/letsencrypt/live/${substr_5:$tls_sni}/cert.pem}\
         {\
-          ${if exists {/usr/local/etc/certs/${substr_5:$tls_sni}/}\
-            {/usr/local/etc/certs/${substr_5:$tls_sni}/cert.pem}\
+          ${if exists {/etc/exim4/domains/${substr_5:$tls_sni}/}\
+            {/etc/exim4/domains/${substr_5:$tls_sni}/cert.pem}\
+            {/etc/exim4/exim.crt}\
           }\
         }\
       }\
     }\
+    {/etc/exim4/exim.crt}\
   }
 
 MAIN_TLS_PRIVATEKEY =\
@@ -45,10 +47,12 @@ MAIN_TLS_PRIVATEKEY =\
       ${if exists {/etc/letsencrypt/live/${substr_5:$tls_sni}/}\
         {/etc/letsencrypt/live/${substr_5:$tls_sni}/privkey.pem}\
         {\
-          ${if exists {/usr/local/etc/certs/${substr_5:$tls_sni}/}\
-            {/usr/local/etc/certs/${substr_5:$tls_sni}/key.pem}\
+          ${if exists {/etc/exim4/domains/${substr_5:$tls_sni}/}\
+            {/etc/exim4/domains/${substr_5:$tls_sni}/key.pem}\
+            {/etc/exim4/exim.key}\
           }\
         }\
       }\
     }\
+    {/etc/exim4/exim.key}\
   }

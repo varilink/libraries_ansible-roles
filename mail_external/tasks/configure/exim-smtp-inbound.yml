@@ -1,0 +1,91 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure/exim-smtp-inbound.yml
+# ------------------------------------------------------------------------------
+
+# Tasks that configure Exim for the mail_external role, specifically for inbound
+# SMTP connections. A separate task list contains the tasks that are specific to
+# outbound SMTP connections.
+
+---
+
+- block:
+
+    - name: >-
+        Copy the Exim configuration file that enables TLS for SMTP inbound
+        connections
+      # Enables TLS and defines port 465 as a TLS on connect port. Create macros
+      # to find cert.pem and key.pem files for the domain identified on connect
+      # using Server Name Identification (SNI).
+      ansible.builtin.copy:
+        src: exim-main/tls_inbound
+        dest: /etc/exim4/conf.d/main/00_exim4-config_tls_inbound
+      notify:
+        - Exim configuration changed
+
+    - name: Add TLS_ON_CONNECT_PORTS section to Exim's main config tlsoptions
+      # Actions the TLS on connect port defined in the previous task.
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/conf.d/main/03_exim4-config_tlsoptions
+        insertafter: '^\.ifdef MAIN_TLS_ENABLE$'
+        block: |-
+          .ifdef TLS_ON_CONNECT_PORTS
+            tls_on_connect_ports = TLS_ON_CONNECT_PORTS
+          .endif
+      notify:
+        - Exim configuration changed
+
+    - name: Generate generic, fallback, self-signed certificate and key files
+      # The file that was deployed by the first task in this list defines two
+      # macros, MAIN_TLS_CERTIFICATE and MAIN_TLS_PRIVATE_KEY. These use the
+      # tls_sni variable to determine the domain name of a connection request,
+      # check that smtp certificate and key files are present for that domain
+      # and return to paths to those files.
+
+      # If these macros fail to find domain specific certificate and key files,
+      # either because tls_sni isn't defined or the files aren't present, then
+      # they return the paths /etc/exim4/exim.crt and /etc/exim4/exim.key
+      # instead. So, here we create fallback certficiate and key files at those
+      # paths. Note that we use our home domain to assign the common name.
+
+      # The openssl req options here are modelled on the exim-gencert command,
+      # which in Debian is located at:
+      # /usr/share/doc/exim4-base/examples/exim-gencert
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -x509 -newkey rsa:2048 -days 1095 -nodes
+          -out /etc/exim4/exim.crt
+          -keyout /etc/exim4/exim.key
+          -subj '/CN={{ inventory_hostname }}'
+        creates: /etc/exim4/exim.crt
+
+    - name: Modify the group and group permissions of the Exim key file
+      ansible.builtin.file:
+        path: /etc/exim4/exim.key
+        group: Debian-exim
+        mode: g+r
+
+    - name: Insert auth-client unix listener in the Dovecot auth service section
+      # This provides the Dovecot authentication socket that Exim accesses to
+      # delegate its authentication for inbound SMTP connections to Dovecot.
+      ansible.builtin.blockinfile:
+        path: /etc/dovecot/conf.d/10-master.conf
+        insertafter: '^service auth {$'
+        block: |-2
+            unix_listener auth-client {
+              user = Debian-exim
+              mode = 0600
+            }
+        marker: "  # {mark} ANSIBLE MANAGED AUTH CLIENT BLOCK"
+      notify: Dovecot configuration changed
+
+    - name: >-
+        Install our required Exim server side authenticators which delegate the
+        authentication to Dovecot
+      # See the the file that is the source for the copy for more information.
+      ansible.builtin.copy:
+        src: exim-auth/server_side
+        dest: /etc/exim4/conf.d/auth/10_exim4-config_server_side
+      notify:
+        - Exim configuration changed
+
+  become: yes

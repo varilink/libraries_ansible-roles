@@ -1,0 +1,20 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/cert-deploy-key.yml
+# ------------------------------------------------------------------------------
+
+# The host of the mail_certificates role must be able to synchronise its
+# repository of certificates to the host of this role. When Ansible generated
+# SSH keys for the mail_certificates role, it copied the public key as
+# files/id_rsa.pub within this role. So, we need to add that key to authorised
+# keys on the current host.
+
+---
+
+- name: >-
+    Authorize public key of the host of the mail_certificates role for SSH
+    connection to this role
+  ansible.builtin.lineinfile:
+    path: ~/.ssh/authorized_keys
+    line: "{{ lookup('file', 'files/id_rsa.pub') }}"
+    # Create ~/.ssh/authorized_keys if it doesn't already exist.
+    create: yes

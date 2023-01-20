@@ -1,0 +1,130 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure/local-delivery.yml
+# ------------------------------------------------------------------------------
+
+# This task list configures both Dovecot and Exim for delivery of emails to
+# "local" users, which in this context means specifically virtual mail users on
+# the current host. Local delivery to operating system users on the current host
+# happens without any of this additional configuration being required. We use
+# the LMTP protocol to integrate Dovecot and Exim for the purposes of local mail
+# delivery.
+
+# TODO: Look into the benefit of using the Dovecot ManageSieve server.
+
+---
+
+- block:
+
+    - name: Copy the "dovecot" Exim router
+      # Exim router to deliver mail to local Dovecot virtual mail users.
+      ansible.builtin.copy:
+        src: exim-router/dovecot
+        dest: /etc/exim4/conf.d/router/320_exim4-config_dovecot
+      notify: Exim configuration changed
+
+    - name: Copy the "dovecot_lmtp" Exim transport
+      # Exim transport to deliver mail to local Dovecot virtual mail users.
+      ansible.builtin.copy:
+        src: exim-transport/dovecot_lmtp
+        dest: /etc/exim4/conf.d/transport/30_exim4-config_dovecot_lmtp
+      notify: Exim configuration changed
+
+    - name: Create vmail user whose home directory holds virtual user mailboxes
+      # Since the virtual mail users do not have operating system accounts, we
+      # store their emails within a special "vmail" operating system user.
+      ansible.builtin.user:
+        name: vmail
+        shell: /usr/sbin/nologin
+
+    - name: Fix ownership of home directory created in previous task
+      # TODO: Investigate whether this can be achieved as part of the previous
+      # task.
+      ansible.builtin.file:
+        path: /home/vmail
+        owner: vmail
+        group: vmail
+
+    - name: Determine if /etc/dovecot/users exists
+      # We use /etc/dovecot/users to hold Dovecot authentication details for the
+      # virtual mail users.
+      ansible.builtin.stat:
+        path: /etc/dovecot/users
+      register: users_file
+
+    - name: Create users file to hold authentication details for virtual users
+      # See the previous task.
+      ansible.builtin.file:
+        path: /etc/dovecot/users
+        state: touch
+        owner: root
+        group: dovecot
+        mode: u=rw,g=r,o=
+      when: not users_file.stat.exists
+
+    - name: "\
+        Put Ansible managed block markers around the lmtp unix listener config"
+      # We need modify the "unix_listener lmtp" configuration. To do this I
+      # first put Ansible managed block delimiters around the configuration as
+      # it is on install.
+
+      # TODO: Simplify the approach here. I think I could use lineinfile with
+      # regexp, insertafter and firstmatch to achieve the same result in a
+      # simpler way. Levaving this mechanism in for now as it is working.
+      ansible.builtin.replace:
+        path: /etc/dovecot/conf.d/10-master.conf
+        # Matches these lines in the file with whitespace flexibility built in:
+        #   unix_listener lmtp {
+        #     #mode = 0666
+        #   }
+        # but NOT if immediately followed by the '# END' block marker to ensure
+        # idempotency.
+        regexp: "\
+          (^\\s*unix_listener\\s+lmtp\\s+{[^\\S\n]*\n\
+          \\s*#mode\\s*=\\s*0666[^\\S\n]*\n\
+          \\s*}[^\\S\n]*$)\
+          (?!# END)\
+          "
+        replace: |-2
+            # BEGIN ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+          \1
+            # END ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK
+      notify: Dovecot configuration changed
+
+    - name: Set the required mode and user for the lmtp unix listener
+      # See the previous task.
+      ansible.builtin.blockinfile:
+        path: /etc/dovecot/conf.d/10-master.conf
+        block: |-2
+            unix_listener lmtp {
+              user = Debian-exim
+              mode = 0666
+            }
+        marker: "  # {mark} ANSIBLE MANAGED LMTP UNIX LISTENER BLOCK"
+      notify: Dovecot configuration changed
+
+    - name: Enable Dovecot's passwdfile auth mechanism
+      # We will use this to authentication Dovecot virtual users.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        line: "!include auth-passwdfile.conf.ext"
+        regexp: '^#?!include auth-passwdfile\.conf\.ext$'
+      notify: Dovecot configuration changed
+
+    # - name: Disable Dovecot's system auth mechanism
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/dovecot/conf.d/10-auth.conf
+    #     line: "#!include auth-system.conf.ext"
+    #     regexp: '^#?!include auth-system\.conf\.ext$'
+    #   notify: Dovecot configuration changed
+
+    - name: Set mail_uid and mail_gid to vmail
+      # Set the user and group that Dovecot uses to access mails to match those
+      # associated with the vmail user.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-mail.conf
+        line: "{{ item }} = vmail"
+        regexp: '^#?{{ item }} ='
+      loop: [mail_uid, mail_gid]
+      notify: Dovecot configuration changed
+
+  become: yes

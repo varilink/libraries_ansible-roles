@@ -1,0 +1,26 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+# This role pulls in the mail role as a dependency. The mail role installs the
+# dovecot-imapd and exim4-daemon-light pacakges but this role requires
+# additional/different packages as follows:
+#  - The dovecot-lmtpd package is required so that we can use the sieve mail
+#    plugin to filter spam messages automatically.
+#  - The dovecot-sieve package provides the Dovecot Sieve plugin to provide mail
+#    filtering facilities at the time of final message delivery, which we use to
+#    filter spam.
+#  - The exim4-daemon-heavy package replaces the exim4 package for access to the
+#    Dovecot authentication drivers.
+
+---
+
+- name: Install APT package(s) required by the email external role
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - dovecot-lmtpd
+      - dovecot-sieve
+      - exim4-daemon-heavy
+    install_recommends: no
+  become: yes

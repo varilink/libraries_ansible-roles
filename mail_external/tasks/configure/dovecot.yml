@@ -1,0 +1,98 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure/dovecot.yml
+# ------------------------------------------------------------------------------
+
+# Tasks that configure Dovecot for the mail_external role. Dovecot is installed
+# and configured by the mail role, which is imported to both the mail_external
+# and mail_internal roles. These tasks future configure Dovecot for the specific
+# needs of the mail_external role.
+
+---
+
+- block:
+
+    - name: Enable SSL support
+      # TODO: Look into whether the Dovecot configuration should specify
+      # ssl=required rather than ssl=yes. I think that means that SSL is
+      # insisted upon rather than supported alongside the option of not using
+      # SSL.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-ssl.conf
+        regexp: '^ssl = (?:no|yes)$'
+        line: ssl = yes
+      notify: Dovecot configuration changed
+
+    - name: Create fallback Dovecot certificate and key pair
+      # We will go on to create a certificate and key pair for each domain that
+      # we configure an email service for. We rely on the TLS SNI mechanism to
+      # match connection requests to the domain certificate. Here we create a
+      # "fallback" certificate and key pair that will be used if for any reason
+      # that TLS SNI matching fails; for example because the email client being
+      # used is old and does not support it.
+
+      # The openssl req options here are modelled on the mkcert.sh script,
+      # which in Debian is located at:
+      # /usr/share/dovecot/mkcert.sh
+      # The only difference is that we've set -days to 1095 rather than 365.
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -new -x509 -nodes -days 1095
+          -out /etc/dovecot/dovecot.pem
+          -keyout /etc/dovecot/private/dovecot.pem
+          -subj '/CN={{ inventory_hostname }}'
+        creates: /etc/dovecot/dovecot.pem
+
+    - name: >-
+        Enable the fallback certificate that we just created in the Dovecot
+        configuration
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-ssl.conf
+        line: ssl_cert = </etc/dovecot/dovecot.pem
+        regexp: '^#?ssl_cert = </etc/dovecot/dovecot\.pem$'
+      notify: Dovecot configuration changed
+
+    - name: Enable the key that we just created in the Dovecot configuration
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-ssl.conf
+        line: ssl_key = </etc/dovecot/private/dovecot.pem
+        regexp: '^#?ssl_key = </etc/dovecot/private/dovecot\.pem$'
+      notify: Dovecot configuration changed
+
+    - name: Disable plaintext Dovecot authentication
+      # This disables all plaintext Dovecot authentication unless SSL/TLS is
+      # used for the client connection to Dovecot.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        regexp: '^#?disable_plaintext_auth = yes$'
+        line: disable_plaintext_auth = yes
+      notify: Dovecot configuration changed
+
+    - name: Enable login as an available Dovecot authentication mechanism
+      # By default Dovecot only supports the PLAIN authentication mechanism. The
+      # LOGIN mechanism is obsolete but still used by old Outlook versions and
+      # some Microsoft phones.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        regexp: '^auth_mechanisms = plain'
+        line: auth_mechanisms = plain login
+      notify: Dovecot configuration changed
+
+    - name: Make a folder to hold the Dovecot domain specific configurations
+      # We will create a subdirectory within /etc/dovecot/domains for each
+      # domain that we configure a mail service for whose name is the domain
+      # name; for example /etc/dovecot/domains/example.com.
+      ansible.builtin.file:
+        path: /etc/dovecot/domains
+        state: directory
+
+    - name: Copy the Dovecot local.conf file
+      # This file includes within the Dovecot configuration all files whose
+      # name matches the pattern domains/*/dovecot.conf relative to the
+      # /etc/dovecot directory. We use these files to configure the path for a
+      # cert file and associated key for each domain that we provide a mail
+      # service for.
+      ansible.builtin.copy:
+        src: dovecot-local.conf
+        dest: /etc/dovecot/local.conf
+
+  become: yes

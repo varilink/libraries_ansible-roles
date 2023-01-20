@@ -1,0 +1,54 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure/remote-delivery.yml
+# ------------------------------------------------------------------------------
+
+# Exim configuration for delivery of emails to remote users, meaning that their
+# domain is not one of the domains configured for local delivery on this host.
+# We use an external mail gateway service as a smarthost for this purpose.
+
+---
+
+- block:
+
+    - name: Copy the domain_smarthost Exim router
+      # Exim router that we will use for the external smarthost. We configure
+      # our own because we want to use our custom, associated transport - see
+      # next task.
+      ansible.builtin.copy:
+        src: exim-router/domain_smarthost
+        dest: "\
+          /etc/exim4/conf.d/router/\
+          175_exim4-config_domain_smarthost\
+          "
+      notify:
+        - Exim configuration changed
+
+    - name: Copy the remote_smtp_domain_smarthost Exim transport
+      # Our custom transport for using our external smarthost provider. This
+      # uses a custom passwords file that contains separate credentials for each
+      # sender domain in contrast to the standard smarthost functionality.
+      ansible.builtin.copy:
+        src: exim-transport/remote_smtp_domain_smarthost
+        dest: "\
+          /etc/exim4/conf.d/transport/\
+          30_exim4-config_remote_smtp_smarthost_domain_smarthost\
+          "
+      notify:
+        - Exim configuration changed
+
+    - name: Copy the skeleton domain.password.client file
+      # As described in the previous task, we use our own password client file
+      # that contains a separate entry for each sender domain.
+      ansible.builtin.copy:
+        src: domain.passwd.client
+        dest: /etc/exim4/domain.passwd.client
+        group: Debian-exim
+        mode: '0640'
+        # Don't copy if the destination file already exists. This role copies a
+        # skeleton file. The domain_email role then adds line entries to the
+        # file on a domain-by-domain basis. If we have cause to run this role
+        # again we mustn't overwrite anything that the domain_email role has
+        # added.
+        force: no
+
+  become: yes

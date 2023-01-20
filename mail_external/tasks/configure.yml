@@ -1,0 +1,24 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+# Tasks to configure the mail_external role. These follow the import of the mail
+# role, which contains those aspects that are common to both the mail_external
+# and mail_internal roles, and the install for the mail_external role. Since
+# there are a lot of tasks to configure the mail_external role, they have been
+# broken down into several separate task lists that are imported here. See each
+# of the imported files for comments specific to each of them.
+
+---
+
+- ansible.builtin.import_tasks: configure/cert-deploy-key.yml
+
+- ansible.builtin.import_tasks: configure/dovecot.yml
+
+- ansible.builtin.import_tasks: configure/exim-smtp-inbound.yml
+
+- ansible.builtin.import_tasks: configure/exim-smtp-outbound.yml
+
+- ansible.builtin.import_tasks: configure/local-delivery.yml
+
+- ansible.builtin.import_tasks: configure/remote-delivery.yml
