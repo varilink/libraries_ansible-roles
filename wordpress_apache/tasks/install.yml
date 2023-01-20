@@ -1,0 +1,13 @@
+# ------------------------------------------------------------------------------
+# wordpress_apache/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT package(s) for wordpress_apache role
+  ansible.builtin.apt:
+    name:
+      - apache2
+      - libapache2-mod-php
+    install_recommends: no
+  become: yes

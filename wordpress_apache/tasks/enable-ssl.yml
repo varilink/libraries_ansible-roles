@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# wordpress_apache/tasks/enable-ssl.yml
+# ------------------------------------------------------------------------------
+
 - block:
 
   - name: Configure WordPress to sit behind SSL enabled proxy

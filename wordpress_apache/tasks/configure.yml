@@ -1,0 +1,43 @@
+# ------------------------------------------------------------------------------
+# wordpress_apache/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Disable the default Apache site
+      ansible.builtin.file:
+        path: /etc/apache2/sites-enabled/000-default.conf
+        state: absent
+      notify: Apache2 configuration changed
+
+    - name: Listening on port 8080 on the local interface using http protocol
+      ansible.builtin.lineinfile:
+        path: /etc/apache2/ports.conf
+        line: 'Listen 127.0.0.1:8080 http'
+        regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
+      notify: Apache2 configuration changed
+
+    - name: Enable apache2 rewrite module
+      community.general.apache2_module:
+        name: rewrite
+        state: present
+      notify: Apache2 configuration changed
+
+    # Any host for the wordpress_apache role must also host the backup_client
+    # role. However, the playbook that applies these roles to the host may apply
+    # the backup_client role after the wordpress_apache role, in which case the
+    # /etc/bacula/scripts directory will not yet be in place.
+    - name: Ensure that the /etc/bacula/scripts directory is present
+      ansible.builtin.file:
+        path: /etc/bacula/scripts
+        state: directory
+
+    - name: Install WordPress backup script
+      ansible.builtin.copy:
+        src: wordpress-apache-backup.sh
+        dest: /etc/bacula/scripts/wordpress-apache-backup.sh
+        mode: 0644
+
+  become: yes
