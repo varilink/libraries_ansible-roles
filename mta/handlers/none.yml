@@ -1,0 +1,8 @@
+# ------------------------------------------------------------------------------
+# mta/handlers/none.yml
+# ------------------------------------------------------------------------------
+
+# An empty handlers file that is provided so that this role can be imported
+# without bringing any handlers with it.
+
+---

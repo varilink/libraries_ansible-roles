@@ -1,0 +1,65 @@
+# mta/tasks/configure.yml
+
+# The mta role is a dependency for several other roles. As each of those other
+# roles imports the mta role, they will configure it for their use. For most
+# aspects of the configuration, the settings that
+
+---
+
+- name: Determine the Exim configuration type that is set
+  # This is set to "local" on install of the exim4-daemon-light or
+  # exim4-daemon-heavy package. All roles that need to send or receive emails
+  # import this role that sets it to "satellite". Some roles then change it
+  # themselves to "smarthost" or "internet" depending on their need.
+  ansible.builtin.shell: >-
+    perl -nae'
+      if ( m/^dc_eximconfig_configtype='\''(\w+)'\''$/ ) {
+        print $1;
+      }
+    ' /etc/exim4/update-exim4.conf.conf
+  changed_when: false
+  register: perl_result
+
+- block:
+
+    - name: Template out the Exim4 update-exim4.conf.conf file
+      template:
+        src: update-exim4.conf.conf.j2
+        dest: /etc/exim4/update-exim4.conf.conf
+      notify:
+        - Exim configuration changed
+      # Another role has imported this role and accepted the default config
+      # type of "satellite" that this role sets. However, another role has
+      # already overridden that to either "smarthost" or "internet". We need
+      # that other role to remain in control of the Exim configuration.
+      when: >-
+        not ( mta_configtype == 'satellite' and (
+          perl_result.stdout == 'smarthost' or perl_result.stdout == 'internet'
+        ) )
+
+    - name: Template out the Exim4 mailname file
+      ansible.builtin.template:
+        src: mailname.j2
+        dest: /etc/mailname
+      notify:
+        - Exim configuration changed
+
+    - name: Add line to /etc/exim4/passwd.client if credentials supplied
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/passwd.client
+        line: "\
+          {{ mta_smarthost_hostname }}:\
+          {{ mta_smarthost_username }}:\
+          {{ mta_smarthost_userpass }}\
+          "
+        regex: "^{{ mta_smarthost_hostname }}:"
+      when: mta_smarthost_username is defined
+
+    - name: Redirect emails to root to the home domain admin user
+      ansible.builtin.lineinfile:
+        path: /etc/aliases
+        line: "root: {{ admin_user }}"
+      notify:
+        - Aliases changed
+
+  become: yes

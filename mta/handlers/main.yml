@@ -1,27 +1,14 @@
-# Update the exim configuration and restart the service if any aspect of the
-# exim configuration has been changed.
+# ------------------------------------------------------------------------------
+# mta/handlers/main.yml
+# ------------------------------------------------------------------------------
+
+# The main (default) handler for the mta role. This combines both the "common"
+# handlers that apply whether a service manager such as systemd is present or
+# not and the "service" handlers that only apply if such a service manager is
+# present.
 
 ---
 
-- block:
+- ansible.builtin.import_tasks: ./common.yml
 
-    - name: Determine the status of the exim service
-      ansible.builtin.service_facts:
-      listen: exim configuration changed
-
-    # TODO: Check if this is done automatically by reload/restart
-    - name: Run update-exim4.conf on any change affecting the exim configuration
-      ansible.builtin.command: update-exim4.conf
-      listen: exim configuration changed
-
-    - name: Reload the Exim confirugarion if it is running
-      ansible.builtin.service:
-        name: exim4
-        state: reloaded
-      when: ansible_facts['services']['exim4']['state'] == 'running'
-      listen: exim configuration changed
-
-    - name: Run newaliases
-      ansible.builtin.command: newaliases
-
-  become: yes
+- ansible.builtin.import_tasks: ./service.yml

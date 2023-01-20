@@ -1,49 +1,9 @@
-# Deploy the mail role
+# mta/tasks/main.yml
 
 ---
 
-- block:
+- ansible.builtin.import_tasks:
+    file: install.yml
 
-    - name: Install APT package(s) required by the mta role
-      ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
-        name:
-          # If any role that has a dependency on this role requires the
-          # exim4-daemon-heavy package then it must install it itself. That will
-          # replace the exim4-daemon-light package.
-          - exim4-daemon-light
-
-    - name: Template out the Exim4 update-exim4.conf.conf file
-      template:
-        src: update-exim4.conf.conf.j2
-        dest: /etc/exim4/update-exim4.conf.conf
-      notify:
-        - exim configuration changed
-
-    - name: Template out the Exim4 mailname file
-      ansible.builtin.template:
-        src: mailname.j2
-        dest: /etc/mailname
-      notify:
-        - exim configuration changed
-
-    - name: Add line to /etc/exim4/passwd.client if credentials supplied
-      ansible.builtin.lineinfile:
-        path: /etc/exim4/passwd.client
-        line: "\
-          {{ mta_smarthost_hostname }}:\
-          {{ mta_smarthost_username }}:\
-          {{ mta_smarthost_userpass }}\
-          "
-        regex: "^{{ mta_smarthost_hostname }}:"
-      when: mta_smarthost_username is defined
-
-    - name: Redirect emails to root to the home domain admin user
-      ansible.builtin.lineinfile:
-        path: /etc/aliases
-        line: "root: {{ admin_user }}"
-      notify:
-        - Run newaliases
-
-  become: yes
+- ansible.builtin.import_tasks:
+    file: configure.yml

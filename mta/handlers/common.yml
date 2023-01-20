@@ -1,0 +1,22 @@
+# ------------------------------------------------------------------------------
+# mta/handlers/common.yml
+# ------------------------------------------------------------------------------
+
+# Handlers that apply whether or not a service manager such as systemd is in
+# place. These are separated out so that they may be imported by environments
+# with no service manager without bringing those handlers that require a service
+# manager.
+
+---
+
+- block:
+
+    - name: Run the newaliases command when the aliases have changed
+      ansible.builtin.command: newaliases
+      listen: Aliases changed
+
+    - name: Run update-exim4.conf on any change affecting the Exim configuration
+      ansible.builtin.command: update-exim4.conf
+      listen: Exim configuration changed
+
+  become: yes

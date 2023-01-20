@@ -1,0 +1,35 @@
+# ------------------------------------------------------------------------------
+# mta/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+# This Mail Transport Agent role is imported by any other role that needs to
+# send emails. It installs the exim4-daemon-light package.
+
+# The mail_external and mail_internal roles need the greater capability provided
+# by the exim4-daemon-heavy package and so they install that themselves. When
+# they do, this replaces the exim4-daemon-light package that has already been
+# installed by importing this role.
+
+# On reruns, the mail_external and mail_internal roles again import this role,
+# so this would revert the version of exim installed back to exim4-daemon-light,
+# hence the check to see if exim4-daemon-heavy is installed below.
+
+# TODO: Make this role configurable so that other roles that import it can
+# specify whether they want the exim4-daemon-light or exim4-daemon-heavy package
+# installed and not have to install any exim package themselves.
+
+---
+
+- name: Determine if exim4-daemon-heavy package is installed
+  ansible.builtin.shell: apt list --installed | grep exim4-daemon-heavy
+  register: grep_daemon_heavy
+  failed_when: grep_daemon_heavy.rc != 0 and grep_daemon_heavy.rc != 1
+  changed_when: false
+
+- name: Install APT package(s) required by the mta role
+  ansible.builtin.apt:
+    name:
+      - exim4-daemon-light
+    install_recommends: no
+  become: yes
+  when: grep_daemon_heavy.rc == 1

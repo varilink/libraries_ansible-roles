@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# mta/tasks/service.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Reload the Exim configuration if it is running
+  ansible.builtin.service:
+    name: exim4
+    state: reloaded
+  become: yes
+  listen: Exim configuration changed
