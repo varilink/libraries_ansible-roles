@@ -12,11 +12,6 @@
           - nginx
           - php-fpm
         install_recommends: no
-      notify:
-        - Nginx installed
-        - PHP FPM installed
-
-    - ansible.builtin.meta: flush_handlers
 
     - name: Set Nginx server_names_hash_bucket_size to 64
       ansible.builtin.lineinfile:
@@ -29,6 +24,7 @@
     - name: Get the codename of the Debian release on this host
       ansible.builtin.command: lsb_release --codename --short
       register: lsb_release
+      changed_when: false
 
     - name: Configure upstream php-fpm for Nginx
       ansible.builtin.template:
