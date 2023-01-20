@@ -1,0 +1,45 @@
+# backup_client/tasks/configure.yml
+---
+- block:
+
+    - name: Configure the bacula file daemon
+      ansible.builtin.template:
+        dest: /etc/bacula/bacula-fd.conf
+        group: bacula
+        mode: 0640
+        owner: root
+        src: templates/bacula-fd.conf.j2
+      notify: Bacula file daemon configuration changed
+
+# The backup_client, backup_director and backup_storage roles all create these
+# two folders, with the permissions and user/group ownership as follows:
+# /etc/bacula     drwxr-xr-x root   root
+# /var/lib/bacula drwx------ bacula bacula
+#
+# The first is the location for bacula configuration files. The second is the
+# bacula user's home folder. Though it can be seen that the top-level bacula
+# configuration folder is univesally accessible, the bacula configuration files
+# within that folder are created with the following permissions and user/group
+# ownership:
+# -rw-r----- root bacula
+#
+# The following tasks enable convenient browsing for the admin user of both the
+# bacula configuration files and whatever files are written by bacula to its
+# its home direcotry, without having to sudo, via membership of the bacula
+# user's primary group.
+#
+# Since the backup director and the backup storage hosts are also backup
+# clients, this is enabled for all three roles via the backup client role.
+
+    - name: Make the admin user a member of the bacula group
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        groups: [bacula]
+        append: yes
+
+    - name: Give members of the bacula group access to the bacula home folder
+      ansible.builtin.file:
+        path: /var/lib/bacula
+        mode: u=rwx,g=rx,o=
+
+  become: yes

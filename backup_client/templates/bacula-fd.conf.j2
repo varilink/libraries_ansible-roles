@@ -12,8 +12,7 @@ Director {
 }
 
 #
-# Restricted Director, used by tray-monitor to get the
-#   status of the file daemon
+# Restricted Director, used by tray-monitor to get the status of the file daemon
 #
 Director {
   Name = {{ backup_monitor_name }}
@@ -25,7 +24,7 @@ Director {
 # "Global" File daemon configuration specifications
 #
 FileDaemon {                          # this is me
-  Name = {{ inventory_hostname }}-fd
+  Name = {{ inventory_hostname }}
   FDport = 9102                  # where we listen for the director
   WorkingDirectory = /var/lib/bacula
   Pid Directory = /run/bacula

@@ -1,15 +1,8 @@
-# Restart the bacula file daemon to reflect a change to its configuration.
-# Note that setting a status of reloaded does not appear to work for this
-# service. However, restarting it is no issue as it doesn't result in any loss
-# of service to customers.
-- name: Populate service facts
-  service_facts:
-  listen: "Restart bacula file daemon"
-
-- name: Restart bacula file daemon if it is running
-  become: yes
-  service:
+# backup_client/handlers/main.yml
+---
+- name: Reload Bacula file daemon configuration
+  ansible.builtin.service:
     name: bacula-fd
-    state: restarted
-  when: ansible_facts['services']['bacula-fd']['state'] == 'running'
-  listen: "Restart bacula file daemon"
+    state: reloaded
+  listen: Bacula file daemon configuration changed
+  become: yes
