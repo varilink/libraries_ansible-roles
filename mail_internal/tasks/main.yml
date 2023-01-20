@@ -1,37 +1,10 @@
-# Deploy the mail internal role
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/main.yml
+# ------------------------------------------------------------------------------
 
 ---
 
-- block:
+- ansible.builtin.import_role:
+    name: mail
 
-    - name: Trust the IMAP connections from clients on the office network
-      # Where we have users on clients on the office network we choose to trust
-      # this client connections without authentication.
-      ansible.builtin.lineinfile:
-        path: /etc/dovecot/dovecot.conf
-        regexp: '^#?login_trusted_networks ='
-        line: login_trusted_networks = {{ office_subnet }}
-      notify:
-        - dovecot configuration changed
-
-    - name: Copy the Exim localmacros file
-      # The Exim localmacros file sets values that tweak our Exim configuration
-      # to our exact needs.
-      ansible.builtin.copy:
-        src: exim-localmacros
-        dest: /etc/exim4/exim4.conf.localmacros
-      notify:
-        - exim configuration changed
-
-    - name: Add REQUIRE_PROTOCOL section to config template
-      ansible.builtin.blockinfile:
-        path: /etc/exim4/exim4.conf.template
-        insertbefore: '^\.ifdef REMOTE_SMTP_HEADERS_REWRITE$'
-        block: |-
-          .ifdef REQUIRE_PROTOCOL
-            protocol = REQUIRE_PROTOCOL
-          .endif
-      notify:
-        - exim configuration changed
-
-  become: yes
+- ansible.builtin.import_tasks: configure.yml

@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT package(s) required by the mail_internal role
+  # The host for the mail_internal role uses fetchmail to fetch emails for the
+  # home domain from the host for the mail_external server.
+  ansible.builtin.apt:
+    name:
+      - fetchmail
+    install_recommends: no
+  become: yes

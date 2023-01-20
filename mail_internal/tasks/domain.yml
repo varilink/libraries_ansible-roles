@@ -1,0 +1,29 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/domain.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- ansible.builtin.import_role:
+    name: mail
+    tasks_from: domain
+
+- block:
+
+    - name: Deploy fetchmailrc file
+      ansible.builtin.template:
+        src: fetchmailrc.j2
+        dest: /etc/fetchmailrc
+        owner: fetchmail
+        mode: 0600
+      vars:
+        target_host: |-
+          {% for host, roles in hosts_to_roles_map.items() %}
+          {% if 'mail_external' in roles %}
+          {{ host }}
+          {%- endif %}
+          {% endfor %}
+        users: "{{ domain_users }}"
+      notify: Fetchmail configuration changed
+
+  become: yes
