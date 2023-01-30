@@ -1,0 +1,31 @@
+# ------------------------------------------------------------------------------
+# mail_certificates/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Create an ACME account
+      ansible.builtin.command:
+        cmd: certbot register --agree-tos --email {{ admin_user_email }}
+        creates: /etc/letsencrypt/accounts
+      when: mail_uses_ca
+
+    - name: Create folder for self-signed certificates
+      ansible.builtin.file:
+        path: /usr/local/etc/certs
+        state: directory
+
+  become: yes
+
+- name: Generate keys for copying certificates to external mail server host
+  ansible.builtin.command:
+    cmd: ssh-keygen -f ~/.ssh/id_rsa -N ""
+    creates: ~/.ssh/id_rsa
+
+- name: Fetch the id_rsa.pub file
+  ansible.builtin.fetch:
+    src: ~/.ssh/id_rsa.pub
+    dest: "{{ role_path }}/../mail_external/files/id_rsa.pub"
+    flat: yes

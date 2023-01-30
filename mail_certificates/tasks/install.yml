@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------
+# mail_certificates/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT packages used by the mail certificates role
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - cron
+      - python3-certbot-dns-linode
+    install_recommends: no
+  become: yes
