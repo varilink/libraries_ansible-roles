@@ -12,7 +12,7 @@
 
   - name: Report the current status of the Dropbox daemon
     ansible.builtin.debug:
-      msg: Dropbox status={{ dropbox_daemon_status.stdout }}
+      var: dropbox_daemon_status.stdout_lines
 
   - name: Start Dropbox daemon and wait a little
     ansible.builtin.shell: |-
