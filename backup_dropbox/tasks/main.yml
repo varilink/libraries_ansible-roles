@@ -42,7 +42,4 @@
       group: bacula
       mode: 0755
 
-  - name: Configure Dropbox to autostart at login
-    ansible.builtin.shell: gosu bacula bash -c '~/dropbox.py autostart y'
-
   become: yes
