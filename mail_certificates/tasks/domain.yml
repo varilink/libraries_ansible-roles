@@ -1,96 +1,21 @@
-- name: Generate domain mail certificates
-  block:
+# ------------------------------------------------------------------------------
+# mail_certificates/tasks/domain.yml
+# ------------------------------------------------------------------------------
 
-    - name: Self-signed
-      block:
+# If a domain is using a certification authority for its certificates then
+# obtain one using Let's Encrypt and its DNS validation method.
 
-        - name: Create domain folder to hold certificates
-          ansible.builtin.file:
-            path: /usr/local/etc/certs/{{ domain_name }}
-            state: directory
+---
 
-        - name: Generate self-signed certificate
-          ansible.builtin.shell:
-            cmd: >-
-              openssl req -x509
-              -newkey rsa:4096
-              -keyout /usr/local/etc/certs/{{ domain_name }}/key.pem
-              -out /usr/local/etc/certs/{{ domain_name }}/cert.pem
-              -sha256
-              -days 365
-              -subj '/CN={{ domain_name }}'
-              -addext 'subjectAltName =
-              DNS:imap.{{ domain_name }},
-              DNS:smtp.{{ domain_name }}'
-              -nodes
-              && chgrp Debian-exim
-              /usr/local/etc/certs/{{ domain_name }}/key.pem
-              && chmod g+r
-              /usr/local/etc/certs/{{ domain_name }}/key.pem
-            creates: /usr/local/etc/certs/{{ domain_name }}/cert.pem
-
-        # TODO: Automate the derivation of the target host
-        # TODO: Make it work with the server identity checks for live deployment
-        - name: Test if we can reach the target for certificate deployment
-          ansible.builtin.command: >-
-            ssh -q
-            -i /home/{{ ansible_user }}/.ssh/id_rsa
-            -o StrictHostKeyChecking=no
-            -o UserKnownHostsFile=/dev/null
-            -o LogLevel=QUIET
-            {{ ansible_user }}@{{ target_host }}
-            exit
-          register: ssh_test
-          ignore_errors: yes
-          vars:
-            # To derive the target host we load the playbook, filter on the play
-            # that contains the role 'mail_external' and use the single host
-            # (there will be only one) that is targetted by that play.
-            target_host: >-
-              {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
-              | community.general.json_query(
-                "[?contains(roles,'mail_external')].hosts|[0]"
-              ) }}
-
-        - name: Deploy certificates to external mail host
-          ansible.builtin.command: >-
-            rsync --recursive --group --log-file=/var/log/rsync
-            --rsh='ssh -i /home/{{ ansible_user }}/.ssh/id_rsa
-            -o StrictHostKeyChecking=no
-            -o UserKnownHostsFile=/dev/null
-            -o LogLevel=QUIET'
-            --rsync-path='sudo rsync'
-            /usr/local/etc/certs
-            {{ ansible_user }}@{{ target_host }}:/usr/local/etc
-          vars:
-            # To derive the target host we load the playbook, filter on the play
-            # that contains the role 'mail_external' and use the single host
-            # (there will be only one) that is targetted by that play.
-            target_host: >-
-              {{ ( lookup('file', playbook_dir + '/hosts.yml') | from_yaml )
-              | community.general.json_query(
-                "[?contains(roles,'mail_external')].hosts|[0]"
-              ) }}
-          when: ssh_test.rc == 0
-
-      when: not mail_uses_ca
-
-    - name: Certification authority
-      block:
-
-        - name: Obtain certificates that the mail service requires
-          ansible.builtin.command:
-            cmd: >-
-              /usr/bin/certbot certonly
-              --non-interactive
-              --dns-linode
-              --dns-linode-credentials /usr/local/etc/dns-linode-credentials.ini
-              --domain imap.{{ domain_name }}
-              --domain smtp.{{ domain_name }}
-            creates: /etc/letsencrypt/live/{{ domain_name }}
-
-        # TODO: Add initial deployment and putting in place of renewal hook
-
-      when: mail_uses_ca
-
+- name: Obtain certificates that the mail service requires
+  ansible.builtin.command:
+    cmd: >-
+      /usr/bin/certbot certonly
+      --non-interactive
+      --dns-linode
+      --dns-linode-credentials /usr/local/etc/dns-linode-credentials.ini
+      --domain imap.{{ domain_name }}
+      --domain smtp.{{ domain_name }}
+    creates: /etc/letsencrypt/live/{{ domain_name }}
   become: yes
+  when: mail_uses_ca
