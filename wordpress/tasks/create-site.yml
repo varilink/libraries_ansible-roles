@@ -67,11 +67,11 @@
       ansible.builtin.shell: >-
         wp --path={{ wordpress_site_path }}
         core is-installed
-      # This task never changes anything.
-      changed_when: False
-      # If WordPress isn't installed then the exit status is 1 (error).
-      ignore_errors: True
       register: wp_installed
+      # This task never changes anything.
+      changed_when: false
+      # If WordPress is installed, rc=0, if it isn't rc=1.
+      failed_when: wp_installed.rc !=0 and wp_installed.rc != 1
 
     - name: Install WordPress
       ansible.builtin.command: >-
