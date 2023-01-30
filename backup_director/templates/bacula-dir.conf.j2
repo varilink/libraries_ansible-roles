@@ -60,8 +60,20 @@ Job {
   Name = {{ hostname }}
   JobDefs = BackupJob
   Client = {{ hostname }}
+{% if backup_linked_to_dropbox %}
+{#
+We have integration with Dropbox enabled. Copy bootstrap files directly to
+Dropbox so that they are held offsite for disaster recovery purposes.
+#}
   Write Bootstrap = "/var/lib/bacula/Dropbox/
   {{- backup_copy_folder }}/Bootstrap/%n.bsr"
+{% else %}
+{#
+We don't have integration with Dropbox enabled and so we must write bootstrap
+files locally to the backup director's host.
+#}
+  Write Bootstrap = "/var/lib/bacula/Bootstrap/%n.bsr"
+{% endif %}
 {#-
 Use a FileSet that is specific to each server to be backed up and is in fact
 derived from the Ansible roles that are deployed to each server.
