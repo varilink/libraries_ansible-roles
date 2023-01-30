@@ -20,6 +20,25 @@
       sleep 60
     when: dropbox_daemon_status.stdout == "Dropbox isn't running!"
 
+  - name: Wait until new directories are no longer being created in ~/Dropbox
+    ansible.builtin.shell: |-
+      touch /tmp/now
+      sleep 10
+      find ~bacula/Dropbox -maxdepth 1 -type d -cnewer /tmp/now
+    args:
+      # Ansible warns about using the touch command in a shell rather than using
+      # the file module with a state of touch. However what we do here is
+      # legitimate because of the need to delay after the touch before the find
+      # command is executed.
+      warn: false
+    changed_when: false
+    register: find_result
+    until: not find_result.stdout
+    retries: 5
+    # In this case the "delay" is built into the shell commands using the sleep
+    # command and has to be in this use case.
+    delay: 0
+
   - name: Find what we need to exclude
     ansible.builtin.find:
       paths: ~bacula/Dropbox/
