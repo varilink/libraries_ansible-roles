@@ -4,18 +4,15 @@
 
 ---
 
-- block:
-
-    - name: Deploy check-storage-dropbox-status.sh script
-      ansible.builtin.template:
-        src: check-storage-dropbox-status.sh.j2
-        dest: /etc/bacula/scripts/check-storage-dropbox-status.sh
-        owner: root
-        group: root
-        mode: u=rwx,g=rx,o=rx
-
-    - name: Install and setup Dropbox for backup use
-      ansible.builtin.import_role:
-        name: backup_dropbox
-
+- name: Deploy check-storage-dropbox-status.sh script
+  ansible.builtin.template:
+    src: check-storage-dropbox-status.sh.j2
+    dest: /etc/bacula/scripts/check-storage-dropbox-status.sh
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
   become: yes
+
+- ansible.builtin.import_role:
+    name: backup_dropbox
+
