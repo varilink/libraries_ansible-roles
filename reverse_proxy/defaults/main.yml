@@ -1,2 +1,6 @@
-host_uses_ssl: true
-wordpress_site_uses_ssl: "{{ host_uses_ssl }}"
+host_enabled_for_ssl: yes
+wordpress_site_uses_ssl: "{{ host_enabled_for_ssl }}"
+wordpress_site_uses_ca: "\
+  {% if wordpress_site_uses_ssl %}\
+  {{ yes }}
+  {% endif %}"

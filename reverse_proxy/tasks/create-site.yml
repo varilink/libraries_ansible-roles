@@ -17,7 +17,7 @@
     msg: >-
       Invalid request to install a WordPress site that uses SSL via a reverse
       proxy that does not support SSL
-  when: wordpress_site_uses_ssl and not host_uses_ssl
+  when: wordpress_site_uses_ssl and not host_enabled_for_ssl
 
 - name: >-
     If WordPress site uses SSL then see if a certbot SSL certificate is already

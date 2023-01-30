@@ -3,7 +3,10 @@
 # ------------------------------------------------------------------------------
 
 ---
-# By default use Let's Encrypt as a certification authority for all certificates
-# used for IMAP and SMTP connections to the external mail server. If this is
-# overridden to false, this role will fall back on self-signed certificates.
-mail_uses_ca: true
+
+# Mail uses Certification Authority (CA). By default use self-signed
+# certificates for domains configured on the mail service. If this is set to
+# yes then we use Let's Encrypt as a certification authority instead. This
+# requires integration with the Linode domain zone management system so that
+# Let's Encrypt can validate certificate requests.
+mail_uses_ca: no
