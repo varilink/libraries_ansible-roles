@@ -16,14 +16,82 @@
 
     - block:
 
-        # We are adding a user for our home domain so we add the user as an
+        - block:
+
+            # We are adding a user for our home domain so we add the user as an
             # operating system user rather than a Dovecot virtual user. This
             # will also update the user's password if it has changed.
 
-        - name: Create operating system user account
-          ansible.builtin.user:
-            name: "{{ user.fname }}"
-            password: "{{ user.password }}"
+            - name: >-
+                Get the content of the /etc/shadow file that contains user
+                passwords
+              ansible.builtin.slurp:
+                src: /etc/shadow
+              register: shadow_file
+
+            - name: >-
+                Set variable to the user record in the shadow file if it is
+                found
+              ansible.builtin.set_fact:
+                shadow_file_user_rec: >-
+                  {{ shadow_file.content | b64decode | regex_search(
+                  '^' + user.fname + '.*$', multiline=True) }}
+
+            - block:
+
+                - name: Set variable containing in the existing md5 hash
+                  ansible.builtin.set_fact:
+                    existing_md5_hash: >-
+                      {{ shadow_file_user_rec | regex_search('^' + user.fname
+                      + ':(\$1\$.{8}\$.{22}):', '\1') | first }}
+
+                - name: >-
+                    Generate md5 hash of the configured password for the user
+                    using the same salt in the existing md5 hash
+                  ansible.builtin.command: |-
+                    mkpasswd --method=md5 '{{ user.password }}' '{{ salt }}'
+                  changed_when: false
+                  register: mkpasswd_result
+                  vars:
+                    salt: >-
+                      {{ existing_md5_hash | regex_search('^\$1\$(.{8})',
+                      '\1') | first }}
+
+                - name: >-
+                    Set variable indicating if the user password has changed or
+                    not
+                  ansible.builtin.set_fact:
+                    password_has_changed: |-
+                      {% if mkpasswd_result.stdout == existing_md5_hash %}
+                      false
+                      {%- else %}
+                      true
+                      {%- endif %}
+
+              when: shadow_file_user_rec
+              # The user was found in the /etc/shadow file
+
+            - block:
+
+                - name: >-
+                    Generate hash of the configured password for the user
+                    using a randomly generated salt
+                  ansible.builtin.command: |-
+                    mkpasswd --method=md5 '{{ user.password }}'
+                  changed_when: false
+                  register: mkpasswd_result
+              
+                - name: >-
+                    Create operating system user account or change the password
+                    of an existing user
+                  ansible.builtin.user:
+                    name: "{{ user.fname }}"
+                    password: "{{ mkpasswd_result.stdout }}"
+
+              when: not shadow_file_user_rec or password_has_changed
+              # The user was not found in the /etc/shadow file or their password
+              # has been changed.
+
           when: user.fname != admin_user
           
 
