@@ -12,8 +12,8 @@ if [[ $status == 'Up to date' ]]; then
   exit 0
 else
   # Send an email for any status other than 'Up to date'
-  /usr/sbin/exim4 -v {{ admin_user }}@{{ home_domain }} << EOM
-To: {{ admin_user }}@{{ home_domain }}
+  /usr/sbin/exim4 -v {{ admin_user_email }} << EOM
+To: {{ admin_user_email }}
 From: bacula@{{ home_domain }}
 Subject: Dropbox status on the backup storage host
 I have detected that the status of the Dropbox service on the backup storage host is NOT 'Up to date'. It is instead reported as:
