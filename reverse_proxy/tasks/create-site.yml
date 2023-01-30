@@ -9,7 +9,7 @@
 
 - name: Fail if WordPress site uses SSL but reverse proxy does not support SSL
   # A reverse proxy can be configured to support SSL or not via the
-  # host_uses_ssl variable. A WordPress site can be configured to use SSL or not
+  # host_enabled_for_ssl variable. A WordPress site can be configured to use SSL or not
   # via the wordpress_site_uses_ssl variable. If a WordPress site is configured
   # to use SSL via a reverse proxy that is not configured to support SSL, then
   # fail.

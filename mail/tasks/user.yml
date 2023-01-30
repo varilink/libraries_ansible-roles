@@ -17,8 +17,8 @@
     - block:
 
         # We are adding a user for our home domain so we add the user as an
-        # operating system user rather than a Dovecot virtual user. This will
-        # also update the user's password if it has changed.
+            # operating system user rather than a Dovecot virtual user. This
+            # will also update the user's password if it has changed.
 
         - name: Create operating system user account
           ansible.builtin.user:

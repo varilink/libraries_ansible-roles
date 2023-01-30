@@ -1,5 +1,9 @@
+# ------------------------------------------------------------------------------
 # backup_client/handlers/main.yml
+# ------------------------------------------------------------------------------
+
 ---
+
 - name: Reload Bacula file daemon configuration
   ansible.builtin.service:
     name: bacula-fd

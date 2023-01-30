@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# mail_certificates/defaults/main.yml
+# ------------------------------------------------------------------------------
+
 ---
 # By default use Let's Encrypt as a certification authority for all certificates
 # used for IMAP and SMTP connections to the external mail server. If this is

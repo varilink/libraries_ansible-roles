@@ -1,0 +1,8 @@
+# ------------------------------------------------------------------------------
+# backup_client/handlers/none.yml
+# ------------------------------------------------------------------------------
+
+# An empty handers file to allow this role to be imported into other roles
+# without bringing any handlers with it.
+
+---
