@@ -1,0 +1,13 @@
+# ------------------------------------------------------------------------------
+# wordpress_nginx/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT package(s) for wordpress host role using Nginx
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - php-fpm
+    install_recommends: no
+  become: yes

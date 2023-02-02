@@ -1,0 +1,42 @@
+# ------------------------------------------------------------------------------
+# wordpress/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Install common APT package(s) for the wordpress host role
+      ansible.builtin.apt:
+        install_recommends: no
+        update_cache: yes
+        name:
+          - acl
+          - ca-certificates
+          - jq
+          - php
+          - php-mysql
+          - rsync # since this role uses the ansible.builtin.synchronize module
+          - unzip
+
+    - name: Install WP-CLI
+      ansible.builtin.get_url:
+        url: "https://\
+          raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
+        dest: /usr/local/sbin/wp
+        mode: '755'
+
+    - name: Make the .wp-cli folder for WP-CLI
+      ansible.builtin.file:
+        path: /var/www/.wp-cli
+        state: directory
+        owner: www-data
+        group: www-data
+
+    - name: Install the WP-CLI find command's package
+      ansible.builtin.command:
+        cmd: wp package install wp-cli/find-command
+        creates: ~/.wp-cli/packages/vendor/wp-cli/find-command
+      become_user: www-data
+
+  become: yes

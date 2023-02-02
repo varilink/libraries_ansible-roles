@@ -1,0 +1,42 @@
+# ------------------------------------------------------------------------------
+# wordpress_nginx/tasks/configure.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Set Nginx server_names_hash_bucket_size to 64
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^(\s+)(?:# )?server_names_hash_bucket_size 64;$'
+        line: '\1server_names_hash_bucket_size 64;'
+        backrefs: yes
+      notify: Nginx configuration changed
+
+    - name: Get the codename of the Debian release on this host
+      ansible.builtin.command: lsb_release --codename --short
+      register: lsb_release
+      changed_when: false
+
+    - name: Configure upstream php-fpm for Nginx
+      ansible.builtin.template:
+        src: php-fpm.conf.j2
+        dest: /etc/nginx/conf.d/php-fpm.conf
+      notify: Nginx configuration changed
+      vars:
+        debian_release: "{{ lsb_release.stdout }}"
+
+    - name: Install WordPress backup script
+      ansible.builtin.copy:
+        src: wordpress-nginx-backup.sh
+        dest: /etc/bacula/scripts/wordpress-nginx-backup.sh
+        mode: 0644
+
+    - name: Install certbot
+      ansible.builtin.apt:
+        name: [certbot]
+        install_recommends: no
+      when: wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl
+
+  become: yes
