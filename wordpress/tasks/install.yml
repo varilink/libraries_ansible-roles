@@ -8,8 +8,6 @@
 
     - name: Install common APT package(s) for the wordpress host role
       ansible.builtin.apt:
-        install_recommends: no
-        update_cache: yes
         name:
           - acl
           - ca-certificates
@@ -18,6 +16,7 @@
           - php-mysql
           - rsync # since this role uses the ansible.builtin.synchronize module
           - unzip
+        install_recommends: no
 
     - name: Install WP-CLI
       ansible.builtin.get_url:
