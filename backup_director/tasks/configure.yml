@@ -24,6 +24,37 @@
     - set_fact:
         fileset_files: "{{ fileset_find_result.files | map(attribute='path') }}"
 
+    # The backup director is configured to backup one of:
+    # 1. Hosts in the inventory group backup_clients.
+    # 2. All hosts apart from those in the inventory group backup_exceptions.
+    # 3. All hosts.
+    #
+    # Either backup_clients or backup_exceptions or neither should be configured
+    # as inventory groups. It's not valid for both backup_clients and
+    # backup_exceptions to be configured as inventory groups.
+    #
+    # The backup_client role must be allocated in plays that match the following
+    # host patterns in those three scenarios:
+    # 1. backup_clients
+    # 2. all:!backup_exceptions
+    # 3. all
+
+    - name: >-
+        Derive hosts in backup_clients and backup_exceptions inventory groups
+      ansible.builtin.set_fact:
+        backup_clients: "{{ query('inventory_hostnames', 'backup_clients') }}"
+        backup_exceptions: >-
+          {{ query('inventory_hostnames', 'backup_exceptions') }}
+
+    - name: >-
+        Fail if there are hosts in both backup_clients and backup_exceptions
+        inventory groups
+      ansible.builtin.fail:
+        msg: >-
+          It's not valid to have both backup_clients and backup_exceptions
+          groups in your inventory
+      when: backup_clients | length > 0 and backup_exceptions | length > 0
+
     - name: Template bacula-dir.conf
       ansible.builtin.template:
         src: bacula-dir.conf.j2
@@ -32,9 +63,15 @@
         group: bacula
         mode: 0640
       vars:
-        # Every host in the inventory is backed up. For brevity, define variable
-        # for this query as it is referenced three times in the template file.
-        hostnames: "{{ query('inventory_hostnames', 'backup_clients') }}"
+        # hostnames = the hosts to be backup up - see above.
+        hostnames: |-
+          {% if backup_clients | length > 0 %}
+          {{ backup_clients }}
+          {% elif backup_exceptions | length > 0 %}
+          {{ query('inventory_hostnames', 'all:!backup_exceptions') }}
+          {% else %}
+          {{ query('inventory_hostnames', 'all') }}
+          {% endif %}
       notify: Bacula director configuration changed
 
     - name: Create folder to hold filesets for roles
