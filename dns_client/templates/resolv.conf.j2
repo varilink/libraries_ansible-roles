@@ -16,7 +16,6 @@ https://github.com/varilink/libraries-ansible#dns_client_options
 
 #}
 # Deployed using Ansible dns_client role
-domain {{ home_domain }}
 search {{ home_domain }}
 {% for nameserver in dns_client_nameservers %}
 nameserver {{ nameserver }}
