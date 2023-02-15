@@ -1,0 +1,9 @@
+# ------------------------------------------------------------------------------
+# calendar/handlers/none.yml
+# ------------------------------------------------------------------------------
+
+# An empty handlers file so that this role can be imported without bringing its
+# main handlers with it in situations where the importer wants to define its own
+# handlers.
+
+---
