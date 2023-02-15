@@ -1,1 +1,8 @@
+# ------------------------------------------------------------------------------
+# dns_client/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# See https://github.com/varilink/libraries-ansible#unsafe_writes
 unsafe_writes: false
