@@ -4,8 +4,12 @@
 
 ---
 
-- name: Delete WordPress site files
+- name: Remove site WordPress files
   ansible.builtin.file:
-    path: "/var/www/{{ wordpress_site_server_name }}"
+    path: "{{ wordpress_site_path }}"
     state: absent
   become: yes
+  vars:
+    wordpress_site_server_name: "\
+      {{ wordpress_site_subdomain }}.{{ domain_name }}"
+    wordpress_site_path: "/var/www/{{ wordpress_site_server_name }}"
