@@ -2,6 +2,16 @@
 # dns/tasks/site/create.yml
 # ------------------------------------------------------------------------------
 
+- ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  loop: >-
+    {{
+      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items |
+      union(
+      wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items)
+    }}
+
 - name: Create DNS entries for WordPress site
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts

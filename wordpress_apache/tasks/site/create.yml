@@ -4,6 +4,16 @@
 
 ---
 
+- ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  loop: >-
+    {{
+      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items |
+      union(
+      wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items)
+    }}
+
 - ansible.builtin.import_role:
     name: wordpress
     tasks_from: create-site.yml
@@ -61,3 +71,6 @@
       )
 
   become: yes
+  vars:
+    wordpress_site_server_name: "\
+      {{ wordpress_site_subdomain }}.{{ domain_name }}"

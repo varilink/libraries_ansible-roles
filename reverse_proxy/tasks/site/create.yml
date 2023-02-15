@@ -5,6 +5,16 @@
 ---
 
 - name: Fail if WordPress site uses SSL but reverse proxy does not support SSL
+- ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  loop: >-
+    {{
+      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items |
+      union(
+      wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items)
+    }}
+
   # A reverse proxy can be configured to support SSL or not via the
   # host_enabled_for_ssl variable. A WordPress site can be configured to use SSL
   # or not via the wordpress_site_uses_ssl variable. If a WordPress site is
@@ -90,3 +100,8 @@
     become: yes
 
   when: wordpress_site_uses_ssl and not certbot_certificate_installed
+
+  vars:
+    wordpress_site_server_name: "\
+      {{ wordpress_site_subdomain}}.{{ domain_name }}"
+    wordpress_site_path: /var/www/{{ wordpress_site_server_name }}/html
