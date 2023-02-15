@@ -11,7 +11,14 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
-{%- if wordpress_site_uses_ssl and certbot_certificate_installed %}
+{%-
+  if (
+    wordpress_site_uses_ssl and wordpress_site_uses_ca and
+    certbot_certificate_installed
+  ) or (
+    wordpress_site_uses_ssl and not wordpress_site_uses_ca
+  )
+%}
 
 
   location /.well-known/acme-challenge/ {
@@ -37,10 +44,17 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
+{% if wordpress_site_uses_ca %}
   ssl_certificate /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/privkey.pem;
+{%- else %}
+  ssl_certificate /etc/ssl/certs/
+  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  ssl_certificate_key /etc/ssl/private/
+  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+{%- endif %}
 
   location / {
     return 301 https://{{ wordpress_site_server_name }}$request_uri;
@@ -59,10 +73,17 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
+{% if wordpress_site_uses_ca %}
   ssl_certificate /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
   {{- wordpress_site_server_name }}/privkey.pem;
+{%- else %}
+  ssl_certificate /etc/ssl/certs/
+  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  ssl_certificate_key /etc/ssl/private/
+  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+{%- endif %}
 
 {% endif %}
 

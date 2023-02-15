@@ -12,10 +12,7 @@ host_enabled_for_ssl: yes
 # for it is an impossible situation, validation within the role flags this up as
 # a fail.
 wordpress_site_uses_ssl: "{{ host_enabled_for_ssl }}"
-wordpress_site_uses_ca: "\
-  {% if wordpress_site_uses_ssl %}\
-  {{ yes }}
-  {% endif %}"
 
 # Use certification authority certificates so that using self-signed
 # certificates instead is a conscious decision.
+wordpress_site_uses_ca: "{% if wordpress_site_uses_ssl %}yes{% endif %}"

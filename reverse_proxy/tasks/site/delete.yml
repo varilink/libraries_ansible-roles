@@ -16,46 +16,46 @@
 
 - block:
 
-  - name: Disable site in Nginx service
-    ansible.builtin.file:
-      path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf
-      state: absent
-    notify:
-      - Nginx configuration changed
+    - name: Disable site in Nginx service
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf
+        state: absent
+      notify:
+        - Nginx configuration changed
 
-  - name: Make site unavailable in Nginx service
-    ansible.builtin.file:
-      path: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
-      state: absent
-    notify:
-      - Nginx configuration changed
+    - name: Make site unavailable in Nginx service
+      ansible.builtin.file:
+        path: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+        state: absent
+      notify:
+        - Nginx configuration changed
 
-  - name: See if a certbot SSL certificate is installed for this site
-    ansible.builtin.shell: >-
-      certbot certificates |
-      grep 'Certificate Name: {{ wordpress_site_server_name }}' || true
-    # NOTE: The "|| true" is to ensure a zero return code if grep doesn't find
-    # anything. Otherwise this would fail the Ansible task.
-    register: certbot_certificates
-    changed_when: false
+    - name: See if a certbot SSL certificate is installed for this site
+      ansible.builtin.shell: >-
+        certbot certificates |
+        grep 'Certificate Name: {{ wordpress_site_server_name }}'
+      register: certbot_cert
+      changed_when: false
+      failed_when: certbot_cert.rc !=0 and certbot_cert.rc != 1
+
+    - name: >-
+        If there is a certbot certificate installed for this WordPress site then
+        delete it
+      ansible.builtin.command: "\
+        certbot -n --cert-name {{ wordpress_site_server_name }} delete"
+      when: certbot_cert.rc == 0
+
+    - name: >-
+        If there is a self-signed certificate installed for this WordPress site
+        then delete it
+      ansible.builtin.file:
+        path: >-
+          /etc/ssl/certs/{{
+          wordpress_site_server_name | replace('.', '_')
+          }}.pem
+        state: absent
 
   become: yes
-
-- ansible.builtin.set_fact:
-    certbot_certificate_installed: |-
-      {%- if wordpress_site_uses_ssl and certbot_certificates.stdout %}
-      yes
-      {%- else %}
-      no
-      {%- endif %}
-
-- name: >-
-    If there is a certbot certificate installed for this WordPress site then
-    delete it
-  ansible.builtin.command: "\
-    certbot -n --cert-name {{ wordpress_site_server_name }} delete"
-  become: yes
-  when: certbot_certificate_installed
   vars:
     wordpress_site_server_name: "\
       {{ wordpress_site_subdomain }}.{{ domain_name }}"
