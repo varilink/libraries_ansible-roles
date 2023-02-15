@@ -7,14 +7,21 @@
 
 ---
 
-- name: Restart Radicale to reflect configuration change
-  service:
-    name: radicale
-    state: restarted
-  become: yes
-  listen: Radicale configuration changed
+- block:
 
-- debug:
-    msg: If you are seeing this message then something has gone wrong
-  listen: Bacula file daemon installed
-  when: false
+    - name: Determine the status of the radicale service
+      ansible.builtin.service_facts:
+      listen: Radicale configuration changed
+
+    # The systemd radicale unit does not support reload, so we must restart it
+    # if it is running in order to reflect configuration change.
+    - name: >-
+        Restart the radicale service if it is running to reflect configuration
+        change
+      ansible.builtin.service:
+        name: radicale
+        state: restarted
+      when: ansible_facts['services']['radicale']['state'] == 'running'
+      listen: Radicale configuration changed
+
+  become: yes
