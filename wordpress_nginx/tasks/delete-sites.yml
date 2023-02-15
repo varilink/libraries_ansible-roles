@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------
+# wordpress_nginx/tasks/delete-sites.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- ansible.builtin.include_tasks: site/delete.yml
+  loop: >-
+    {{
+    subdomains.split(',') |
+    intersect(wordpress_sites | map(attribute='subdomain'))
+    }}
+  loop_control:
+    loop_var: subdomain

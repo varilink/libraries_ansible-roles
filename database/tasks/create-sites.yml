@@ -1,0 +1,8 @@
+- ansible.builtin.include_tasks: site/create.yml
+  loop: >-
+    {{
+    subdomains.split(',') |
+    intersect(wordpress_sites | map(attribute='subdomain'))
+    }}
+  loop_control:
+    loop_var: subdomain
