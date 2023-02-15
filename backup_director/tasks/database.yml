@@ -1,15 +1,15 @@
 # ------------------------------------------------------------------------------
-# database/tasks/bacula.yml
+# backup_director/tasks/database.yml
 # ------------------------------------------------------------------------------
-
-# Create a database to hold the bacula catalog for our backup_director role.
 
 ---
 
 - block:
 
-    - name: Create a database for bacula to use
+    - name: Create the database for the backup director to use
       community.mysql.mysql_db:
+        # This task list needs to be run on the host for the MariaDB service so
+        # that it can connect using the socket.
         login_unix_socket: /var/run/mysqld/mysqld.sock
         name: bacula
 
