@@ -4,7 +4,7 @@
 
 ---
 
-- name: Install APT package(s) required by the DNS internal role
+- name: Install APT package(s) required by the dns role
   ansible.builtin.apt:
     name:
       - dnsmasq
