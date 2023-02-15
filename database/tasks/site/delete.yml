@@ -16,26 +16,26 @@
 
 - block:
 
-    - name: Drop a local database user for the WordPress site
+    - name: Delete a local database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        state: absent
         login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: absent
       when: wordpress_site_database_host is not defined
 
-    - name: Drop a remote database user for the WordPress site
+    - name: Delete a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         host: "{{ wordpress_site_database_host }}"
-        state: absent
         login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: absent
       when: wordpress_site_database_host is defined
 
-    - name: Drop database for the WordPress site
+    - name: Delete database for the WordPress site
       community.mysql.mysql_db:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        state: absent
         login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: absent
 
   become: yes
   vars:
