@@ -37,19 +37,24 @@
       notify:
         - Dnsmasq configuration changed
 
-    - name: Enable read of additional hosts file in /etc/dnsmasq.conf
-      ansible.builtin.lineinfile:
-        path: /etc/dnsmasq.conf
-        regexp: '^#?addn-hosts='
-        line: addn-hosts=/etc/addn-hosts
-      notify:
-        - Dnsmasq configuration changed
-
     - name: Set domain to required value in /etc/dnsmasq.conf
+      # For the expand-hosts setting to take effect, we need to provide the
+      # domain that will be added to the simple names in /etc/addn-hosts; see:
+      # https://github.com/varilink/libraries-ansible#home_domain
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: "^#?domain=(?:thekelleys\\.org\\.uk|{{ home_domain }})"
         line: domain={{ home_domain }}
+      notify:
+        - Dnsmasq configuration changed
+
+    - name: Enable read of additional hosts file in /etc/dnsmasq.conf
+      # I like to isolate the "mask" entries from the /etc/hosts file so we use
+      # a separate file for additional hosts.
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?addn-hosts='
+        line: addn-hosts=/etc/addn-hosts
       notify:
         - Dnsmasq configuration changed
 
@@ -72,7 +77,7 @@
     - name: Gather IP addresses each DNS host pattern
       # The DNS host patterns for the DNS server define the hosts that the DNS
       # server must provide a mask lookup for, so we need their IP addresses.
-      ansible.builtin.include_tasks: hosts-pattern.yml
+      ansible.builtin.include_tasks: host-pattern.yml
       loop: "{{ dns_host_patterns }}"
       loop_control:
         loop_var: host_pattern
