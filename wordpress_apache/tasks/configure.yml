@@ -4,6 +4,11 @@
 
 ---
 
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
 - block:
 
     - name: Disable the default Apache site
@@ -19,11 +24,32 @@
         regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
       notify: Apache2 configuration changed
 
-    - name: Enable apache2 rewrite module
+    - name: Disable apache2 mpm_event module
       community.general.apache2_module:
-        name: rewrite
+        name: mpm_event
+        state: absent
+        ignore_configcheck: yes
+      notify: Apache2 configuration changed
+
+    - community.general.apache2_module:
+        name: mpm_prefork
+        state: present
+        ignore_configcheck: yes
+      notify: Apache2 configuration changed
+
+    - name: Enable apache2 rewrite and php modules
+      community.general.apache2_module:
+        name: "{{ item }}"
         state: present
       notify: Apache2 configuration changed
+      loop:
+        - rewrite
+        - |-
+            {% if lsb_release.stdout == 'bullseye' %}
+            php7.4
+            {%- elif lsb_release.stdout == 'buster' %}
+            php7.3
+            {%- endif %}
 
     # Any host for the wordpress_apache role must also host the backup_client
     # role. However, the playbook that applies these roles to the host may apply

@@ -16,45 +16,46 @@
 
 - block:
 
-  - name: Stop listening on WordPress site's custom port on local interface only
-    ansible.builtin.lineinfile:
-      path: /etc/apache2/ports.conf
-      line: Listen 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }} http
-      state: absent
-    notify:
-      - Apache2 configuration changed
-    when: >-
-      not wordpress_expose_externally and (
-        wordpress_site_expose_externally is not defined
-        or not wordpress_site_expose_externally
-      )
+    - name: "\
+        Stop listening on WordPress site's custom port on local interface only"
+      ansible.builtin.lineinfile:
+        path: /etc/apache2/ports.conf
+        line: Listen 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }} http
+        state: absent
+      notify:
+        - Apache2 configuration changed
+      when: >-
+        not wordpress_expose_externally and (
+          wordpress_site_expose_externally is not defined
+          or not wordpress_site_expose_externally
+        )
 
-  - name: Stop listening on WordPress site's custom port on all interfaces
-    ansible.builtin.lineinfile:
-      path: /etc/apache2/ports.conf
-      line: Listen {{ wordpress_site_reverse_proxy_pass_port }} http
-      state: absent
-    notify:
-      - Apache2 configuration changed
-    when: >-
-      wordpress_expose_externally and (
-        wordpress_site_expose_externally is not defined
-        or wordpress_site_expose_externally
-      )
+    - name: Stop listening on WordPress site's custom port on all interfaces
+      ansible.builtin.lineinfile:
+        path: /etc/apache2/ports.conf
+        line: Listen {{ wordpress_site_reverse_proxy_pass_port }} http
+        state: absent
+      notify:
+        - Apache2 configuration changed
+      when: >-
+        wordpress_expose_externally and (
+          wordpress_site_expose_externally is not defined
+          or wordpress_site_expose_externally
+        )
 
-  - name: Disable site apache2 configuration
-    ansible.builtin.file:
-      path: /etc/apache2/sites-enabled/{{ wordpress_site_server_name }}.conf
-      state: absent
-    notify:
-      - Apache2 configuration changed
+    - name: Disable site apache2 configuration
+      ansible.builtin.file:
+        path: /etc/apache2/sites-enabled/{{ wordpress_site_server_name }}.conf
+        state: absent
+      notify:
+        - Apache2 configuration changed
 
-  - name: Make site apache2 configuration unavailable
-    ansible.builtin.file:
-      path: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
-      state: absent
-    notify:
-      - Apache2 configuration changed
+    - name: Make site apache2 configuration unavailable
+      ansible.builtin.file:
+        path: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
+        state: absent
+      notify:
+        - Apache2 configuration changed
 
   become: yes
   vars:
@@ -63,4 +64,4 @@
 
 - ansible.builtin.import_role:
     name: wordpress
-    tasks_from: delete-site.yml
+    tasks_from: delete-site
