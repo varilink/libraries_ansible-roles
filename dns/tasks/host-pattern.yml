@@ -1,15 +1,34 @@
-# dns/tasks/hosts-pattern.yml
+# ------------------------------------------------------------------------------
+# dns/tasks/host-pattern.yml
+# ------------------------------------------------------------------------------
+
+# This task list gathers IP addresses for hosts defined by a single pattern in
+# the dns_host_patterns list variable; see dns/defaults/main.yml for an
+# explanation of that variable.
+#
+# This task list is in its own file, even though it only contains a single task,
+# because we want to loop over the patterns and execute this task for each
+# pattern. This could perhaps be done in a single task with nested loops.
 
 ---
 
 - name: >-
     Gather IP address for each host matching the pattern where we don't already
     have it
+
+  # The setup module "Gathers facts about remote hosts".
   ansible.builtin.setup:
+
+  # Both delegate the task to the host matching the pattern and also the fact
+  # gathered, since the IP address pertains to that host and not the DNS server.
   delegate_to: "{{ matching_host }}"
   delegate_facts: true
-  ignore_unreachable: true
+
+  # If we already have the default IPv4 address for the host then we don't need
+  # to do anything.
   when: hostvars[matching_host]['ansible_default_ipv4'] is not defined
+
+  # Loop for every host that the pattern matches to.
   with_inventory_hostnames:
     - "{{ host_pattern.string }}"
   loop_control:
