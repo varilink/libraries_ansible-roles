@@ -9,6 +9,11 @@ Note that we cannot apply any changes to the /etc/resolv.conf file on our Linode
 VMs as the Linode hosting service will overwrite them with its own
 /etc/resolv.conf file. For this reason it's pointless to deploy this dns_client
 role to those hosts.
+
+See:
+https://github.com/varilink/libraries-ansible#dns_client_nameservers
+https://github.com/varilink/libraries-ansible#dns_client_options
+
 #}
 # Deployed using Ansible dns_client role
 domain {{ home_domain }}

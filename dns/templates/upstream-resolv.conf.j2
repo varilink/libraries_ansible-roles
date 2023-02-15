@@ -1,3 +1,15 @@
-{% for nameserver in dns_upstream_nameservers %}
+{#
+--------------------------------------------------------------------------------
+dns/templates/upstream-resolv.conf.j2
+--------------------------------------------------------------------------------
+
+Template file that populates /etc/upstream-resolv.conf with the nameservers that
+the DNS host uses for its upstream resolution; see:
+https://github.com/varilink/libraries-ansible#dns_upstream_nameservers
+https://github.com/varilink/libraries-ansible/issues/12
+
+#}
+
+{%- for nameserver in dns_upstream_nameservers %}
 nameserver {{ nameserver }}
 {% endfor %}

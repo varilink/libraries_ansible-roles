@@ -1,3 +1,10 @@
+# ------------------------------------------------------------------------------
+# dns/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# See https://github.com/varilink/libraries-ansible#dns_host_patterns
 dns_host_patterns:
   - string: all
     description: All hosts

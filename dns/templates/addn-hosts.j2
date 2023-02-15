@@ -73,6 +73,13 @@ deployed to that host.
       if host_record_written and hostname in hosts_to_roles_map
     %}
 
+      {#-
+      Once we have written out the host lookup record, see if there are roles
+      associated with the host that should be added as aliases; for example
+      bacula_dir, caldav, etc. See:
+      https://github.com/varilink/libraries-ansible#hosts_to_roles_map
+      #}
+
       {%- for host_role in hosts_to_roles_map[hostname] %}
 
         {%- for service in dns_service_lookups %}

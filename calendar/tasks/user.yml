@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------------
+# calendar/tasks/user.yml
+# ------------------------------------------------------------------------------
+
 # This task list uses the web services provided by Radicale to create a calendar
 # for a user.
 
@@ -72,6 +76,7 @@
           </prop>
         </set>
       </mkcol>
-  # If this task ran and it didn't error then has created a calendar.
+  # If this task ran and it didn't error then it has created a calendar, so we
+  # flag a change on every successful run.
   changed_when: true
   when: calendar_get.status == 404

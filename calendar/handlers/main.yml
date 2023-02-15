@@ -1,5 +1,9 @@
-# Restart the radicale service to reflect a change to its configuration.
-# NOTE: There is no reload option for the radicale service.
+# ------------------------------------------------------------------------------
+# calendar/handlers/main.yml
+# ------------------------------------------------------------------------------
+
+# When the radicale service is managed by systemd, we restart the service
+# whenever there is a configuration change.
 
 ---
 

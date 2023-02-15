@@ -1,15 +1,22 @@
+# ------------------------------------------------------------------------------
 # dns/tasks/configure.yml
+# ------------------------------------------------------------------------------
 
 ---
 
 - block:
 
+    # Setup upstream resolution for our DNS server.
+
     - name: Template out upstream-resolv.conf
+      # See the template file itself for more information.
       ansible.builtin.template:
         src: upstream-resolv.conf.j2
         dest: /etc/upstream-resolv.conf
 
     - name: Set resolv-file to /etc/upstream-resolv.conf in /etc/dnsmasq.conf
+      # Use the upstream resolve file that was templated out in the previous
+      # task.
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?resolv-file='
@@ -17,7 +24,12 @@
       notify:
         - Dnsmasq configuration changed
 
+    # Configure the "mask", i.e. the DNS resolution that our local DNS server
+    # supplements its upstream resolution with. There are several aspects to
+    # this.
+
     - name: Enable expand-hosts in /etc/dnsmasq.conf
+      # This automatically adds a domain to simple names in /etc/addn-hosts.
       ansible.builtin.lineinfile:
         path: /etc/dnsmasq.conf
         regexp: '^#?expand-hosts'
@@ -42,6 +54,11 @@
         - Dnsmasq configuration changed
 
     - name: Copy skeleton addn-hosts file
+      # In order to give the /etc/addn-hosts file a logical structure:
+      # 1. Setup an Ansible managed block for the host and base service (e.g.
+      #    bacula-dir, caldav, etc.) entries.
+      # 2. Add a "# Project entries" line for project playbooks to add their
+      #    entries after.
       ansible.builtin.copy:
         content: |
           # Entries for hosts and services
@@ -53,12 +70,15 @@
         force: no
 
     - name: Gather IP addresses each DNS host pattern
+      # The DNS host patterns for the DNS server define the hosts that the DNS
+      # server must provide a mask lookup for, so we need their IP addresses.
       ansible.builtin.include_tasks: hosts-pattern.yml
       loop: "{{ dns_host_patterns }}"
       loop_control:
         loop_var: host_pattern
 
     - name: Template hosts and services lookups to addn-hosts
+      # See the template file itself for further information.
       ansible.builtin.blockinfile:
         path: /etc/addn-hosts
         block: >-

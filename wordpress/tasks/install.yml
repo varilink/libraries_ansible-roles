@@ -14,7 +14,7 @@
           - jq
           - php
           - php-mysql
-          - rsync # since this role uses the ansible.builtin.synchronize module
+          - rsync
           - unzip
         install_recommends: no
 
