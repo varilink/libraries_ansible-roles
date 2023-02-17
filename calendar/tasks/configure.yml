@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# calendar/tasks/config.yml
+# calendar/tasks/configure.yml
 # ------------------------------------------------------------------------------
 
 ---
@@ -12,9 +12,12 @@
     - name: Expose calendar service on the network
       ansible.builtin.lineinfile:
         path: /etc/radicale/config
-        # Original line is '#hosts = 127.0.0.1:5232'
+        # Original line is:
+        # '#hosts = 127.0.0.1:5232' (Radicale 2 on buster); or
+        # '#hosts = localhost:5232' (Radicale 3 on bullseye)
+        #
         # Regex matches both original and replacement to ensure idempotence
-        regexp: '^#?hosts = (?:\d{1,3}\.){3}\d{1,3}:5232$'
+        regexp: '^#?hosts = (?:localhost|(?:\d{1,3}\.){3}\d{1,3}):5232$'
         line: hosts = 0.0.0.0:5232
       notify: Radicale configuration changed
 
@@ -34,7 +37,9 @@
         # steps that currently use lineinfile so that we can target a specific
         # config section?
         #
-        # Original line is 'type = remote_user'
+        # Original line is:
+        # 'type = remote_user' (Radicale 2 on buster and Radicale 3 on bullseye)
+        #
         # Regex matches both original and replacement to ensure idempotence
         regexp: '^type = (?:remote_user|none)$'
         line: type = none
