@@ -22,7 +22,7 @@
   changed_when: false
 
 - name: >-
-    Install APT package(s) required by the backup_director role from bullseye or
+    Install APT package(s) required by the backup_client role from bullseye or
     stretch
   ansible.builtin.apt:
     name:
