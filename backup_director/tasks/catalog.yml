@@ -27,21 +27,28 @@
         - MaxValue
 
     - name: Test if Bacula catalog tables are already present in database
-      # If this mysql query succeeds then mysql_result.stderr will be an empty
-      # string and mysql_result.stdout will be a stringified positive integer.
-      # This indicates that the Bacula catalog tables are present. If this mysql
-      # query fails then mysql_result.stdout will be an empty string and
-      # mysql_result.stderr will be a string starting "ERROR ". This indicates
-      # that the Bacula catalog tables are not present and must be made.
       ansible.builtin.shell: >-
-        mysql --skip-column-names --silent bacula
-        -e 'SELECT VersionId FROM Version' || true
-      changed_when: false
+        mysql --skip-column-names --silent
+        --user={{ backup_database_user | default('bacula') }}
+        --password={{ backup_database_password | default('bacula') }}
+        {% if backup_database_host is defined %}
+        --host={{ backup_database_host }}
+        {%- endif %}
+        bacula -e 'SELECT VersionId FROM Version'
       register: mysql_result
+      changed_when: false
+      # rc == 0 when the query returns a row and rc == 1 when it doesn't
+      failed_when: mysql_result.rc != 0 and mysql_result.rc != 1
 
     - name: Make Bacula catalog tables
-      ansible.builtin.shell: "\
-        db_name=bacula /usr/share/bacula-director/make_mysql_tables"
-      when: not mysql_result.stdout and mysql_result.stderr is regex('^ERROR ')
+      ansible.builtin.shell: >-
+        db_name=bacula /usr/share/bacula-director/make_mysql_tables
+        --user={{ backup_database_user | default('bacula') }}
+        --password={{ backup_database_password | default('bacula') }}
+        {% if backup_database_host is defined %}
+        --host={{ backup_database_host }}
+        {%- endif %}
+      register: make_mysql_tables
+      when: mysql_result.rc == 1
 
   become: yes
