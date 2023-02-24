@@ -12,6 +12,7 @@
           - acl
           - ca-certificates
           - jq
+          - less
           - php
           - php-mysql
           - rsync
