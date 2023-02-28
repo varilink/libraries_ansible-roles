@@ -1,0 +1,34 @@
+# ------------------------------------------------------------------------------
+# wordpress/tasks/subdomains
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Check subdomains provided in --extra-vars
+  ansible.builtin.debug:
+    msg: >-
+      If you run web tasks then you must set an extra var
+      ("subdomains_scope") containing a comma separate list of subdomains to act on; for
+      example 'dev', 'dev,test', 'staging,www' etc.
+  failed_when: true
+  run_once: true
+  when: playbook_subdomains is not defined
+
+- name: Restrict subdomains to those known to the current host
+  ansible.builtin.set_fact:
+    subdomains: >-
+      {{
+      wordpress_sites | map(attribute='subdomain') |
+      intersect(playbook_subdomains)
+      }}
+  when: subdomains_filter is not defined
+
+- name: Restrict subdomains to those known to the current host
+  ansible.builtin.set_fact:
+    subdomains: >-
+      {{
+      wordpress_sites | map(attribute='subdomain') |
+      intersect(playbook_subdomains) |
+      intersect(subdomains_filter)
+      }}
+  when: subdomains_filter is defined
