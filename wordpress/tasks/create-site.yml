@@ -44,14 +44,17 @@
         cmd: >-
           wp --path={{ wordpress_site_path }}
           config create
-          --dbhost={{ wordpress_site_database_host | default('localhost') }}
-          --dbname={{
-              wordpress_site_server_name | regex_replace ('\.', '_')
-            }}
-          --dbuser={{
-              wordpress_site_server_name | regex_replace ('\.', '_')
-            }}
-          --dbpass={{ wordpress_site_database_password }}
+          --dbhost=
+          {%- if wordpress_site_database_host == wordpress_site_host %}
+          localhost
+          {%- else %}
+          {{- wordpress_site_database_host }}
+          {%- endif %}
+          --dbname=
+          {{- wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbuser=
+          {{- wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbpass='{{ wordpress_site_database_password }}'
           --extra-php
           --skip-check
         stdin: |

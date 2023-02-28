@@ -30,21 +30,21 @@
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      # This WordPress site will be co-hosted with its database. We know this
-      # because there is no database host configured for the WordPress site.
-      when: wordpress_site_database_host is not defined
+      # The WordPress site database is co-located with the WordPress site so
+      # the user will connect from the localhost.
+      when: wordpress_site_database_host == wordpress_site_host
 
     - name: Create a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         # host value needed since connection to the database is remote
-        host: "{{ wordpress_site_database_host }}"
+        host: "{{ wordpress_site_host }}.{{ home_domain }}"
         password: "{{ wordpress_site_database_password }}"
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      # This WordPress site will be hosted separately from ts database. We know
-      # this because there is a database host configured for the WordPress site.
-      when: wordpress_site_database_host is defined
+      # The WordPress site database is not co-located with the WordPress site so
+      # the user will connect from the WordPress site's host.
+      when: wordpress_site_database_host != wordpress_site_host
 
   become: yes

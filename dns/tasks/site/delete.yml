@@ -13,7 +13,7 @@
     path: /etc/addn-hosts
     line: >-
       {{ ansible_default_ipv4.address }}
-      {{ wordpress_site_subdomain }}.{{ domain_name }}
+      {{ wordpress_site_server_name }}
     state: absent
   notify: Dnsmasq configuration changed
   become: yes
