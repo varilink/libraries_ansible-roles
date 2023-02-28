@@ -4,15 +4,9 @@
 
 ---
 
-- ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
-  loop: >-
-    {{
-      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
-      first | dict2items |
-      union(
-      wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
-      first | dict2items)
-    }}
+- ansible.builtin.import_role:
+    name: wordpress
+    tasks_from: site_vars
 
 - name: "\
     Fail if WordPress site uses SSL but reverse proxy does not support SSL"
@@ -133,8 +127,3 @@
       when: >-
         wordpress_site_uses_ssl and wordpress_site_uses_ca and
         certbot_certificate.rc == 1
-
-  vars:
-    wordpress_site_server_name: "\
-      {{ wordpress_site_subdomain}}.{{ domain_name }}"
-    wordpress_site_path: /var/www/{{ wordpress_site_server_name }}/html

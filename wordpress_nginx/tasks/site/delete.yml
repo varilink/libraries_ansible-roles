@@ -3,6 +3,10 @@
 
 ---
 
+- ansible.builtin.import_role:
+    name: wordpress
+    tasks_from: site_vars
+
 - block:
 
     - name: Disable Nginx site configuration
