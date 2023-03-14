@@ -439,11 +439,7 @@ Storage {
   # since the hosting service for our external VMs overwrites any edits we make
   # to their /etc/resolv.conf file meaning that we can't specify our home domain
   # for searches there.
-{% if backup_storage_host is defined %}
-  Address = "{{ backup_storage_host }}.{{ home_domain }}"
-{% else %}
-  Address = localhost
-{% endif %}
+  Address = bacula-sd.{{ home_domain }}
   SDPort = 9103
   Password = "{{ backup_storage_director_password }}"
   Device = FileStorage
