@@ -98,4 +98,29 @@
       loop: "{{ fileset_files }}"
       notify: Bacula director configuration changed
 
+    - name: Determine if a folder has been created for Dropbox integration
+      ansible.builtin.stat:
+        path: /var/lib/bacula/Dropbox
+      register: dropbox_dir
+
+    - name: >-
+        Ensure the Bootstrap folder is present in the Dropbox folder if the
+        Dropbox folder exists
+      ansible.builtin.file:
+        path: /var/lib/bacula/Dropbox/{{ backup_copy_folder }}/Bootstrap
+        state: directory
+        owner: bacula
+        group: bacula
+      when: dropbox_dir.stat.exists and dropbox_dir.stat.isdir
+
+    - name: >-
+        Ensure the Bootstrap folder is present directly in the bacula home
+        directory if the Dropbox folder doesn't exist
+      ansible.builtin.file:
+        path: /var/lib/bacula/Bootstrap
+        state: directory
+        owner: bacula
+        group: bacula
+      when: not dropbox_dir.stat.exists
+
   become: yes
