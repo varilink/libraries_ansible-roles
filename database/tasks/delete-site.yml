@@ -15,15 +15,15 @@
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: absent
-      when: wordpress_site_database_host is not defined
+      when: wordpress_site_host is not defined
 
     - name: Delete a remote database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        host: "{{ wordpress_site_database_host }}"
+        host: "{{ wordpress_site_host }}.{{ home_domain }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: absent
-      when: wordpress_site_database_host is defined
+      when: wordpress_site_host is defined
 
     - name: Delete database for the WordPress site
       community.mysql.mysql_db:
