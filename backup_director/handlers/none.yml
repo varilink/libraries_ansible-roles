@@ -1,8 +1,0 @@
-# ------------------------------------------------------------------------------
-# backup_director/handlers/none.yml
-# ------------------------------------------------------------------------------
-
----
-
-# Empty handler file so that this role can be imported into other roles without
-# bringing with it any handlers by selecting this file for "handlers_from".

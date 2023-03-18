@@ -4,6 +4,8 @@
 
 ---
 
+- ansible.builtin.import_tasks: ./common.yml
+
 - name: Reload the Exim configuration if it is running
   ansible.builtin.service:
     name: exim4
