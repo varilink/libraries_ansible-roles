@@ -72,6 +72,3 @@
         )
 
   become: yes
-  vars:
-    wordpress_site_server_name: "\
-      {{ wordpress_site_subdomain }}.{{ domain_name }}"
