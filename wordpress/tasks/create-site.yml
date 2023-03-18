@@ -4,6 +4,8 @@
 
 ---
 
+- ansible.builtin.import_tasks: common/site-vars.yml
+
 - block:
 
   - name: Create directory to hold site WordPress files

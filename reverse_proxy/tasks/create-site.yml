@@ -1,12 +1,8 @@
 # ------------------------------------------------------------------------------
-# reverse_proxy/tasks/site/create.yml
+# reverse_proxy/tasks/create-site.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: site_vars
 
 - name: "\
     Fail if WordPress site uses SSL but reverse proxy does not support SSL"

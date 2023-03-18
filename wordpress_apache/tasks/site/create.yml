@@ -6,10 +6,6 @@
 
 - ansible.builtin.import_role:
     name: wordpress
-    tasks_from: site_vars
-
-- ansible.builtin.import_role:
-    name: wordpress
     tasks_from: create-site
 
 - block:

@@ -1,12 +1,8 @@
 # ------------------------------------------------------------------------------
-# dns/tasks/site/delete.yml
+# dns/tasks/delete-site.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: site_vars
 
 - name: Remove DNS entries for WordPress site
   ansible.builtin.lineinfile:

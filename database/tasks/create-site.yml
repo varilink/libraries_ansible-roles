@@ -1,12 +1,8 @@
 # ------------------------------------------------------------------------------
-# database/tasks/site/create.yml
+# database/tasks/create-site.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: site_vars
 
 - block:
 

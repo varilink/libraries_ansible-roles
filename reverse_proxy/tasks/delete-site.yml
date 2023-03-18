@@ -1,12 +1,8 @@
 # ------------------------------------------------------------------------------
-# reverse_proxy/tasks/site/delete.yml
+# reverse_proxy/tasks/delete-site.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: site_vars
 
 - block:
 
