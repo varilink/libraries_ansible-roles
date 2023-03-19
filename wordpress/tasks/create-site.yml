@@ -48,18 +48,15 @@
     - name: Create the WordPress config file
       ansible.builtin.command:
         cmd: >-
-          wp --path={{ wordpress_site_path }}
-          config create
+          wp --path={{ wordpress_site_path }} config create
           --dbhost=
-          {%- if wordpress_site_database_host == wordpress_site_host %}
+          {%- if wordpress_site_database_host is not defined -%}
           localhost
-          {%- else %}
-          {{- wordpress_site_database_host }}
+          {%- else -%}
+          {{ wordpress_site_database_host }}
           {%- endif %}
-          --dbname=
-          {{- wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbuser=
-          {{- wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
+          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
           --dbpass='{{ wordpress_site_database_password }}'
           --extra-php
           --skip-check

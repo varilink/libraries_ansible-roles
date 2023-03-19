@@ -6,20 +6,17 @@
 
 - block:
 
-    - name: Delete a local database user for the WordPress site
+    - name: Delete database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        host: |-
+          {% if wordpress_site_database_host is defined %}
+          {{- inventory_hostname }}.{{ home_domain }}
+          {%- else -%}
+          localhost
+          {%- endif %}
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: absent
-      when: wordpress_site_host is not defined
-
-    - name: Delete a remote database user for the WordPress site
-      community.mysql.mysql_user:
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        host: "{{ wordpress_site_host }}.{{ home_domain }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-        state: absent
-      when: wordpress_site_host is defined
 
     - name: Delete database for the WordPress site
       community.mysql.mysql_db:

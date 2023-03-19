@@ -89,11 +89,11 @@ server {
 
 
   location / {
-{% if wordpress_site_host == inventory_hostname %}
+{% if wordpress_site_reverse_proxy_host is not defined %}
     proxy_pass http://127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }};
 {% else %}
     proxy_pass http://
-    {{- hostvars[wordpress_site_host].ansible_default_ipv4.address }}:
+    {{- ansible_default_ipv4.address }}:
     {{- wordpress_site_reverse_proxy_pass_port }};
 {% endif %}
     proxy_set_header Host {{ wordpress_site_server_name }};

@@ -1,8 +1,8 @@
-{% if wordpress_site_host == wordpress_site_reverse_proxy_host %}
-<VirtualHost 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }}>
-{% else %}
-<VirtualHost {{ hostvars[inventory_hostname].ansible_default_ipv4.address }}:
+{% if wordpress_site_reverse_proxy_host is defined %}
+<VirtualHost {{ ansible_default_ipv4.address }}:
 {{- wordpress_site_reverse_proxy_pass_port }}>
+{% else %}
+<VirtualHost 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }}>
 {% endif %}
 
   ServerName {{ wordpress_site_server_name }}

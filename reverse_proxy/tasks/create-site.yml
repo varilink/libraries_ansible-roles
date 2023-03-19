@@ -15,7 +15,29 @@
     msg: >-
       Invalid request to install a WordPress site that uses SSL via a
       reverse proxy that does not support SSL
-  when: wordpress_site_uses_ssl and not host_enabled_for_ssl
+  # If wordpress_site_reverse_proxy_host is defined then this task has been
+  # delegated to that host. If that is the case then because the reverse_proxy
+  # role hasn't been imported on that host the role's default value for
+  # host_enabled_for_ssl won't apply there so if host_enabled_for_ssl isn't
+  # applied there via the inventory then it won't be defined. If
+  # wordpress_site_reverse_proxy_host isn't enabled then the role's default
+  # value will apply unless overridden in the inventory so it's much simpler.
+  when: >-
+    wordpress_site_uses_ssl and (
+      (
+        wordpress_reverse_proxy_host
+          is defined and
+        hostvars[wordpress_site_reverse_proxy_host].host_enabled_for_ssl
+          is defined and not
+        hostvars[wordpress_site_reverse_proxy_host].host_enabled_for_ssl
+      )
+    or
+      (
+        wordpress_reverse_proxy_host
+          is defined and not
+        host_enabled_for_ssl
+      )
+    )
 
 - block:
 
