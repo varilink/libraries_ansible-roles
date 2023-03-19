@@ -14,3 +14,5 @@
 
   notify: Dnsmasq configuration changed
   become: yes
+  delegate_to: "{{ wordpress_site_dns_host }}"
+  when: wordpress_site_dns_host is defined

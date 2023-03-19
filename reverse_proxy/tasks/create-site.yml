@@ -123,3 +123,6 @@
       when: >-
         wordpress_site_uses_ssl and wordpress_site_uses_ca and
         certbot_certificate.rc == 1
+
+  delegate_to: "\
+    {{ wordpress_site_reverse_proxy_host | default(inventory_hostname) }}"

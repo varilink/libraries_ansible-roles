@@ -44,3 +44,5 @@
       when: wordpress_site_database_host != wordpress_site_host
 
   become: yes
+  delegate_to: "\
+    {{ wordpress_site_database_host | default(inventory_hostname) }}"
