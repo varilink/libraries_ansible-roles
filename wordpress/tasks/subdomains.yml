@@ -2,33 +2,43 @@
 # wordpress/tasks/subdomains
 # ------------------------------------------------------------------------------
 
+# This task list determines the subdomains that tasks that affect with WordPress
+# sites should act upon - see:
+# https://github.com/varilink/libraries-ansible#controlling-the-wordpress-sites-impacted-by-project-playbooks
+
 ---
 
-- name: Check subdomains provided in --extra-vars
-  ansible.builtin.debug:
+- name: >-
+    Check that either playbook_subdomains or run_subdomains or both is defined
+  ansible.builtin.fail:
     msg: >-
-      If you run web tasks then you must set an extra var
-      ("subdomains_scope") containing a comma separate list of subdomains to act on; for
-      example 'dev', 'dev,test', 'staging,www' etc.
-  failed_when: true
+      Neither playbook_subdomains nor run_subdomains is defined - see
+      https://github.com/varilink/libraries-ansible#controlling-the-wordpress-sites-impacted-by-project-playbooks
   run_once: true
-  when: playbook_subdomains is not defined
+  when: playbook_subdomains is not defined and run_subdomains is not defined
 
-- name: Restrict subdomains to those known to the current host
+- name: >-
+    Determine the subdomains that are in scope within the current task context
   ansible.builtin.set_fact:
-    subdomains: >-
-      {{
-      wordpress_sites | map(attribute='subdomain') |
-      intersect(playbook_subdomains)
-      }}
-  when: subdomains_filter is not defined
-
-- name: Restrict subdomains to those known to the current host
-  ansible.builtin.set_fact:
-    subdomains: >-
-      {{
-      wordpress_sites | map(attribute='subdomain') |
-      intersect(playbook_subdomains) |
-      intersect(subdomains_filter)
-      }}
-  when: subdomains_filter is defined
+    subdomains: |-
+      {% if subdomains_filter is defined %}
+        {{- subdomains_scope | intersect(subdomains_configured) |
+            intersect(subdomains_filter) }}
+      {%- else %}
+        {{- subdomains_scope | intersect(subdomains_configured) }}
+      {%- endif %}
+  vars:
+    # The subdomains in the scope of the current playbook run.
+    subdomains_scope: |-
+      {% if playbook_subdomains is defined %}
+        {%- if run_subdomains is defined %}
+          {{- playbook_subdomains | intersect(run_subdomains.split(',')) }}
+        {%- else %}
+          {{- playbook_subdomains }}
+        {%- endif %}
+      {%- else %}
+        {{- run_subdomains.split(',')}}
+      {%- endif %}
+    # The subdomains configured via the inventory in the current task context.
+    subdomains_configured: "\
+      {{ wordpress_sites | map(attribute='subdomain') }}"
