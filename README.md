@@ -218,80 +218,89 @@ The table [List of Variables](#list-of-variables) below contains:
 Since the test environments in my [Services - Docker](https://github.com/varilink/services-docker) repository are used for desktop based testing only and not any live services, I can share the values for variables set within them openly, whereas I could not for a live environment since they would in that environment be sensitive data. Thus [Services - Docker](https://github.com/varilink/services-docker) serves as a useful illustration of how to set the variables used by the roles in this library for anybody wanting to use those roles themselves.
 
 The values used in the **Where Set** column are one or more of:
-- *default* = The variable is not set in a test environment's inventory or playbooks and so the default value set in the role applies.
-- *inventory/all* = The variable is set within the all group of the inventory for test environments.
-- *inventory/external* = The variable is set within the external group of the inventory for test environments.
-- *inventory/internal* = The variable is set within the internal group of the inventory for test environments.
-- *host(s)* = The variable is set for one or more specific hosts in the inventory for test environments.
-- *my-roles* = The variable is set in the my-roles wrapper to this role library in [Services - Docker ](https://github.com/varilink/services-docker). This equates to setting a common value for the variable in the all group of the inventory for all [Services - Docker](https://github.com/varilink/services-docker) test environments without having to repeat it for all three.
+- *default* = Not set in a test environment's inventory or playbooks and so the default value set in the role applies.
+- *extra* = Set at playbook execution time via the `--extra-vars` option.
+- *inventory/all* = Set within the all group of the inventory for test environments.
+- *inventory/external* = Set within the external group of the inventory for test environments.
+- *inventory/internal* = Set within the internal group of the inventory for test environments.
+- *host(s)* = Set for one or more specific hosts in the inventory for test environments.
+- *my-roles* = Set in the my-roles wrapper to this role library in [Services - Docker ](https://github.com/varilink/services-docker). This equates to setting a common value for the variable in the all group of the inventory for all [Services - Docker](https://github.com/varilink/services-docker) test environments without having to repeat it for all three.
 - *nowhere* = The variable is optional and no value is set, either in a role nor in the inventories and playbooks for test environments.
-- *projects/all* = The variable is set within the all group of project playbooks for test environments.
-- *projects/host(s)* = The variable is set for one or more specific host(s) within project playbooks for test environments.
+- *playbook* = Set directly within project playbooks.
+- *projects/all* = Set within the all group of project playbooks for test environments.
+- *projects/host(s)* = Set for one or more specific host(s) within project playbooks for test environments.
 
 ### List of Variables
 
-| Name                                   | Used In                                                                                                                  | Mandatory | Where Set                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- | -------------------------------------------------------------------------- |
-| admin_user                             | backup_client<br>mail<br>mta<br>wordpress                                                                                | Yes       | inventory/all <sup>1</sup>                                                 |
-| admin_user_email                       | backup_director<br>backup_storage<br>mail_certificates<br>wordpress<br>wordpress_apache                                  | Yes       | inventory/all                                                              |
-| backup_archive_media_directory         | backup_dropbox<br>backup_storage                                                                                         | No        | default                                                                    |
-| backup_client_director_password        | backup_client<br>backup_director                                                                                         | Yes       | inventory/host(s) <sup>2</sup>                                             |
-| backup_client_monitor_password         | backup_client                                                                                                            | Yes       | inventory/host(s) <sup>2</sup>                                             |
-| backup_copy_folder                     | backup_director<br>backup_dropbox                                                                                        | No        | inventory/all <sup>3</sup>                                                 |
-| backup_database_host                   | backup_director                                                                                                          | No        | inventory/all <sup>4</sup>                                                 |
-| backup_database_password               | backup_director                                                                                                          | No        | default <sup>5</sup>                                                       |
-| backup_database_user                   | backup_director                                                                                                          | No        | default <sup>5</sup>                                                       |
-| backup_director_console_password       | backup_director                                                                                                          | Yes       | inventory/all                                                              |
-| backup_director_host                   | database                                                                                                                 | No        | inventory/all <sup>4</sup>                                                 |
-| backup_director_monitor_password       | backup_director                                                                                                          | Yes       | inventory/all                                                              |
-| backup_director_name                   | backup_client<br>backup_director<br>backup_storage                                                                       | Yes       | inventory/all                                                              |
-| backup_director_schedules_active       | backup_director                                                                                                          | No        | inventory/all <sup>6</sup>                                                 |
-| backup_linked_to_dropbox               | backup_director<br>backup_storage                                                                                        | No        | default <sup>7</sup>                                                       |
-| backup_monitor_name                    | backup_client<br>backup_director<br>backup_storage                                                                       | Yes       | inventory/all                                                              |
-| backup_storage_director_password       | backup_director<br>backup_storage                                                                                        | Yes       | inventory/all                                                              |
-| backup_storage_host                    | backup_director                                                                                                          | No        | inventory/all <sup>4</sup>                                                 |
-| backup_storage_monitor_password        | backup_storage                                                                                                           | Yes       | inventory/all                                                              |
-| backup_storage_name                    | backup_storage                                                                                                           | Yes       | inventory/all                                                              |
-| database_expose_externally             | database                                                                                                                 | No        | inventory/all <sup>4</sup>                                                 |
-| dns_client_nameservers                 | dns_client                                                                                                               | Yes       | inventory/external<br>inventory/internal<br>inventory/host(s) <sup>8</sup> |
-| dns_client_options                     | dns_client                                                                                                               | No        | nowhere                                                                    |
-| dns_host_patterns                      | dns                                                                                                                      | Yes       | inventory/external <sup>9</sup>                                            |
-| dns_linode_key                         | dns_api<br>dynamic_dns                                                                                                   | Yes       | inventory/all <sup>7</sup>                                                 |
-| dns_upstream_nameservers               | dns                                                                                                                      | Yes       | inventory/external<br>inventory/internal <sup>10</sup>                     |
-| domain_country                         | mail_external                                                                                                            | No        | projects/all                                                               |
-| domain_locality                        | mail_external                                                                                                            | No        | projects/all                                                               |
-| domain_name                            | dns<br>dynamic_dns<br>mail<br>mail_certificates<br>mail_external<br>reverse_proxy<br>wordpress_apache<br>wordpress_nginx | Yes       | projects/all                                                               |
-| domain_organisation                    | mail_external<br>wordpress                                                                                               | Yes       | projects/all                                                               |
-| domain_organisation_unit               | mail_external                                                                                                            | No        | nowhere                                                                    |
-| domain_smarthost_username              | mail_external                                                                                                            | No        | nowhere <sup>11</sup>                                                      |
-| domain_smarthost_userpass              | mail_external                                                                                                            | No        | nowhere <sup>11</sup>                                                      |
-| domain_state                           | mail_external                                                                                                            | No        | projects/all                                                               |
-| domain_users                           | mail_external<br>mail_internal                                                                                           | Yes       | projects/all                                                               |
-| dynamic_dns_crontab_stride             | dynamic_dns                                                                                                              | No        | default                                                                    |
-| dynamic_dns_records_dir                | dynamic_dns                                                                                                              | No        | default                                                                    |
-| home_domain                            | backup_director<br>backup_storage<br>dns<br>dns_client<br>mail<br>mail_external<br>mail_internal<br>mta                  | Yes       | inventory/all                                                              |
-| host_enabled_for_ssl                   | reverse_proxy                                                                                                            | No        | inventory/internal<br>inventory/host(s) <sup>12</sup>                      |
-| hosts_to_roles_map                     | backup_director<br>domain.yml                                                                                            | Yes       | inventory/all                                                              |
-| mail_uses_ca                           | mail_certificates<br>mail_external                                                                                       | No        | default <sup>13</sup>                                                      |
-| mta_smarthost_hostname                 | mta                                                                                                                      | Yes       |                                                                            |
-| mta_smarthost_port                     | mta                                                                                                                      | Yes       |                                                                            |
-| mta_smarthost_username                 | mta                                                                                                                      | Yes       |                                                                            |
-| mta_smarthost_userpass                 | mta                                                                                                                      | Yes       |                                                                            |
-| office_subnet                          | mail_internal                                                                                                            | Yes       | inventory/all                                                              |
-| project_dynamic_dns_records            | dynamic_dns                                                                                                              | Yes       | projects/all                                                               |
-| unsafe_writes                          | dns_client                                                                                                               | No        | my-roles                                                                   |
-| wordpress_expose_externally            | wordpress_apache                                                                                                         | No        | inventory/all <sup>4</sup>                                                 |
-| wordpress_site_admin_email             | wordpress                                                                                                                | No        | default <sup>14</sup>                                                      |
-| wordpress_site_admin_password          | wordpress                                                                                                                | Yes       | projects/host(s)                                                           |
-| wordpress_site_admin_user              | wordpress                                                                                                                | No        | inventory/all                                                              |
-| wordpress_site_client_max_body_size    | wordpress_nginx                                                                                                          | No        | default                                                                    |
-| wordpress_site_database_host           | database<br>wordpress                                                                                                    | No        | default <sup>14</sup>                                                      |
-| wordpress_site_database_password       | database<br>wordpress                                                                                                    | Yes       | projects/host(s)                                                           |
-| wordpress_site_expose_externally       | wordpress_apache                                                                                                         | No        |                                                                            |
-| wordpress_site_plugins                 | wordpress                                                                                                                | No        |                                                                            |
-| wordpress_site_reverse_proxy_pass_port | reverse_proxy<br>wordpress_apache                                                                                        | Yes       | projects/all                                                               |
-| wordpress_site_subdomain               | dns<br>reverse_proxy<br>wordpress<br>wordpress_apache<br>wordpress_nginx                                                 | Yes       |                      |
-| wordpress_site_uses_ssl                | reverse_proxy<br>wordpress_nginx                                                                                         | No        |                      |
+| Name                                   | Used In                                                                                                                  | Mandatory | Where Set                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- | ----------------------------------------------------------------------------------------- |
+| admin_user                             | backup_client<br>mail<br>mta<br>wordpress                                                                                | Yes       | inventory/all <sup>1</sup>                                                                |
+| admin_user_email                       | backup_director<br>backup_storage<br>mail_certificates<br>wordpress<br>wordpress_apache                                  | Yes       | inventory/all                                                                             |
+| backup_archive_media_directory         | backup_dropbox<br>backup_storage                                                                                         | No        | default                                                                                   |
+| backup_client_director_password        | backup_client<br>backup_director                                                                                         | Yes       | inventory/host(s) <sup>2</sup>                                                            |
+| backup_client_monitor_password         | backup_client                                                                                                            | Yes       | inventory/host(s) <sup>2</sup>                                                            |
+| backup_copy_folder                     | backup_director<br>backup_dropbox                                                                                        | No        | inventory/all <sup>3</sup>                                                                |
+| backup_database_host                   | backup_director                                                                                                          | No        | inventory/all <sup>4</sup>                                                                |
+| backup_database_password               | backup_director                                                                                                          | No        | default <sup>5</sup>                                                                      |
+| backup_database_user                   | backup_director                                                                                                          | No        | default <sup>5</sup>                                                                      |
+| backup_director_console_password       | backup_director                                                                                                          | Yes       | inventory/all                                                                             |
+| backup_director_host                   | database                                                                                                                 | No        | inventory/all <sup>4</sup>                                                                |
+| backup_director_monitor_password       | backup_director                                                                                                          | Yes       | inventory/all                                                                             |
+| backup_director_name                   | backup_client<br>backup_director<br>backup_storage                                                                       | Yes       | inventory/all                                                                             |
+| backup_director_schedules_active       | backup_director                                                                                                          | No        | inventory/all <sup>6</sup>                                                                |
+| backup_linked_to_dropbox               | backup_director<br>backup_storage                                                                                        | No        | default <sup>7</sup>                                                                      |
+| backup_monitor_name                    | backup_client<br>backup_director<br>backup_storage                                                                       | Yes       | inventory/all                                                                             |
+| backup_storage_director_password       | backup_director<br>backup_storage                                                                                        | Yes       | inventory/all                                                                             |
+| backup_storage_host                    | backup_director                                                                                                          | No        | inventory/all <sup>4</sup>                                                                |
+| backup_storage_monitor_password        | backup_storage                                                                                                           | Yes       | inventory/all                                                                             |
+| backup_storage_name                    | backup_storage                                                                                                           | Yes       | inventory/all                                                                             |
+| database_expose_externally             | database                                                                                                                 | No        | inventory/all <sup>4</sup>                                                                |
+| dns_client_nameservers                 | dns_client                                                                                                               | Yes       | inventory/external<br>inventory/internal<br>inventory/host(s) <sup>8</sup>                |
+| dns_client_options                     | dns_client                                                                                                               | No        | nowhere                                                                                   |
+| dns_host_patterns                      | dns                                                                                                                      | Yes       | inventory/external <sup>9</sup>                                                           |
+| dns_linode_key                         | dns_api<br>dynamic_dns                                                                                                   | Yes       | inventory/all <sup>7</sup>                                                                |
+| dns_upstream_nameservers               | dns                                                                                                                      | Yes       | inventory/external<br>inventory/internal <sup>10</sup>                                    |
+| domain_country                         | mail_external                                                                                                            | No        | projects/all                                                                              |
+| domain_locality                        | mail_external                                                                                                            | No        | projects/all                                                                              |
+| domain_name                            | dns<br>dynamic_dns<br>mail<br>mail_certificates<br>mail_external<br>reverse_proxy<br>wordpress_apache<br>wordpress_nginx | Yes       | projects/all                                                                              |
+| domain_organisation                    | mail_external<br>wordpress                                                                                               | Yes       | projects/all                                                                              |
+| domain_organisation_unit               | mail_external                                                                                                            | No        | nowhere                                                                                   |
+| domain_smarthost_username              | mail_external                                                                                                            | No        | nowhere <sup>11</sup>                                                                     |
+| domain_smarthost_userpass              | mail_external                                                                                                            | No        | nowhere <sup>11</sup>                                                                     |
+| domain_state                           | mail_external                                                                                                            | No        | projects/all                                                                              |
+| domain_users                           | mail_external<br>mail_internal                                                                                           | Yes       | projects/all                                                                              |
+| dynamic_dns_crontab_stride             | dynamic_dns                                                                                                              | No        | default                                                                                   |
+| dynamic_dns_records_dir                | dynamic_dns                                                                                                              | No        | default                                                                                   |
+| home_domain                            | backup_director<br>backup_storage<br>dns<br>dns_client<br>mail<br>mail_external<br>mail_internal<br>mta                  | Yes       | inventory/all                                                                             |
+| host_enabled_for_ssl                   | reverse_proxy                                                                                                            | No        | inventory/internal<br>inventory/host(s) <sup>12</sup>                                     |
+| hosts_to_roles_map                     | backup_director<br>domain.yml                                                                                            | Yes       | inventory/all                                                                             |
+| mail_uses_ca                           | mail_certificates<br>mail_external                                                                                       | No        | default <sup>13</sup>                                                                     |
+| mta_smarthost_hostname                 | mta                                                                                                                      | Yes       |                                                                                           |
+| mta_smarthost_port                     | mta                                                                                                                      | Yes       |                                                                                           |
+| mta_smarthost_username                 | mta                                                                                                                      | Yes       |                                                                                           |
+| mta_smarthost_userpass                 | mta                                                                                                                      | Yes       |                                                                                           |
+| office_subnet                          | mail_internal                                                                                                            | Yes       | inventory/all                                                                             |
+| playbook_subdomains                    | wordpress                                                                                                                | No        | playbook                                                                                  |
+| project_dynamic_dns_records            | dynamic_dns                                                                                                              | Yes       | projects/all                                                                              |
+| run_subdomains                         | wordpress                                                                                                                | No        | extra                                                                                     |
+| subdomains_filter                      | wordpress                                                                                                                | No        | playbook                                                                                  |
+| unsafe_writes                          | dns_client                                                                                                               | No        | my-roles                                                                                  |
+| wordpress_expose_externally            | wordpress_apache                                                                                                         | No        | inventory/all <sup>4</sup>                                                                |
+| wordpress_site_admin_email             | wordpress                                                                                                                | No        | default <sup>14</sup>                                                                     |
+| wordpress_site_admin_password          | wordpress                                                                                                                | Yes       | projects/host(s)                                                                          |
+| wordpress_site_admin_user              | wordpress                                                                                                                | No        | inventory/all                                                                             |
+| wordpress_site_client_max_body_size    | wordpress_nginx                                                                                                          | No        | default                                                                                   |
+| wordpress_site_database_host           | database<br>wordpress                                                                                                    | No        | inventory/external<br>inventory/internal&nbsp;<sup>4</sup>                                |
+| wordpress_site_database_password       | database<br>wordpress                                                                                                    | Yes       | projects/host(s)                                                                          |
+| wordpress_site_dns_host                | dns                                                                                                                      | No        | inventory/external<br>inventory/internal                                                  |
+| wordpress_site_expose_externally       | wordpress_apache                                                                                                         | No        |                                                                                           |
+| wordpress_site_plugins                 | wordpress                                                                                                                | No        |                                                                                           |
+| wordpress_site_reverse_proxy_host      | dns<br>wordpress_apache                                                                                                  | No        | inventory/external<br>inventory/internal<br>playbook&nbsp;<sup>4</sup>&nbsp;<sup>15</sup> |
+| wordpress_site_reverse_proxy_pass_port | reverse_proxy<br>wordpress_apache                                                                                        | Yes       | projects/all                                                                              |
+| wordpress_site_subdomain               | dns<br>reverse_proxy<br>wordpress<br>wordpress_apache<br>wordpress_nginx                                                 | Yes       |                                                                                           |
+| wordpress_site_uses_ssl                | reverse_proxy<br>wordpress_nginx                                                                                         | No        |                                                                                           |
+
+These are notes for the **Where Set** entries above. Where there is more than one **Where Set** for a variable, the notes apply collectively to them all.
 
 > <sup>1</sup> Variables set here are not necessarily used by all hosts in the test environment. I operate the principle that if a single value applies wherever the variable is used, then that value is set in the *all* group. Since I apply that principle throughout I do not repeat this note on other entries.
 
@@ -320,6 +329,8 @@ The values used in the **Where Set** column are one or more of:
 > <sup>13</sup> The test environments use self-signed certificates so that they're not reliant on Let's Encrypt integration. In live use, it is recommended to use certification authority certificates.
 
 > <sup>14</sup> Defaults to the value set for [admin_user_email](#admin-user-email).
+
+> <sup>15</sup> The playbook entries 
 
 ### Variable Descriptions
 
@@ -522,11 +533,26 @@ The password that a host uses when connecting to a smarthost to relay emails.
 
 The IP address mask for the office network. The internal mail server relays email unconditionally for clients on this network.
 
+#### playbook_subdomains
+
+See [Controlling the WordPress Sites Impacted by Project Playbooks](#controlling-the-wordpress-sites-impacted-by-project-playbooks) below.
+
+#### project_dynamic_dns_records
+
+#### run_subdomains
+
+See [Controlling the WordPress Sites Impacted by Project Playbooks](#controlling-the-wordpress-sites-impacted-by-project-playbooks) below.
+
+#### subdomains_filter
+
+See [Controlling the WordPress Sites Impacted by Project Playbooks](#controlling-the-wordpress-sites-impacted-by-project-playbooks) below.
+
 #### unsafe_writes
 
 If set to a true value, this enables the dns_client role to write to `/etc/hosts` and `/etc/resolv.conf` in an unsafe manner. This is necessary only in a Docker container environment because of the way that Docker mounts a copy of the host's `/etc/resolv.conf` file within containers. Hence this variable defaults to a false value, which is the value it should have in all other scenarios.
 
 #### wordpress_expose_externally
+
 Whether to expose an Apache based WordPress service on the external network interface or not.
 
 When we use Apache for WordPress sites we do so behind an Nginx reverse proxy, usually with both on the same host. Where this is the case, the Apache service should listen on the local network interface only, since it is only the reverse proxy on the same host that accesses it. For this reason a default value of *false* is set for this variable.
@@ -536,43 +562,91 @@ If a host for Apache WordPress sites is paired with an Nginx reverse proxy on an
 Whatever is set for this variable on a host, it can be countermanded at a WordPress site level using the `wordpress_site_expose_externally` variable.
 
 #### wordpress_site_admin_email
+
 When each WordPress site is created so is an initial administrator user account. This variable sets the email address for that account. It can be omitted, in which case the value of the `admin_user_email` variable will be used instead.
 
 #### wordpress_site_admin_password
+
 The name of the administrator user account referred to in the description of the `wordpress_site_admin_email` variable. This can not be omitted.
 
 #### wordpress_site_admin_user
+
 The name of the administrator user account referred to in the description of the `wordpress_site_admin_email` variable. This can also be omitted, in which case the value of the `admin_user` variable will be used instead.
 
 #### wordpress_site_client_max_body_size
+
 If this variable is set then it dictates the maximum size for file uploads in WordPress in the web server(s). The value must still be adjusted in WordPress itself. If it isn't set then the default values apply.
 
 #### wordpress_site_database_host
-The host that a WordPress site should use for its database. If this is omitted then it will be assumed that is the same host as the WordPress site is on.
+
+The host that a WordPress site uses for its database. If this is defined then it will be used by the [wordpress](#wordpress) role to set the value of `dbhost` when it creates the configuration file for a WordPress site. If it isn't defined then the [wordpress](#wordpress) role will set `dbhost` to `localhost`, i.e. it will assume that the database is co-hosted with the WordPress site.
 
 #### wordpress_site_database_password
+
 The password that a WordPress site should use to connect to its database.
 
-#### wordpress_site_dns_host
-The DNS host that provides domain resolution services for a WordPress site. The value of this variable is used to target a DNS host for adding DNS entries for the WordPress site using the `site_dns` role.
-
-This variable only needs to be set if that is required. It could be for example that for a particular WordPress site we rely solely on manual DNS settings using Linode's DNS manager.
-
 #### wordpress_site_expose_externally
+
 Whether an Apache based WordPress site is exposed on the external network interface - see `wordpress_expose_externally`. If this is omitted then the value of `wordpress_expose_externally` will apply.
 
+#### wordpress_site_host
+
+If this variable is defined then it is used by roles as follows:
+
+- [database](#databse) - to associate a host when it creates the user for a WordPress site to connect to that its database.
+- [reverse_proxy](#reverse-proxy) - to establish the IP address that requests for a WordPress site should be passed through to.
+
+If it is not defined then both roles assume that the WordPress site is co-hosted with them.
+
 #### wordpress_site_plugins
+
 If this is defined it should be a dictionary object, the keys of which are the names of plugins to be installed and activated for a WordPress site. Each of these may optionally have a `version` attribute set, which will of course dictate the version of the plugin to be installed. Note that any plugins that are present that are not listed in a provided `wordpress_site_plugins` variable will be deactivated if necessary and uninstalled.
 
 #### wordpress_site_reverse_proxy_pass_port
+
 The port associated with a WordPress site that uses Apache. We implement our Apache WordPress service behind and Nginx reverse proxy, so this is the port that the reverse proxy will pass requests to for that WordPress site.
 
 #### wordpress_site_subdomain
+
 The subdomain of a WordPress site. There can be multiple WordPress sites for a domain, each distinguished by a separate subdomain; for example 'www', 'test', etc.
 
 #### wordpress_site_uses_ca
 
 #### wordpress_site_uses_ssl
+
 This variable controls whether a WordPress site uses SSL or not. By default it is set to the same value as the variable `host_enabled_for_ssl`, so if a reverse proxy host is enabled for SSL then by default all the WordPress sites that it serves use SSL and if it isn't then by default all the WordPress sites that it serves don't use SSL.
 
 If a reverse proxy host is enabled for SSL then its possible to override the default value of `wordpress_site_uses_ssl` when deploying WordPress sites to it. If you set the variable to `no` then the deployed WordPress site will **not** use SSL. You might do this for a reverse proxy host that serves some WordPress sites that are exposed externally and others that are only exposed internally.
+
+### Controlling the WordPress Sites Impacted by Project Playbooks
+
+Under [List of Roles](#list-of-roles) above there are six roles that support the *site* deployment level:
+- database
+- dns
+- reverse_proxy
+- wordpress
+- wordpress_apache
+- wordpress_nginx
+
+To manage WordPress sites these roles should be used in projects that typically manage sites that correspond to one or more subdomains of a project domain; for example *dev*, *test* and *www* subdomains for the domain *example.com*, which therefore corresponds to the WordPress sites *dev.example.com*, *test.example.com* and *www.example.com*. Using these roles, you can act on multiple WordPress sites for a project domain in a single playbook run.
+
+Between them, three of the variables listed under [Variable Descriptions](#variable-descriptions) above control the WordPress sites for a project domain that a playbook run will act upon in coordination with the variables whose names start `wordpress_site_` that are defined within the project's inventory. Those three variables are:
+- `playbook_subdomains`
+- `run_subdomains`
+- `subdomains_filter`
+
+When set, each of these variables takes as its value a comma separated list of domains; for example "www", "dev,test", etc. Use these variables as follows:
+
+> `playbook_subdomains`<br>
+> Set this in the playbook at playbook level to make setting `run_subdomains` (see below) optional. This is purely a convenience when testing ahead of go-live. For live WordPress sites it is recommended not to define this variable so that on each playbook run a conscious choice must be made of the subdomains to act upon so that you don't inadvertently impact live sites.
+
+> `run_subdomains`<br>
+> Set this via `--extra-vars` when running a playbook. This should be made mandatory by not defining `playbook_subdomains` (see above) for playbooks that might impact live sites. The subdomains scope of a playbook run is either the value of `playbook_subdomains` (if `run_subdomains` is not defined) or `run_subdomains` (if `playbook_subdomains` is not defined) or the intersection of the two if both are defined. When both are defined, `run_subdomains` provides a means to filter down the subdomains scope of a playbook defined by `playbook_subdomains`.
+
+> `subdomains_filter`<br>
+> Set this at play or task level within playbooks to further filter down the subdomains scope of the playbook for specific tasks only a subset of that scope applies.
+
+A good way to understand how to use these variables is to examine the playbooks in the following folders in my [Services - Docker](https://github.com/varilink/services-docker) repository:
+- `envs/distributed/playbooks/customer/`
+- `envs/now/playbooks/customer/`
+- `envs/to-be/playbooks/customer/`
