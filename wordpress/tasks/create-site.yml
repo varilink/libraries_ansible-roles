@@ -6,6 +6,10 @@
 
 - ansible.builtin.import_tasks: common/site-vars.yml
 
+- ansible.builtin.import_role:
+    name: database
+    tasks_from: create-site
+
 - block:
 
   - name: Create directory to hold site WordPress files
@@ -105,3 +109,7 @@
     become_user: www-data
 
   become: yes
+
+- ansible.builtin.import_role:
+    name: dns
+    tasks_from: create-site
