@@ -19,9 +19,6 @@
 
 - block:
 
-    # The WordPress site is SSL enabled using a self-signed certificate, so we
-    # must generate that certificate if it doesn't exist already.
-
     - name: Generate self-signed certificate if it isn't already installed
       ansible.builtin.command:
         cmd: >-
@@ -41,56 +38,54 @@
           /etc/ssl/certs/{{
           wordpress_site_server_name | replace('.', '_')
           }}.pem
-      become: yes
+      # The WordPress site is SSL enabled using a self-signed certificate, so we
+      # must generate that certificate if it doesn't exist already.
       when: wordpress_site_uses_ssl and not wordpress_site_uses_ca
 
-    - block:
+    - name: >-
+        Determine if a certification authority's certificate is installed
+      ansible.builtin.shell: >-
+        certbot certificates |
+        grep 'Certificate Name: {{ wordpress_site_server_name }}'
+      register: certbot_certificates
+      failed_when: certbot_certificates.rc != 0 and certbot_certificates.rc != 1
+      changed_when: false
+      # The WordPress site is SSL enabled using a CA certificate, so see if we
+      # already have one installed.
+      when: wordpress_site_uses_ssl and wordpress_site_uses_ca
 
-        - name: >-
-            Determine if a certification authority's certificate is installed
-          ansible.builtin.shell: >-
-            certbot certificates |
-            grep 'Certificate Name: {{ wordpress_site_server_name }}'
-          register: certbot_certificates
-          failed_when: "\
-            certbot_certificates.rc != 0 and certbot_certificates.rc != 1"
-          changed_when: false
-          when: wordpress_site_uses_ssl and wordpress_site_uses_ca
-
-        - name: Template site Nginx configuration to sites-available
-          ansible.builtin.template:
-            src: nginx.conf.j2
-            dest: "\
-              /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
-          notify:
-            - Nginx configuration changed
-          vars:
-            certbot_certificate_installed: |-
-              {%
-                if certbot_certificates.rc is defined and
-                certbot_certificates.rc == 0
-              %}
-              yes
-              {%- else %}
-              no
-              {%- endif %}"
-
-        - name: Enable site nginx configuration
-          ansible.builtin.file:
-            src: "\
-              /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
-            dest: "\
-              /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf"
-            state: link
-          notify:
-            - Nginx configuration changed
-
-      become: yes
+    - name: Template site Nginx configuration to sites-available
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: "\
+          /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
+      notify:
+        - Nginx configuration changed
+      vars:
+        certbot_certificate_installed: |-
+          {%
+            if certbot_certificates.rc is defined and
+            certbot_certificates.rc == 0
+          %}
+          yes
+          {%- else %}
+          no
+          {%- endif %}"
+              
+    - name: Enable site nginx configuration
+      ansible.builtin.file:
+        src: "\
+          /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
+        dest: "\
+          /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf"
+        state: link
+      notify:
+        - Nginx configuration changed
 
     # Flush handlers so that if the site is newly configured it becomes
     # available immediately for the Let's Encrypt HTTP-01 challenge if we're
-    # going to go on and install a Let's Encrypt certificate. Note that we
-    # can't place flush_handlers within a when conditional.
+    # going to go on and install a Let's Encrypt certificate. Note that we can't
+    # place flush_handlers within a when conditional.
     - meta: flush_handlers
 
     - block:
@@ -124,5 +119,6 @@
         wordpress_site_uses_ssl and wordpress_site_uses_ca and
         certbot_certificate.rc == 1
 
+  become: yes
   delegate_to: "\
     {{ wordpress_site_reverse_proxy_host | default(inventory_hostname) }}"
