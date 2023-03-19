@@ -2,46 +2,34 @@
 # database/tasks/create-site.yml
 # ------------------------------------------------------------------------------
 
+# TODO: Obfuscate the names of the WordPress site's database and user for
+# "security through obscurity".
+
 ---
 
 - block:
 
-    # TODO: Obfuscate the names of the WordPress site's database and user for
-    # "security through obscurity".
-
     - name: Create database for the WordPress site
       community.mysql.mysql_db:
         # Name the database by substituting '_' for '.' in the site's server
-        # name; for example database www_varilink_co_uk for a site with the
-        # server name www.varilink.co.uk.
+        # name; for example database www_example_com for a site with the server
+        # name www.example.com.
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
-    - name: Create a local database user for the WordPress site
+    - name: Create database user for the WordPress site
       community.mysql.mysql_user:
         name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        # Name the user that the WordPress site will use to access the database
-        # in the same way that we named the database in the previous task.
+        host: |-
+          {% if wordpress_site_database_host is defined %}
+          {{ inventory_hostname }}.{{ home_domain }}
+          {%- else %}
+          localhost
+          {%- endif %}
         password: "{{ wordpress_site_database_password }}"
         priv: "\
           {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
-      # The WordPress site database is co-located with the WordPress site so
-      # the user will connect from the localhost.
-      when: wordpress_site_database_host == wordpress_site_host
-
-    - name: Create a remote database user for the WordPress site
-      community.mysql.mysql_user:
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
-        # host value needed since connection to the database is remote
-        host: "{{ wordpress_site_host }}.{{ home_domain }}"
-        password: "{{ wordpress_site_database_password }}"
-        priv: "\
-          {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-      # The WordPress site database is not co-located with the WordPress site so
-      # the user will connect from the WordPress site's host.
-      when: wordpress_site_database_host != wordpress_site_host
 
   become: yes
   delegate_to: "\
