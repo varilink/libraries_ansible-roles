@@ -6,13 +6,3 @@
 
 # Enable hosts for SSL so that not doing so is a conscious decision.
 host_enabled_for_ssl: yes
-
-# Determine whether WordPress sites use SSL based on whether the host is enabled
-# for SSL or not. A WordPress site that uses SSL on a host that isn't enabled
-# for it is an impossible situation, validation within the role flags this up as
-# a fail.
-wordpress_site_uses_ssl: "{{ host_enabled_for_ssl }}"
-
-# Use certification authority certificates so that using self-signed
-# certificates instead is a conscious decision.
-wordpress_site_uses_ca: "{% if wordpress_site_uses_ssl %}yes{% endif %}"
