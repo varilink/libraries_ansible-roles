@@ -117,7 +117,8 @@ both on the office network.
 
   {%- endif %}{# hostname in groups['external'] #}
 
-  {%- if 'backup_storage' in hosts_to_roles_map[hostname] %}
+  {%- if 'backup_storage' in hosts_to_roles_map[hostname]
+      and backup_linked_to_dropbox %}
 
   Client Run After Job = "/etc/bacula/scripts/check-storage-dropbox-status.sh"
   {%- endif %}
