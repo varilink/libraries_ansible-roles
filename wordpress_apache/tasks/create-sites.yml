@@ -9,6 +9,10 @@
     tasks_from: subdomains
 
 - ansible.builtin.include_tasks: site/create.yml
+  vars:
+    site_dns_host: "{{ wordpress_site_dns_host }}"
+    site_host: "{{ wordpress_site_reverse_proxy_host }}"
+    site_server_name: "{{ wordpress_site_server_name }}"
   loop: "{{ subdomains }}"
   loop_control:
     loop_var: subdomain

@@ -5,5 +5,7 @@ dns_service_lookups:
     role: backup_storage
   - name: caldav
     role: calendar
+  - name: influxdb
+    role: monitor_server
   - name: smtp
     role: mail_internal

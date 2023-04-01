@@ -2,23 +2,34 @@
 # database/tasks/create-backup-database.yml
 # ------------------------------------------------------------------------------
 
+# Creates a backup database, which is used to store the Bacula catalog. Also
+# creates a user to access that database. Due to idempotence this can be invoked
+# more than once to create multiple users that can access the backup database;
+# for example, one for use by the backup director and the other for use by the
+# backup web interface.
+
 ---
 
 - block:
 
-    - name: Create the database for the backup director to use
+    - name: Create the backup database
       community.mysql.mysql_db:
         # This task list needs to be run on the host for the MariaDB service so
         # that it can connect using the socket.
         login_unix_socket: /var/run/mysqld/mysqld.sock
         name: bacula
 
-    - name: Create a user for bacula to use
-      # Create the account for the IP address of the host that is the target for
-      # the backup_director role. This relies on the play that contains the
-      # backup_director role applying to a single host only.
+    - name: Create a user to access the backup database
+      # If the variable database_user_host is provided then the user account
+      # will be created for that host, otherwise it will be created for the
+      # localhost.
       community.mysql.mysql_user:
-        host: "{{ backup_director_host | default('localhost') }}"
+        host: |-
+          {% if database_user_host is defined %}
+          {{ database_user_host }}.{{ home_domain }}
+          {%- else %}
+          localhost
+          {%- endif %}
         login_unix_socket: /var/run/mysqld/mysqld.sock
         name: "{{ backup_database_user | default('bacula') }}"
         priv: 'bacula.*:ALL'

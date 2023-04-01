@@ -70,7 +70,7 @@
           # BEGIN ANSIBLE MANAGED BLOCK
           # END ANSIBLE MANAGED BLOCK
 
-          # Project entries
+          # Project records
         dest: /etc/addn-hosts
         force: no
 
@@ -90,5 +90,7 @@
           {{
             lookup('ansible.builtin.template', './templates/addn-hosts.j2')
           }}
+      notify:
+        - Dnsmasq configuration changed
 
   become: yes

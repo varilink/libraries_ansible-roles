@@ -2,21 +2,22 @@
 # dns/tasks/create-project-record.yml
 # ------------------------------------------------------------------------------
 
+# Create a project DNS record. These are added at the bottom of the
+# /etc/addn-hosts file, after the line '# Project records'.
+
 ---
 
-- name: Create DNS entries for WordPress site
+- name: Create project DNS record
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts
     line: |-
-      {% if wordpress_site_reverse_proxy_host is defined %}{{
-        hostvars[wordpress_site_reverse_proxy_host].ansible_default_ipv4.address
-      }}{% else %}{{
-        ansible_default_ipv4.address
-      }}{% endif %} {{ wordpress_site_server_name }}
+      {% if dns_record_target is defined %}
+      {{ hostvars[dns_record_target].ansible_default_ipv4.address }}
+      {%- else %}
+      {{ ansible_default_ipv4.address }}
+      {%- endif %} {{ dns_record_hostname }}
     regexp: >-
       ^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}
-      {{ wordpress_site_server_name | regex_escape() }}$
+      {{ dns_record_hostname | regex_escape() }}$
   notify: Dnsmasq configuration changed
   become: yes
-  delegate_to: "{{ wordpress_site_dns_host }}"
-  when: wordpress_site_dns_host is defined
