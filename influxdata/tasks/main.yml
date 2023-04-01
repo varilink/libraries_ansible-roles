@@ -1,0 +1,36 @@
+- name: Download the Influx GPG key
+  ansible.builtin.get_url:
+    url: https://repos.influxdata.com/influxdata-archive_compat.key
+    dest: /tmp
+
+- block:
+
+    - name: Check the Influx GPG key
+      ansible.builtin.shell: >-
+        echo '393e8779c89ac8d958f81f942f9ad7fb82a25e133faddaf92e15b16e6ac9ce4c
+        /tmp/influxdata-archive_compat.key' | sha256sum --check
+      changed_when: false
+      register: sha256sum_check_result
+      failed_when: sha256sum_check_result.rc != 0
+
+    - name: Add the Influx GPG key to the keyring
+      ansible.builtin.shell:
+        cmd: >-
+          cat /tmp/influxdata-archive_compat.key | gpg --dearmor
+          > /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+        creates: /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+
+    - name: Add Influx to APT sources
+      ansible.builtin.shell:
+        cmd: >-
+          echo "deb
+          [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg]
+          https://repos.influxdata.com/debian stable main"
+          > /etc/apt/sources.list.d/influxdata.list
+        creates: /etc/apt/sources.list.d/influxdata.list
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+  become: yes

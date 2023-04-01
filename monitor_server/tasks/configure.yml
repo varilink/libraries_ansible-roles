@@ -1,0 +1,50 @@
+- block:
+
+    - name: Setup influx
+      ansible.builtin.command:
+        cmd: >-
+          influx setup
+          --bucket monitor
+          --username {{ admin_user }}
+          --password {{ monitor_password | default('my-password') }}
+          --org "{{ home_organisation }}"
+          --retention {{ monitor_retention }}
+          --force
+        creates: /var/lib/influxdb/.influxdbv2/configs
+
+    - name: List the existing influxdb authorizations
+      ansible.builtin.command: influx auth list --json
+      changed_when: false
+      register: influx_auth_list
+
+    - block:
+
+        - name: Create all access influx auth token
+          ansible.builtin.command: >-
+            influx auth create
+            --all-access
+            --description "All access token"
+            --host http://localhost:8086
+            --json
+            --org "{{ home_organisation }}"
+          register: influx_auth_create
+          when: tokens | length == 0
+
+        - name: Set the influx access token as a fact
+          ansible.builtin.set_fact:
+            influx_access_token: |-
+              {% if tokens | length == 0 %}
+              {{ influx_auth_create.stdout | from_json |
+              community.general.json_query('token') }}
+              {%- else %}
+              {{ tokens | first }}
+              {%- endif %}
+
+      vars:
+        token_query: "[?description == 'All access token'].token"
+        tokens: >-
+          {{ influx_auth_list.stdout | from_json |
+          community.general.json_query(token_query) }}
+
+  become: yes
+  become_user: influxdb

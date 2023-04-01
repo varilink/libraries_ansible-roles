@@ -1,0 +1,31 @@
+- name: Install APT packages required by the monitor_server role
+  ansible.builtin.apt:
+    name:
+      - acl
+      - ca-certificates
+      - gosu
+      - gpg
+    install_recommends: no
+  become: yes
+
+- ansible.builtin.import_role:
+    name: influxdata
+
+- block:
+
+    - name: Install InfluxDB APT package
+      ansible.builtin.apt:
+        name: influxdb2
+        install_recommends: no
+
+    - name: Install the influx CLI
+      ansible.builtin.unarchive:
+        src: "\
+          https://dl.influxdata.com/influxdb/releases/\
+          influxdb2-client-2.6.1-linux-amd64.tar.gz"
+        remote_src: yes
+        exclude: [LICENSE, README.md]
+        extra_opts: ["--strip-components=1"]
+        dest: /usr/local/bin
+
+  become: yes

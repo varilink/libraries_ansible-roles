@@ -1,0 +1,42 @@
+server {
+
+  listen      80;
+  listen      [::]:80;
+  server_name {{ site_server_name }};
+
+  access_log /var/log/nginx/{{ site_server_name }}-access.log;
+  error_log /var/log/nginx/{{ site_server_name }}-error.log;
+
+  location /.well-known/acme-challenge/ {
+    root      /var/www/{{ site_server_name }}/html;
+    try_files $uri =404;
+    break;
+  }
+
+  location / {
+    return 301 https://{{ site_server_name }}$request_uri;
+  }
+
+}
+
+server {
+
+  listen      8086 ssl;
+  listen      [::]:8086 ssl;
+  server_name {{ site_server_name }};
+
+  access_log /var/log/nginx/{{ site_server_name }}-access.log;
+  error_log /var/log/nginx/{{ site_server_name }}-error.log;
+
+  ssl_certificate /etc/ssl/certs/
+  {{- site_server_name | replace('.', '_') }}.pem;
+  ssl_certificate_key /etc/ssl/private/
+  {{- site_server_name | replace('.', '_') }}.pem;
+
+  location / {
+    proxy_pass http://influxdb:8086;
+    proxy_set_header Host {{ site_server_name }};
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+}

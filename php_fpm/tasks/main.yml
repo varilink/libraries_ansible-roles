@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# php_fpm/tasks/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Install APT packages for PHP FPM role
+  ansible.builtin.apt:
+    name: php-fpm
+    install_recommends: no
+  become: yes

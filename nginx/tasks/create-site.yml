@@ -1,0 +1,110 @@
+# ------------------------------------------------------------------------------
+# reverse_proxy/tasks/create-site.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Generate self-signed certificate if it isn't already installed
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -new -x509 -nodes -days 1095
+          -out /etc/ssl/certs/{{
+          site_server_name | replace('.', '_')
+          }}.pem
+          -keyout /etc/ssl/private/{{
+          site_server_name | replace('.', '_')
+          }}.pem
+          -subj '/CN={{ site_server_name }}'
+          -addext "subjectAltName = DNS:{{ site_server_name }}"
+          {% if subdomain == 'www' %} -addext "subjectAltName = DNS:{{
+          domain_name
+          }}"
+          {%- endif %}
+        creates: >-
+          /etc/ssl/certs/{{
+          site_server_name | replace('.', '_')
+          }}.pem
+      # The WordPress site is SSL enabled using a self-signed certificate, so we
+      # must generate that certificate if it doesn't exist already.
+      when: site_uses_ssl and not env_uses_ca
+
+    - name: >-
+        Determine if a certification authority's certificate is installed
+      ansible.builtin.shell: >-
+        certbot certificates |
+        grep 'Certificate Name: {{ site_server_name }}'
+      register: certbot_certificates
+      failed_when: certbot_certificates.rc != 0 and certbot_certificates.rc != 1
+      changed_when: false
+      # The WordPress site is SSL enabled using a CA certificate, so see if we
+      # already have one installed.
+      when: site_uses_ssl and env_uses_ca
+
+    - name: Template site Nginx configuration to sites-available
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: "\
+          /etc/nginx/sites-available/{{ site_server_name }}.conf"
+      notify:
+        - Nginx configuration changed
+      vars:
+        certbot_certificate_installed: |-
+          {%
+            if certbot_certificates.rc is defined and
+            certbot_certificates.rc == 0
+          %}
+          yes
+          {%- else %}
+          no
+          {%- endif %}"
+              
+    - name: Enable site nginx configuration
+      ansible.builtin.file:
+        src: "\
+          /etc/nginx/sites-available/{{ site_server_name }}.conf"
+        dest: "\
+          /etc/nginx/sites-enabled/{{ site_server_name }}.conf"
+        state: link
+      notify:
+        - Nginx configuration changed
+
+    # Flush handlers so that if the site is newly configured it becomes
+    # available immediately for the Let's Encrypt HTTP-01 challenge if we're
+    # going to go on and install a Let's Encrypt certificate. Note that we can't
+    # place flush_handlers within a when conditional.
+    - meta: flush_handlers
+
+    - block:
+
+        # A certification authority's certificate is not yet installed, so get
+        # and install one.
+
+        - name: Install certbot certificate
+          ansible.builtin.command: |-
+            certbot -n certonly
+            --webroot -w {{ site_path }}
+            -d {{ site_server_name }}
+            {% if site_subdomain == 'www' %}
+            -d {{ domain_name }}
+            {% endif %}
+
+        - name: Template site nginx configuration to sites-available
+          ansible.builtin.template:
+            src: nginx.conf.j2
+            dest: >-
+              /etc/nginx/sites-available/{{
+              site_server_name
+              }}.conf
+          notify:
+            - Nginx configuration changed
+          vars:
+            certbot_certificate_installed: yes
+
+      become: yes
+      when: >-
+        site_uses_ssl and env_uses_ca and
+        certbot_certificate.rc == 1
+
+  become: yes

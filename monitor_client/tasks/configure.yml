@@ -1,0 +1,57 @@
+- name: Test if /etc/telegraf/telegraf.conf.sample file is present
+  ansible.builtin.stat:
+    path: /etc/telegraf/telegraf.conf.sample
+  register: sample_config
+
+- block:
+
+    - name: Generate my starting Telegraf configuration
+      ansible.builtin.shell: >-
+        telegraf config
+        --input-filter cpu:disk:mem:new:swap
+        --output-filter influxdb_v2
+        > /etc/telegraf/telegraf.conf
+        && rm /etc/telegraf/telegraf.conf.sample
+      when: sample_config.stat.exists
+
+    - name: Configure URL for influxdb access
+      ansible.builtin.lineinfile:
+        path: /etc/telegraf/telegraf.conf
+        line: |-
+          {% if 'external' in group_names %}
+            urls = ["https://influxdb.{{ home_domain }}:8086"]
+          {%- else %}
+            urls = ["http://influxdb:8086"]
+          {%- endif %}
+        regex: "\
+          ^  urls = \\[\\\"https?://\
+          (?:127\\.0\\.0\\.1|influxdb(?:\\.{{ home_domain | regex_escape }})?)\
+          :8086\\\"\\]$"
+
+    - name: Configure token for influxdb access
+      ansible.builtin.lineinfile:
+        path: /etc/telegraf/telegraf.conf
+        line: '  token = "{{ influx_access_token }}"'
+        regex: '^  token = \".*\"$'
+
+    - name: Configure organisation for influxdb access
+      ansible.builtin.lineinfile:
+        path: /etc/telegraf/telegraf.conf
+        line: '  organization = "{{ home_organisation }}"'
+        regex: "\
+          ^  organization = \"(?:{{ home_organisation | regex_escape }})?\"$"
+
+    - name: Configure bucket for influxdb access
+      ansible.builtin.lineinfile:
+        path: /etc/telegraf/telegraf.conf
+        line: '  bucket = "monitor"'
+        regex: '^  bucket = "(?:monitor)?"$'
+
+    - name: Disable CA verification for external connections
+      ansible.builtin.lineinfile:
+        path: /etc/telegraf/telegraf.conf
+        line: '  insecure_skip_verify = true'
+        regex: '^  (?:# )insecure_skip_verify = (?:false|true)?$'
+      when: "'external' in group_names"
+
+  become: yes

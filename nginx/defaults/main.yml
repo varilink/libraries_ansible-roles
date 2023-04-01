@@ -1,0 +1,8 @@
+# ------------------------------------------------------------------------------
+# reverse_proxy/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# Enable hosts for SSL so that not doing so is a conscious decision.
+host_enabled_for_ssl: yes

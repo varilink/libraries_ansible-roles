@@ -1,0 +1,8 @@
+- ansible.builtin.import_role:
+    name: nginx
+    tasks_from: create-site
+  vars:
+    subdomain: influxdb
+    site_subdomain: influxdb
+    site_server_name: "{{ subdomain }}.{{ home_domain }}"
+    site_uses_ssl: yes

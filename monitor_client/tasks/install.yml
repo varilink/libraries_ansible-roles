@@ -1,0 +1,17 @@
+- name: Install APT packages required by the monitor_client role
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gpg
+      - jq
+    install_recommends: no
+  become: yes
+
+- ansible.builtin.import_role:
+    name: influxdata
+
+- name: Install Telegraf APT package
+  ansible.builtin.apt:
+    name: telegraf
+    install_recommends: no
+  become: yes

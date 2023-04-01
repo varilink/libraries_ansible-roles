@@ -1,0 +1,15 @@
+- block:
+
+    - name: Install APT peripheral packages required by monitor_dashboard role
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - libfontconfig1
+        install_recommends: no
+
+    - name: Install grafana APT package required by monitor_dashboard role
+      ansible.builtin.apt:
+        deb: https://dl.grafana.com/oss/release/grafana_9.4.7_amd64.deb
+        install_recommends: no
+
+  become: yes

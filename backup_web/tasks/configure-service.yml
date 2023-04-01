@@ -1,0 +1,23 @@
+- block:
+
+    - name: Template out the bacula_web configuration file
+      ansible.builtin.template:
+        src: config.php.j2
+        dest: /var/www/bacula-web/application/config/config.php
+        owner: www-data
+        group: www-data
+
+    - name: Template out config file for nginx site
+      ansible.builtin.template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/backup.{{ home_domain }}.conf
+      notify: Nginx configuration changed
+
+    - name: Enable site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/backup.{{ home_domain }}.conf
+        src: /etc/nginx/sites-available/backup.{{ home_domain }}.conf
+        state: link
+      notify: Nginx configuration changed
+
+  become: yes

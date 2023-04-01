@@ -1,0 +1,55 @@
+# ------------------------------------------------------------------------------
+# backup_web/tasks/install.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- ansible.builtin.import_role:
+    name: nginx
+
+- ansible.builtin.import_role:
+    name: php_fpm
+
+- block:
+
+    - name: Install APT packages for backup_web role
+      ansible.builtin.apt:
+        name:
+          - acl
+          - ca-certificates
+          - composer
+          - git
+          - gosu
+          - php-cli
+          - php-mbstring
+          - php-mysql
+          - php-sqlite3
+          - php-xml
+          - php-zip
+          - unzip
+          - wget
+        install_recommends: no
+
+    - name: Enable write in /var/www for the www-data user
+      ansible.builtin.file:
+        path: /var/www
+        group: www-data
+        mode: g+w
+
+  become: yes
+
+- name: Find if the bacula-web project has already been created
+  ansible.builtin.stat:
+    path: /var/www/bacula-web
+  register: bacula_web
+
+- name: Create the bacula-web project
+  community.general.composer:
+    command: create-project
+    arguments: bacula-web/bacula-web bacula-web
+    no_dev: true
+    prefer_dist: true
+    working_dir: /var/www
+  become: yes
+  become_user: www-data
+  when: not bacula_web.stat.exists

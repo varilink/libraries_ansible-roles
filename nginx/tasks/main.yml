@@ -1,0 +1,31 @@
+# ------------------------------------------------------------------------------
+# nginx/tasks/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Install APT packages for Nginx role
+      ansible.builtin.apt:
+        name: nginx
+        install_recommends: no
+
+    - block:
+
+        - name: Install certbot APT package
+          ansible.builtin.apt:
+            name: certbot
+            install_recommends: no
+
+        - name: Automate reload of Nginx configuration on certificate renewal
+          ansible.builtin.copy:
+            src: files/reload-nginx-config.sh
+            dest: /etc/letsencrypt/renewal-hooks/deploy/
+            owner: root
+            group: root
+            mode: '755'
+
+      when: host_enabled_for_ssl
+
+  become: yes

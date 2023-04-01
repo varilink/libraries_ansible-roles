@@ -1,0 +1,23 @@
+---
+
+- block:
+
+  - name: Populate service facts
+    ansible.builtin.service_facts:
+    listen: Nginx configuration changed
+
+  - name: Reload nginx configuration if nginx is running
+    ansible.builtin.service:
+      name: nginx
+      state: reloaded
+    when: ansible_facts['services']['nginx']['state'] == 'running'
+    listen: Nginx configuration changed
+
+  - name: Start nginx if it isn't running
+    ansible.builtin.service:
+      name: nginx
+      state: started
+    when: ansible_facts['services']['nginx']['state'] != 'running'
+    listen: Nginx configuration changed
+
+  become: yes
