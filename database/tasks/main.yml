@@ -1,9 +1,9 @@
+# ------------------------------------------------------------------------------
 # database/tasks/main.yml
+# ------------------------------------------------------------------------------
 
 ---
 
-- ansible.builtin.import_tasks:
-    file: install.yml
+- ansible.builtin.import_tasks: install-service.yml
 
-- ansible.builtin.import_tasks:
-    file: configure.yml
+- ansible.builtin.import_tasks: configure-service.yml

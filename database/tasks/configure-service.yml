@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# database/tasks/configure.yml
+# database/tasks/configure-service.yml
 # ------------------------------------------------------------------------------
 
 # Configure a database service after we have installed it.
