@@ -4,6 +4,8 @@
 
 ---
 
+backup_copy_folder: bacula
+
 # Run scheduled jobs by default but allow this to be overridden in testing
 # environments where we might not want jobs to run automatically.
 backup_director_schedules_active: yes

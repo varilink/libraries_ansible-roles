@@ -74,11 +74,10 @@ files locally to the backup director's host.
 #}
   Write Bootstrap = "/var/lib/bacula/Bootstrap/%n.bsr"
 {% endif %}
-{#-
+{#
 Use a FileSet that is specific to each server to be backed up and is in fact
 derived from the Ansible roles that are deployed to each server.
 #}
-
   FileSet = {{ hostname }}
   {%- if hostname in groups['external'] %}
 
