@@ -123,4 +123,9 @@
         group: bacula
       when: not dropbox_dir.stat.exists
 
+    - name: Copy the bacula catalog queries file to the director host
+      ansible.builtin.copy:
+        src: query.sql
+        dest: /etc/bacula/scripts/query.sql
+
   become: yes
