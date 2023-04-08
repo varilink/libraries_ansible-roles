@@ -1,0 +1,17 @@
+- block:
+
+    - name: List the existing influxdb authorizations
+      ansible.builtin.command: influx auth list --json
+      changed_when: false
+      register: influx_auth_list
+
+    - name: Set the influx access token as a fact
+      ansible.builtin.set_fact:
+        influx_access_token: >-
+          {{ influx_auth_list.stdout | from_json |
+          community.general.json_query(token_query) | first }}
+      vars:
+        token_query: "[?description == 'All access token'].token"
+
+  become: yes
+  become_user: influxdb
