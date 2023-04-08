@@ -1,4 +1,6 @@
 dns_service_lookups:
+  - name: backup
+    role: backup_web
   - name: bacula-dir
     role: backup_director
   - name: bacula-sd
@@ -7,5 +9,7 @@ dns_service_lookups:
     role: calendar
   - name: influxdb
     role: monitor_server
+  - name: monitor
+    role: monitor_dashboard
   - name: smtp
     role: mail_internal
