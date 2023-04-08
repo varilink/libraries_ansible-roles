@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# monitor_server/tasks/install-service.yml
+# ------------------------------------------------------------------------------
+
+---
+
 - name: Install APT packages required by the monitor_server role
   ansible.builtin.apt:
     name:

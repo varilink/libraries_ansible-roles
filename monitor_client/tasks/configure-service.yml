@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# monitor_client/tasks/configure-service.yml
+# ------------------------------------------------------------------------------
+
+---
+
 - name: Test if /etc/telegraf/telegraf.conf.sample file is present
   ansible.builtin.stat:
     path: /etc/telegraf/telegraf.conf.sample
