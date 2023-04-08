@@ -1,15 +1,41 @@
+- name: Download the Grafana GPG key
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /tmp/grafana.key
+
 - block:
 
-    - name: Install APT peripheral packages required by monitor_dashboard role
+    - name: Install peripheral APT packages required by monitor_dashboard role
       ansible.builtin.apt:
         name:
           - ca-certificates
           - libfontconfig1
         install_recommends: no
 
-    - name: Install grafana APT package required by monitor_dashboard role
+    - name: Add the Grafana GPG key to the keyring
+      ansible.builtin.shell:
+        cmd: >-
+          cat /tmp/grafana.key | gpg --dearmor
+          > /etc/apt/trusted.gpg.d/grafana.gpg
+        creates: /etc/apt/trusted.gpg.d/grafana.gpg
+
+    - name: Add Grafana stable release to the APT sources
+      ansible.builtin.shell:
+        cmd: >-
+          echo "deb
+          [signed-by=/etc/apt/trusted.gpg.d/grafana.gpg]
+          https://apt.grafana.com stable main"
+          > /etc/apt/sources.list.d/grafana.list
+        creates: /etc/apt/sources.list.d/grafana.list
+
+    - name: Update APT cache
       ansible.builtin.apt:
-        deb: https://dl.grafana.com/oss/release/grafana_9.4.7_amd64.deb
+        update_cache: yes
+
+    - name: Install Grafana APT package required by monitor_dashboard role
+      ansible.builtin.apt:
+        name:
+          - grafana
         install_recommends: no
 
     - name: Start the Grafana service
