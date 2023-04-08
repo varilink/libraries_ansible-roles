@@ -60,4 +60,9 @@
         regex: '^  (?:# )insecure_skip_verify = (?:false|true)?$'
       when: "'external' in group_names"
 
+    - name: Start the telegraf service
+      ansible.builtin.service:
+        name: telegraf
+        state: started
+
   become: yes

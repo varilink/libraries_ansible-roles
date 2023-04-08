@@ -6,6 +6,7 @@
 
 - ansible.builtin.import_role:
     name: nginx
+    handlers_from: service
 
 - ansible.builtin.import_role:
     name: php_fpm

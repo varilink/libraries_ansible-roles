@@ -26,5 +26,9 @@
           - influxdb2-cli
         install_recommends: no
 
+    - name: Start the influxd service
+      ansible.builtin.service:
+        name: influxdb
+        state: started
 
   become: yes
