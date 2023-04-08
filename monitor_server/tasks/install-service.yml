@@ -19,19 +19,12 @@
 
 - block:
 
-    - name: Install InfluxDB APT package
+    - name: Install InfluxDB APT packages
       ansible.builtin.apt:
-        name: influxdb2
+        name:
+          - influxdb2
+          - influxdb2-cli
         install_recommends: no
 
-    - name: Install the influx CLI
-      ansible.builtin.unarchive:
-        src: "\
-          https://dl.influxdata.com/influxdb/releases/\
-          influxdb2-client-2.6.1-linux-amd64.tar.gz"
-        remote_src: yes
-        exclude: [LICENSE, README.md]
-        extra_opts: ["--strip-components=1"]
-        dest: /usr/local/bin
 
   become: yes
