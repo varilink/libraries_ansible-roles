@@ -25,7 +25,7 @@
         cmd: >-
           echo "deb
           [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg]
-          https://repos.influxdata.com/debian stable main"
+          https://repos.influxdata.com/debian $(lsb_release -cs) stable"
           > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
 
