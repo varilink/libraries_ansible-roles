@@ -32,5 +32,3 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
   become: yes
-  delegate_to: "\
-    {{ wordpress_site_database_host | default(inventory_hostname) }}"
