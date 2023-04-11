@@ -469,7 +469,8 @@ Storage {
 Catalog {
   Name = MyCatalog
   dbname = "bacula";
-{% if backup_database_host is defined %}
+{% if backup_database_host is defined
+   and backup_database_host != inventory_hostname %}
   DB Address = "{{ backup_database_host }}";
 {% else %}
   DB Socket = /var/run/mysqld/mysqld.sock;
