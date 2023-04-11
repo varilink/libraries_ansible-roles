@@ -4,6 +4,5 @@
 
 ---
 
-- ansible.builtin.import_tasks: install.yml
-
-- ansible.builtin.import_tasks: configure.yml
+- ansible.builtin.import_role:
+    name: nginx
