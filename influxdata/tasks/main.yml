@@ -4,6 +4,11 @@
 
 ---
 
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
 - name: Download the Influx GPG key
   ansible.builtin.get_url:
     url: https://repos.influxdata.com/influxdata-archive_compat.key
@@ -31,9 +36,14 @@
         cmd: >-
           echo "deb
           [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg]
-          https://repos.influxdata.com/debian $(lsb_release -cs) stable"
+          https://repos.influxdata.com/debian {{ lsb_release.stdout }} stable"
           > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
+
+    - name: Install APT apt-transport-https package if Debian release is stretch
+      ansible.builtin.apt:
+        name: [apt-transport-https]
+      when: lsb_release.stdout == 'stretch'
 
     - name: Update APT cache
       ansible.builtin.apt:
