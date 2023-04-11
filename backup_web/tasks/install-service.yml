@@ -4,13 +4,6 @@
 
 ---
 
-- ansible.builtin.import_role:
-    name: nginx
-    handlers_from: service
-
-- ansible.builtin.import_role:
-    name: php_fpm
-
 - block:
 
     - name: Install APT packages for backup_web role
@@ -30,6 +23,7 @@
           - unzip
           - wget
         install_recommends: no
+      notify: PHP FPM configuration changed
 
     - name: Enable write in /var/www for the www-data user
       ansible.builtin.file:

@@ -4,16 +4,6 @@
 
 ---
 
-# Add the domain to the Dovecot service's configuration
-- ansible.builtin.import_tasks: domain/dovecot.yml
+- ansible.builtin.import_tasks: configure-domain-handlers.yml
 
-# Add the domain to the Exim service's configuration
-- ansible.builtin.import_tasks: domain/exim.yml
-
-# Create mail accounts for the domain users
-- ansible.builtin.include_role:
-    name: mail
-    tasks_from: user
-  loop: "{{ domain_users }}"
-  loop_control:
-    loop_var: user
+- ansible.builtin.import_tasks: configure-domain-body.yml

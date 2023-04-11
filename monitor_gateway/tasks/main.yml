@@ -6,6 +6,6 @@
 
 - ansible.builtin.import_role:
     name: nginx
-    handlers_from: service
+    handlers_from: none
 
 - ansible.builtin.import_tasks: create-site.yml

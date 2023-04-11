@@ -1,8 +1,11 @@
 # ------------------------------------------------------------------------------
-# wordpress/tasks/dependencies.yml
+# mail/tasks/create-mail-user-handler.yml
 # ------------------------------------------------------------------------------
 
 ---
 
+# Import common handlers from mta role for "Aliases changed" listener
 - ansible.builtin.import_role:
     name: mta
+    handlers_from: common
+    tasks_from: none

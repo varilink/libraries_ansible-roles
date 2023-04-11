@@ -1,9 +1,5 @@
 # ------------------------------------------------------------------------------
-# wordpress_apache/tasks/dependencies.yml
+# mail/tasks/none.yml
 # ------------------------------------------------------------------------------
 
 ---
-
-- name: Import the wordpress role
-  ansible.builtin.import_role:
-    name: wordpress

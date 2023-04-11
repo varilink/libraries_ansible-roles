@@ -1,0 +1,13 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure-domain/users.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# Create mail accounts for the domain users
+- ansible.builtin.include_role:
+    name: mail
+    tasks_from: user
+  loop: "{{ domain_users }}"
+  loop_control:
+    loop_var: user

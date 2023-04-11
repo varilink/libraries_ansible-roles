@@ -1,10 +1,13 @@
 # ------------------------------------------------------------------------------
-# wordpress/tasks/main.yml
+# mail_external/tasks/configure-domain-handlers.yml
 # ------------------------------------------------------------------------------
 
 ---
 
 - ansible.builtin.import_role:
-    name: mta
+    name: mail
+    tasks_from: none
 
-- ansible.builtin.import_tasks: install-service.yml
+- ansible.builtin.import_role:
+    name: mta
+    tasks_from: none

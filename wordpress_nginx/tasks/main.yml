@@ -4,7 +4,8 @@
 
 ---
 
-- ansible.builtin.import_tasks: dependencies.yml
+- ansible.builtin.import_role:
+    name: wordpress
 
 - ansible.builtin.import_tasks: install-service.yml
 
