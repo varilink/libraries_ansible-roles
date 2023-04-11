@@ -1,0 +1,34 @@
+# ------------------------------------------------------------------------------
+# php_fpm/handlers/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
+- name: Reload the PHP FPM configuration in bullseye
+  ansible.builtin.service:
+    name: php7.4-fpm
+    state: reloaded
+  become: yes
+  listen: PHP FPM configuration changed
+  when: lsb_release.stdout == 'bullseye'
+
+- name: Reload the PHP FPM configuration in buster
+  ansible.builtin.service:
+    name: php7.3-fpm
+    state: reloaded
+  become: yes
+  listen: PHP FPM configuration changed
+  when: lsb_release.stdout == 'buster'
+
+- name: Reload the PHP FPM configuration in stretch
+  ansible.builtin.service:
+    name: php7.0-fpm
+    state: reloaded
+  become: yes
+  listen: PHP FPM configuration changed
+  when: lsb_release.stdout == 'stretch'
