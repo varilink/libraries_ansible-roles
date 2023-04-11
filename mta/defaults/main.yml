@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# mta/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
 # These values are Used in templates/update-exim4.conf.conf.j2 and are listed in
 # the order that they appear in that file.
 mta_configtype: satellite

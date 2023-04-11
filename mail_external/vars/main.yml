@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# mail_external/vars/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
 mta_configtype: smarthost
 mta_other_hostnames: "{{ home_domain }}"
 mta_local_interfaces: >-

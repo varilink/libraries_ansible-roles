@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# monitor_gateway/tasks/create-site.yml
+# ------------------------------------------------------------------------------
+
+---
+
 - ansible.builtin.import_role:
     name: nginx
     tasks_from: create-site

@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# backup_dropbox/tasks/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
 - block:
 
   - name: Install apt package(s) required for the backup dropbox role
