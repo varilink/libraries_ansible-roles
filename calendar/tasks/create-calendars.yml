@@ -1,11 +1,11 @@
 # ------------------------------------------------------------------------------
-# calendar/tasks/create.yml
+# calendar/tasks/create-calendars.yml
 # ------------------------------------------------------------------------------
 
 ---
 
 - name: Create a shared calendar for the office and one for each office user
-  ansible.builtin.include_tasks: user.yml
+  ansible.builtin.include_tasks: create-calendar-for-user.yml
   loop: "{{ users }}"
   loop_control:
     loop_var: user

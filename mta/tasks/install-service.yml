@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# mta/tasks/install.yml
+# mta/tasks/install-service.yml
 # ------------------------------------------------------------------------------
 
 # This Mail Transport Agent role is imported by any other role that needs to

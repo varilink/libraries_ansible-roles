@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# mail_external/tasks/install.yml
+# mail_external/tasks/install-service.yml
 # ------------------------------------------------------------------------------
 
 # This role pulls in the mail role as a dependency. The mail role installs the

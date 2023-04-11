@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# mail_certificates/tasks/domain.yml
+# mail_certificates/tasks/get-domain-cert.yml
 # ------------------------------------------------------------------------------
 
 # If a domain is using a certification authority for its certificates then

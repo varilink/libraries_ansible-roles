@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# calendar/tasks/user.yml
+# calendar/tasks/create-calendar-for-user.yml
 # ------------------------------------------------------------------------------
 
 # This task list uses the web services provided by Radicale to create a calendar

@@ -1,4 +1,6 @@
-# mta/tasks/configure.yml
+# ------------------------------------------------------------------------------
+# mta/tasks/configure-service.yml
+# ------------------------------------------------------------------------------
 
 # The mta role is a dependency for several other roles. As each of those other
 # roles imports the mta role, they will configure it for their use. For most

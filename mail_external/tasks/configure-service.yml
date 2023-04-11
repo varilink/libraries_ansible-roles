@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# mail_external/tasks/configure.yml
+# mail_external/tasks/configure-service.yml
 # ------------------------------------------------------------------------------
 
 # Tasks to configure the mail_external role. These follow the import of the mail
@@ -11,14 +11,14 @@
 
 ---
 
-- ansible.builtin.import_tasks: configure/cert-deploy-key.yml
+- ansible.builtin.import_tasks: configure-service/cert-deploy-key.yml
 
-- ansible.builtin.import_tasks: configure/dovecot.yml
+- ansible.builtin.import_tasks: configure-service/dovecot.yml
 
-- ansible.builtin.import_tasks: configure/exim-smtp-inbound.yml
+- ansible.builtin.import_tasks: configure-service/exim-smtp-inbound.yml
 
-- ansible.builtin.import_tasks: configure/exim-smtp-outbound.yml
+- ansible.builtin.import_tasks: configure-service/exim-smtp-outbound.yml
 
-- ansible.builtin.import_tasks: configure/local-delivery.yml
+- ansible.builtin.import_tasks: configure-service/local-delivery.yml
 
-- ansible.builtin.import_tasks: configure/remote-delivery.yml
+- ansible.builtin.import_tasks: configure-service/remote-delivery.yml

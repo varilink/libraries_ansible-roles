@@ -7,6 +7,6 @@
 - ansible.builtin.import_role:
     name: dns_api
 
-- ansible.builtin.import_tasks: install.yml
+- ansible.builtin.import_tasks: install-service.yml
 
-- ansible.builtin.import_tasks: configure.yml
+- ansible.builtin.import_tasks: configure-service.yml
