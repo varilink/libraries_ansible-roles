@@ -72,7 +72,7 @@
         stride: "{{ dynamic_dns_crontab_stride }}"
 
     - name: >-
-        Delete crontab entires for times in the current schedule that aren't in
+        Delete crontab entries for times in the current schedule that aren't in
         the desired schedule
       ansible.builtin.cron:
         name: "Dynamic DNS update at {{ item }} minutes past the hour"

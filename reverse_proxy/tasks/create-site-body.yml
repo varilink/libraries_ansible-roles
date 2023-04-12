@@ -84,7 +84,7 @@
       notify:
         - Nginx configuration changed
       vars:
-        certbot_certificate_installed: |-
+        certbot_certificate_installed_string: |-
           {%
             if certbot_certificates.rc is defined and
             certbot_certificates.rc == 0
@@ -92,7 +92,9 @@
           yes
           {%- else %}
           no
-          {%- endif %}"
+          {%- endif %}
+        certbot_certificate_installed: "\
+          {{ certbot_certificate_installed_string | bool }}"
               
     - name: Enable site nginx configuration
       ansible.builtin.file:
@@ -139,6 +141,6 @@
       become: yes
       when: >-
         wordpress_site_uses_ssl and wordpress_site_uses_ca and
-        certbot_certificate.rc == 1
+        certbot_certificates.rc == 1
 
   become: yes

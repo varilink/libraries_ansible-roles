@@ -97,6 +97,15 @@
       # intuitively expect from reading it.
       when: wp_installed.rc
 
+    - ansible.builtin.import_tasks: initialize-site/plugins.yml
+      when: wordpress_site_plugins is defined
+
+    - ansible.builtin.import_tasks: initialize-site/themes.yml
+      when: wordpress_site_themes is defined
+
+    - ansible.builtin.import_tasks: initialize-site/sidebars.yml
+      when: wordpress_site_sidebars is defined
+
     become_user: www-data
 
   become: yes

@@ -11,6 +11,16 @@ server {
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
   error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
 
+{%- if wordpress_site_uses_ssl and wordpress_site_uses_ca %}
+
+  location /.well-known/acme-challenge/ {
+    root      /var/www/{{ wordpress_site_server_name }}/html;
+    try_files $uri =404;
+    break;
+  }
+
+{%- endif %}
+
 {%-
   if (
     wordpress_site_uses_ssl and wordpress_site_uses_ca and
@@ -19,13 +29,6 @@ server {
     wordpress_site_uses_ssl and not wordpress_site_uses_ca
   )
 %}
-
-
-  location /.well-known/acme-challenge/ {
-    root      /var/www/{{ wordpress_site_server_name }}/html;
-    try_files $uri =404;
-    break;
-  }
 
   location / {
     return 301 https://{{ wordpress_site_server_name }}$request_uri;
