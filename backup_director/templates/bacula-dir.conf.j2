@@ -302,16 +302,48 @@ FileSet {
   }
 
 # Include files for each role deployed to this host for which a file is provided
+{#-
+Define a variable to hold a sorted, unique list of roles for this host that
+contain a FileSet snippet file.
+#}
+{% set host_fileset_roles = [] %}
+{#
+Loop for each role that is explicitly deployed the current host. These are
+provided by the hosts_to_roles_map variable.
+#}
   {%- for role in hosts_to_roles_map[hostname] %}
-    {%- for fileset_file in fileset_files %}
-      {%-
-        if fileset_file | regex_search(role + '/files/bacula-fileset\.conf$')
-      %}
+{#
+For each role that is explicitly deployed to this host, examine the
+fileset_files variable to see if that role has a bacula-fileset.conf file. If it
+does then include that file within the FileSet for this host.
+#}
+    {%- for file in fileset_files %}
+      {%- if file | regex_search(role + '/files/bacula-fileset\.conf$') %}
+        {{- host_fileset_roles.append(role) or '' }}
+      {%- endif %}
+    {%- endfor %}{# files #}
+{#
+For each role that is explicitly deployed to this host, examine the
+role_dependencies variable to see if that role pulls in other roles as
+dependencies.
+#}
+    {%- if role_dependencies[role] is defined %}
+      {%- for dependency_role in role_dependencies[role] %}
+        {%- for file in fileset_files %}
+          {%- if file |
+                 regex_search(dependency_role + '/files/bacula-fileset\.conf$')
+          %}
+            {{- host_fileset_roles.append(dependency_role) or '' }}
+          {%- endif %}
+        {%- endfor %}{# files #}
+      {%- endfor %}{# dependency roles #}
+    {%- endif %}
+  {%- endfor %}{# explicitly deployed roles #}
+
+  {%- for role in host_fileset_roles | sort | unique %}
 
 @/etc/bacula/role-filesets/{{ role }}.conf
-      {%- endif %}
-    {%- endfor %}{# include_file in include_files #}
-  {%- endfor %}{# role in roles | unique | sort #}
+  {%- endfor %}
 
 
 }

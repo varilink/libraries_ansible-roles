@@ -1,0 +1,50 @@
+# ------------------------------------------------------------------------------
+# backup_director/vars/main.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# The role_dependencies variable contains a mapping of explicitly deployed roles
+# to the roles that are only deployed as dependencies of those explicitly
+# deployed roles; see:
+# https://github.com/varilink/libraries-ansible#list-of-roles
+# 
+role_dependencies:
+  backup_client:
+    - backup
+  backup_director:
+    - backup
+    - backup_dropbox
+    - mta
+  backup_storage:
+    - backup
+    - backup_dropbox
+  backup_web:
+    - nginx
+    - php_fpm
+  dynamic_dns:
+    - dns_api
+  mail_certificates:
+    - dns_api
+  mail_external:
+    - mail
+    - mta
+  mail_internal:
+    - mail
+    - mta
+  monitor_client:
+    - influxdata
+  monitor_gateway:
+    - nginx
+  monitor_server:
+    - influxdata
+  reverse_proxy:
+    - nginx
+  wordpress_apache:
+    - mta
+    - wordpress
+  wordpress_nginx:
+    - mta
+    - nginx
+    - php_fpm
+    - wordpress
