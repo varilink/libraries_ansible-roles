@@ -1,0 +1,7 @@
+- name: Enable anonymous access to Grafana
+  ansible.builtin.lineinfile:
+    path: /etc/grafana/grafana.ini
+    insertafter: '^# enable anonymous access$'
+    line: 'enabled = true # anonymous access enabled'
+  become: yes
+  notify: Grafana configuration changed

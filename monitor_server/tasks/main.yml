@@ -6,4 +6,10 @@
 
 - ansible.builtin.import_tasks: install-service.yml
 
+- name: Start the influxd service
+  ansible.builtin.service:
+    name: influxdb
+    state: started
+  become: yes
+
 - ansible.builtin.import_tasks: configure-service.yml

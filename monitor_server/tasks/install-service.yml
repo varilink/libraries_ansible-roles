@@ -17,18 +17,10 @@
 - ansible.builtin.import_role:
     name: influxdata
 
-- block:
-
-    - name: Install InfluxDB APT packages
-      ansible.builtin.apt:
-        name:
-          - influxdb2
-          - influxdb2-cli
-        install_recommends: no
-
-    - name: Start the influxd service
-      ansible.builtin.service:
-        name: influxdb
-        state: started
-
+- name: Install InfluxDB APT packages
+  ansible.builtin.apt:
+    name:
+      - influxdb2
+      - influxdb2-cli
+    install_recommends: no
   become: yes

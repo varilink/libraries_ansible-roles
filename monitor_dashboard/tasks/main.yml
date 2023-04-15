@@ -11,3 +11,5 @@
     name: grafana-server
     state: started
   become: yes
+
+- ansible.builtin.import_tasks: configure-service.yml
