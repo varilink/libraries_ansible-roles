@@ -31,7 +31,9 @@
         mysql --skip-column-names --silent
         --user={{ backup_database_user | default('bacula') }}
         --password={{ backup_database_password | default('bacula') }}
-        {% if backup_database_host is defined %}
+        {% if backup_database_host is defined and
+              backup_database_host != inventory_hostname
+        %}
         --host={{ backup_database_host }}
         {%- endif %}
         bacula -e 'SELECT VersionId FROM Version'
