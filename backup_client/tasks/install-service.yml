@@ -38,6 +38,29 @@
         path: /etc/apt/sources.list
         line: deb http://deb.debian.org/debian buster-backports main
 
+    - name: Get the machine hardware name
+      ansible.builtin.command: uname -m
+      register: uname_result
+      changed_when: false
+
+    - block:
+
+        - name: >-
+            See if we can export the "Debian Archive Automatic Signing Key
+            (10/buster)" APT key
+          ansible.builtin.command: >-
+            apt-key export 80D15823B7FD1561F9F7BCDDDC30D7C23CBBABEE
+          register: apt_key_export
+          changed_when: false
+
+        - name: Add the keys for buster backports if the architecture is arm
+          ansible.builtin.shell: |-
+            gpg --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
+            gpg --export 648ACFD622F3D138 | sudo apt-key add -
+          when: not apt_key_export.stdout
+
+      when: uname_result.stdout is regex('^arm')
+
     - name: Update APT cache to reflect the addition of buster-backports source
       ansible.builtin.apt:
         update_cache: yes
