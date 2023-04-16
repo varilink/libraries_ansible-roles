@@ -26,7 +26,7 @@
       community.mysql.mysql_user:
         host: |-
           {% if database_user_host is defined %}
-          {{ database_user_host }}.{{ home_domain }}
+          {{ database_user_host }}
           {%- else %}
           localhost
           {%- endif %}
