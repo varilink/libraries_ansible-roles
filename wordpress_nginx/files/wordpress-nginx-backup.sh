@@ -20,8 +20,8 @@ cd /tmp
 
 # Find all the WordPress websites that use Nginx on the server.
 for SITE in $(                                                                 \
-  wp --allow-root find --format=json /usr/local/share/nginx |                  \
-  jq '.[].version_path'                                     |                  \
+  wp find --format=json /usr/local/share/nginx |                               \
+  jq '.[].version_path'                        |                               \
   cut --delimiter=/ --fields=6                                                 \
 )
 do
@@ -32,7 +32,7 @@ do
     rm $DUMP
   done
   EXPORT=$(                                                                    \
-    wp --allow-root --path=/usr/local/share/nginx/$SITE db export --porcelain  \
+    wp --path=/usr/local/share/nginx/$SITE db export --porcelain               \
   )
   echo /tmp/$EXPORT
 done

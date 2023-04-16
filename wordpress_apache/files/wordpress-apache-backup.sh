@@ -20,8 +20,8 @@ cd /tmp
 
 # Find all the WordPress websites that use Apache on the server.
 for SITE in $(                                                                 \
-  wp --allow-root find --format=json /var/www |                                \
-  jq '.[].version_path'                       |                                \
+  wp find --format=json /var/www |                                             \
+  jq '.[].version_path'          |                                             \
   cut --delimiter=/ --fields=4                                                 \
 )
 do
@@ -32,7 +32,7 @@ do
     rm $DUMP
   done
   EXPORT=$(                                                                    \
-    wp --allow-root --path=/var/www/$SITE/html db export --porcelain           \
+    wp --path=/var/www/$SITE/html db export --porcelain                        \
   )
   echo /tmp/$EXPORT
 done
