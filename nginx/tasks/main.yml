@@ -11,6 +11,20 @@
         name: nginx
         install_recommends: no
 
+    # Apache2's default site is located at /var/www/html/index.html. Nginx's
+    # default site is located at /var/www/html/index.nginx-debian.html. When we
+    # have them both on the same server, we don't want the Nginx default site to
+    # display the Apache2 default site.
+    - name: |-
+        Change the order of index files that Nginx looks for in its default site
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/sites-available/default
+        line: "\tindex index.nginx-debian.html index.html index.htm;"
+        regexp: >-
+          ^\tindex (?:index\.nginx-debian\.html )?index\.html
+          index\.htm(?: index\.nginx-debian\.html)?;$
+      notify: Nginx configuration changed
+
     - block:
 
         - name: Install certbot APT package
