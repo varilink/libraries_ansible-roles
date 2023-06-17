@@ -11,13 +11,43 @@
 # both the domain and for the associated record.
 #-------------------------------------------------------------------------------
 
-- name: Write the project's configuration file(s) for dynamic DNS A records
-  ansible.builtin.copy:
-    # Name the configuration file using the FQDN for the A record that is to be
-    # kept updated; for example test.varilink.co.uk.yml.
-    dest: "{{ dynamic_dns_records_dir }}/{{ item.key }}.{{ domain_name }}.yml"
-    content: |
-      domain: {{ domain_linode_id }}
-      record: {{ item.value }}
-  loop: "{{ domain_linode_dynamic_dns_records | dict2items }}"
+- block:
+
+    - name: Write the project's configuration file(s) for dynamic DNS A records
+      ansible.builtin.copy:
+        # Name the configuration file using the FQDN for the A record that is to
+        # be kept updated; for example test.varilink.co.uk.yml.
+        dest: "\
+          {{ dynamic_dns_records_dir }}/{{ item.key }}.{{ domain_name }}.yml"
+        content: |
+          domain: {{ domain_linode_id }}
+          record: {{ item.value }}
+      loop: "{{ domain_linode_dynamic_dns_records | dict2items }}"
+
+    - name: >-
+        Capture a list of project configuration file(s) present on the target
+        host for this project's domain
+      ansible.builtin.find:
+        paths: ["{{ dynamic_dns_records_dir }}"]
+        patterns: ["*.{{ domain_name }}.yml"]
+      register: find_result
+
+    - name: >-
+        Remove any dynamic DNS records that are already present on the host but
+        not longer wanted (presumably removed from the configuration)
+      ansible.builtin.file:
+        path: "{{ dynamic_dns_records_dir + '/' + item }}"
+        state: absent
+      loop: "{{ records_present | difference(records_wanted) }}"
+      vars:
+        # The dynamic DNS records for the domain that are "present", i.e. found
+        # in the dynamic_dns_records_dir on the host.
+        records_present: "\
+          {{ find_result.files | map(attribute='path') | map('basename') }}"
+        # The dynamic DNS records for the domain that are "wanted", i.e. they
+        # are configured via the domain_linode_dynamic_dns_records var.
+        records_wanted: >-
+          {{ domain_linode_dynamic_dns_records.keys() |
+          product(['.' + domain_name + '.yml']) | map('join') | list }}
+
   become: yes
