@@ -28,3 +28,4 @@
     dns_record_hostname: "{{ wordpress_site_server_name }}"
   delegate_to: "\
     {{ wordpress_site_dns_host | default(inventory_hostname) }}"
+  when: "'internal' in group_names"
