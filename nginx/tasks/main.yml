@@ -32,6 +32,15 @@
             name: certbot
             install_recommends: no
 
+        - name: Register a certbot account on this host
+          ansible.builtin.command: >-
+            certbot register --email {{ admin_user_email }}
+            --eff-email --agree-tos
+          register: certbot_register_result
+          # Duplicate registration gives a return code of 1
+          changed_when: certbot_register_result.rc == 0
+          failed_when: certbot_register_result.rc not in [0, 1]
+
         - name: Automate reload of Nginx configuration on certificate renewal
           ansible.builtin.copy:
             src: files/reload-nginx-config.sh
