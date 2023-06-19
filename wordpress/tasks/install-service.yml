@@ -18,6 +18,7 @@
           - php-gd
           - php-imagick
           - php-mysql
+          - php-zip
           - rsync
           - unzip
         install_recommends: no
