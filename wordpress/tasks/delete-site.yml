@@ -4,10 +4,8 @@
 
 ---
 
-- ansible.builtin.import_tasks: common/site-vars.yml
-
 - name: Remove site WordPress files
   ansible.builtin.file:
-    path: "{{ wordpress_site_path }}"
+    path: "/var/www/{{ wordpress_site_server_name }}"
     state: absent
   become: yes
