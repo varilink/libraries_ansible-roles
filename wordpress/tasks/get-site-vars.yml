@@ -1,4 +1,7 @@
-- ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+- name: >-
+    Set facts from combining the elements from the wordpress_sites and
+    wordpress_sites_private variables for the current subdomain
+  ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
   loop: >-
     {{
       wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
@@ -8,9 +11,11 @@
       first | dict2items)
     }}
 
-- ansible.builtin.set_fact:
+- name: Set the wordpress_site_server_name fact 
+  ansible.builtin.set_fact:
     wordpress_site_server_name: "\
       {{ wordpress_site_subdomain }}.{{ domain_name }}"
 
-- ansible.builtin.set_fact:
+- name: Set the wordpress_site_path fact
+  ansible.builtin.set_fact:
     wordpress_site_path: /var/www/{{ wordpress_site_server_name }}/html
