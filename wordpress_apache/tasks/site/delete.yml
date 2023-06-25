@@ -8,6 +8,21 @@
     name: wordpress
     tasks_from: get-site-vars
 
+- ansible.builtin.import_role:
+    name: dns
+    tasks_from: delete-project-record
+  vars:
+    dns_record_hostname: "{{ wordpress_site_server_name }}"
+  delegate_to: "\
+    {{ wordpress_site_dns_host | default(inventory_hostname) }}"
+  when: "'internal' in group_names"
+
+- ansible.builtin.import_role:
+    name: reverse_proxy
+    tasks_from: delete-site
+  delegate_to: "\
+    {{ wordpress_site_reverse_proxy_host | default(inventory_hostname) }}"
+
 - block:
 
     - name: "\
@@ -56,3 +71,10 @@
 - ansible.builtin.import_role:
     name: wordpress
     tasks_from: delete-site
+
+- ansible.builtin.import_role:
+    name: database
+    tasks_from: delete-site
+    handlers_from: none # no handlers needed to create or delete databases
+  delegate_to: "\
+    {{ wordpress_site_database_host | default(inventory_hostname) }}"

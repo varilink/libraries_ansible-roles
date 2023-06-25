@@ -1,0 +1,12 @@
+- name: Delete project DNS record
+  ansible.builtin.lineinfile:
+    path: /etc/addn-hosts
+    line: |-
+      {% if dns_record_target is defined %}
+      {{ hostvars[dns_record_target].ansible_default_ipv4.address }}
+      {%- else %}
+      {{ ansible_default_ipv4.address }}
+      {%- endif %} {{ dns_record_hostname }}
+    state: absent
+  notify: Dnsmasq configuration changed
+  become: yes
