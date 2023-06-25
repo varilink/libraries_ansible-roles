@@ -107,14 +107,44 @@
           # what we might intuitively expect from reading it.
           when: wp_installed.rc
 
-        - ansible.builtin.import_tasks: initialize-site/plugins.yml
+#       - ansible.builtin.import_tasks: initialize-site/plugins.yml
+#         when: wordpress_site_plugins is defined
+
+#       - ansible.builtin.synchronize:
+#           src: "{{ plugin.path }}"
+#           dest: "{{ wordpress_site_path }}/wp-content/plugins/"
+#           rsync_opts: "--chown=www-data:www-data"
+#         loop: "{{ wordpress_site_plugins }}"
+#         loop_control:
+#           loop_var: plugin
+
+        - ansible.builtin.synchronize:
+            src: "{{ item.src }}"
+            dest: "{{ wordpress_site_path }}/wp-content/plugins/{{ item.dest }}"
+            delete: yes
+            rsync_opts: "{{ rsync_common_opts + rsync_plugin_opts }}"
+          vars:
+            rsync_common_opts:
+              - "--chown=www-data:www-data"
+            rsync_plugin_opts: "{{ item.rsync_opts | default([]) }}"
+          loop: "{{ wordpress_site_plugins }}"
           when: wordpress_site_plugins is defined
 
-        - ansible.builtin.import_tasks: initialize-site/themes.yml
+        - ansible.builtin.synchronize:
+            src: "{{ item.src }}"
+            dest: "{{ wordpress_site_path }}/wp-content/themes/{{ item.dest }}"
+            delete: yes
+            rsync_opts: "{{ rsync_common_opts + rsync_theme_opts }}"
+          vars:
+            rsync_common_opts:
+              - "--chown=www-data:www-data"
+            rsync_theme_opts: "{{ item.rsync_opts | default([]) }}"
+          loop: "{{ wordpress_site_themes }}"
           when: wordpress_site_themes is defined
 
-        - ansible.builtin.import_tasks: initialize-site/sidebars.yml
-          when: wordpress_site_sidebars is defined
+
+#       - ansible.builtin.import_tasks: initialize-site/themes.yml
+#         when: wordpress_site_themes is defined
 
       become_user: www-data
 
