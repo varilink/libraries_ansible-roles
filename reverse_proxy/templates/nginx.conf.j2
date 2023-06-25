@@ -5,7 +5,7 @@ server {
   server_name
 {%- if wordpress_site_subdomain == 'www' %}
  {{ domain_name }}
-{% endif %}
+{%- endif %}
  {{ wordpress_site_server_name }};
 
   access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
