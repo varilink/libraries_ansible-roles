@@ -6,7 +6,7 @@
 
 - ansible.builtin.import_role:
     name: wordpress
-    tasks_from: subdomains
+    tasks_from: get-subdomains
 
 - ansible.builtin.include_tasks: site/delete.yml
   loop: "{{ subdomains }}"
