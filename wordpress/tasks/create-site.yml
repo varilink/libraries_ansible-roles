@@ -6,106 +6,110 @@
 
 - block:
 
-  - name: Create directory to hold site WordPress files
-    # NOTE: This will create any missing directories in the path; for example
-    # if the wordpress_site_path is dev.varilink.co.uk then both
-    # /var/www/dev.varilink.co.uk and /var/www/dev.varilink.co.uk/html will be
-    # created, assuming that /var/www already exists but
-    # /var/www/dev.varilink.co.uk did not.
-    ansible.builtin.file:
-      path: "{{ wordpress_site_path }}"
-      state: directory
-
-  - name: Set required ownership of directory to hold site WordPress files
-    # NOTE: We repeat the previous task but this time with owner and group
-    # specified. This is so that any parent directories in the
-    # wordpress_site_path that were created in the previous step retain root
-    # as their owner.
-    ansible.builtin.file:
-      path: "{{ wordpress_site_path }}"
-      state: directory
-      owner: www-data
-      group: www-data
-
-  - block:
-
-    - name: Download WordPress files
-      ansible.builtin.command:
-        cmd: >-
-          wp --path={{ wordpress_site_path }}
-          core download --locale=en_GB
-          {% if wordpress_site_version is defined %}
-          --version={{ wordpress_site_version }}
-          {% endif %}
-        creates: "{{ wordpress_site_path }}/index.php"
-
-    - name: Create the WordPress config file
-      ansible.builtin.command:
-        cmd: >-
-          wp --path={{ wordpress_site_path }} config create
-          --dbhost=
-          {%- if wordpress_site_database_host is not defined -%}
-          localhost
-          {%- else -%}
-          {{ wordpress_site_database_host }}
-          {%- endif %}
-          --dbname={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbuser={{ wordpress_site_server_name | regex_replace ('\.', '_') }}
-          --dbpass='{{ wordpress_site_database_password }}'
-          --extra-php
-          --skip-check
-        stdin: |
-          # BEGIN ANSIBLE MANAGED BLOCK
-          # END ANSIBLE MANAGED BLOCK
-        creates: "{{ wordpress_site_path }}/wp-config.php"
-
-    - name: Deny visibility of WordPress config file to others
+    - name: Create directory to hold site WordPress files
+      # NOTE: This will create any missing directories in the path; for example
+      # if the wordpress_site_path is dev.varilink.co.uk then both
+      # /var/www/dev.varilink.co.uk and /var/www/dev.varilink.co.uk/html will be
+      # created, assuming that /var/www already exists but
+      # /var/www/dev.varilink.co.uk did not.
       ansible.builtin.file:
-        path: "{{ wordpress_site_path }}/wp-config.php"
-        mode: u=rw,g=r,o=
+        path: "{{ wordpress_site_path }}"
+        state: directory
 
-    - name: Remove WordPress sample config file
+    - name: Set required ownership of directory to hold site WordPress files
+      # NOTE: We repeat the previous task but this time with owner and group
+      # specified. This is so that any parent directories in the
+      # wordpress_site_path that were created in the previous step retain root
+      # as their owner.
       ansible.builtin.file:
-        path: "{{ wordpress_site_path }}/wp-config-sample.php"
-        state: absent
+        path: "{{ wordpress_site_path }}"
+        state: directory
+        owner: www-data
+        group: www-data
 
-    - name: Check if WordPress is installed
-      ansible.builtin.shell: >-
-        wp --path={{ wordpress_site_path }}
-        core is-installed
-      register: wp_installed
-      # This task never changes anything.
-      changed_when: false
-      # If WordPress is installed, rc=0, if it isn't rc=1.
-      failed_when: wp_installed.rc !=0 and wp_installed.rc != 1
+    - block:
 
-    - name: Install WordPress
-      ansible.builtin.command: >-
-        wp --path={{ wordpress_site_path }}
-        core install
-        --url={{ wordpress_site_server_name }}
-        --title='{{ domain_organisation }}'
-        --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
-        --admin_password='{{ wordpress_site_admin_password }}'
-        --admin_email={{
-            wordpress_site_admin_email | default(admin_user_email)
-          }}
-        --locale=en_GB
-        --skip-email
-      # The rc from the `wp core is-installed` command is 0 if it is installed
-      # and 1 if it isn't, so the when check is the reverse of what we might
-      # intuitively expect from reading it.
-      when: wp_installed.rc
+        - name: Download WordPress files
+          ansible.builtin.command:
+            cmd: >-
+              wp --path={{ wordpress_site_path }}
+              core download --locale=en_GB
+              {% if wordpress_site_version is defined %}
+              --version={{ wordpress_site_version }}
+              {% endif %}
+            creates: "{{ wordpress_site_path }}/index.php"
 
-    - ansible.builtin.import_tasks: initialize-site/plugins.yml
-      when: wordpress_site_plugins is defined
+        - name: Create the WordPress config file
+          ansible.builtin.command:
+            cmd: >-
+              wp --path={{ wordpress_site_path }} config create
+              --dbhost=
+              {%- if wordpress_site_database_host is not defined -%}
+              localhost
+              {%- else -%}
+              {{ wordpress_site_database_host }}
+              {%- endif %}
+              --dbname={{
+                wordpress_site_server_name | regex_replace ('\.', '_')
+              }}
+              --dbuser={{
+                wordpress_site_server_name | regex_replace ('\.', '_')
+              }}
+              --dbpass='{{ wordpress_site_database_password }}'
+              --extra-php
+              --skip-check
+            stdin: |
+              # BEGIN ANSIBLE MANAGED BLOCK
+              # END ANSIBLE MANAGED BLOCK
+            creates: "{{ wordpress_site_path }}/wp-config.php"
 
-    - ansible.builtin.import_tasks: initialize-site/themes.yml
-      when: wordpress_site_themes is defined
+        - name: Deny visibility of WordPress config file to others
+          ansible.builtin.file:
+            path: "{{ wordpress_site_path }}/wp-config.php"
+            mode: u=rw,g=r,o=
 
-    - ansible.builtin.import_tasks: initialize-site/sidebars.yml
-      when: wordpress_site_sidebars is defined
+        - name: Remove WordPress sample config file
+          ansible.builtin.file:
+            path: "{{ wordpress_site_path }}/wp-config-sample.php"
+            state: absent
 
-    become_user: www-data
+        - name: Check if WordPress is installed
+          ansible.builtin.shell: >-
+            wp --path={{ wordpress_site_path }}
+            core is-installed
+          register: wp_installed
+          # This task never changes anything.
+          changed_when: false
+          # If WordPress is installed, rc=0, if it isn't rc=1.
+          failed_when: wp_installed.rc !=0 and wp_installed.rc != 1
+
+        - name: Install WordPress
+          ansible.builtin.command: >-
+            wp --path={{ wordpress_site_path }}
+            core install
+            --url={{ wordpress_site_server_name }}
+            --title='{{ domain_organisation }}'
+            --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
+            --admin_password='{{ wordpress_site_admin_password }}'
+            --admin_email={{
+                wordpress_site_admin_email | default(admin_user_email)
+              }}
+            --locale=en_GB
+            --skip-email
+          # The rc from the `wp core is-installed` command is 0 if it is
+          # installed and 1 if it isn't, so the when check is the reverse of
+          # what we might intuitively expect from reading it.
+          when: wp_installed.rc
+
+        - ansible.builtin.import_tasks: initialize-site/plugins.yml
+          when: wordpress_site_plugins is defined
+
+        - ansible.builtin.import_tasks: initialize-site/themes.yml
+          when: wordpress_site_themes is defined
+
+        - ansible.builtin.import_tasks: initialize-site/sidebars.yml
+          when: wordpress_site_sidebars is defined
+
+      become_user: www-data
 
   become: yes
