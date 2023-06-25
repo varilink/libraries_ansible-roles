@@ -87,7 +87,13 @@
           ansible.builtin.command: >-
             wp --path={{ wordpress_site_path }}
             core install
-            --url={{ wordpress_site_server_name }}
+            --url=
+            {%- if wordpress_site_uses_ssl %}
+            https://
+            {%- else %}
+            http://
+            {%- endif %}
+            {{- wordpress_site_server_name }}
             --title='{{ domain_organisation }}'
             --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
             --admin_password='{{ wordpress_site_admin_password }}'
