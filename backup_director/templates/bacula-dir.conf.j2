@@ -406,19 +406,19 @@ FileSet {
 
 Schedule {
   Name = Catalog
-  Run = at 01:10
-}
-
-Schedule {
-  Name = DailyCatalogCopy
   Run = at 07:05
 }
 
 Schedule {
+  Name = DailyCatalogCopy
+  Run = at 07:35
+}
+
+Schedule {
   Name = DailyOffSite
-  Run = Level=Full Pool=MonthlyOffSite 1st sat at 01:05
-  Run = Level=Full Pool=WeeklyOffSite 2nd-5th sat at 01:05
-  Run = Level=Incremental Pool=DailyOffSite sun-fri at 01:05
+  Run = Level=Full Pool=MonthlyOffSite 1st sat at 02:05
+  Run = Level=Full Pool=WeeklyOffSite 2nd-5th sat at 02:05
+  Run = Level=Incremental Pool=DailyOffSite sun-fri at 02:05
 }
 
 # Daily backup of servers located on the internal office network
@@ -431,9 +431,9 @@ Schedule {
 
 Schedule {
   Name = DailyCopy
-  Run = Pool= DailyOnSite sun-fri at 02:35
-  Run = Pool= WeeklyOnSite  2nd-5th sat at 02:35
-  Run = Pool= MonthlyOnSite 1st sat at 02:35
+  Run = Pool= DailyOnSite sun-fri at 03:05
+  Run = Pool= WeeklyOnSite  2nd-5th sat at 03:05
+  Run = Pool= MonthlyOnSite 1st sat at 03:05
 }
 {% endif %}
 
