@@ -164,6 +164,24 @@ Job {
 }
 
 Job {
+  Name = WeeklyCopy
+  JobDefs = CopyJob
+  Pool = WeeklyOnSite
+{% if  backup_director_schedules_active %}
+  Schedule = WeeklyCopy
+{% endif %}
+}
+
+Job {
+  Name = MonthlyCopy
+  JobDefs = CopyJob
+  Pool = MonthlyOnSite
+{% if  backup_director_schedules_active %}
+  Schedule = MonthlyCopy
+{% endif %}
+}
+
+Job {
   Name = CheckDropboxStatus
   Type = Admin
   Messages = Standard
@@ -410,11 +428,6 @@ Schedule {
 }
 
 Schedule {
-  Name = DailyCatalogCopy
-  Run = at 07:35
-}
-
-Schedule {
   Name = DailyOffSite
   Run = Level=Full Pool=MonthlyOffSite 1st sat at 02:05
   Run = Level=Full Pool=WeeklyOffSite 2nd-5th sat at 02:05
@@ -429,12 +442,27 @@ Schedule {
   Run = Level=Incremental Pool=DailyOnSite sun-fri at 01:05
 }
 
+{% if backup_linked_to_dropbox %}
+Schedule {
+  Name = DailyCatalogCopy
+  Run = at 07:35
+}
+
 Schedule {
   Name = DailyCopy
-  Run = Pool= DailyOnSite sun-fri at 03:05
-  Run = Pool= WeeklyOnSite  2nd-5th sat at 03:05
-  Run = Pool= MonthlyOnSite 1st sat at 03:05
+  Run = sun-fri at 03:05
 }
+
+Schedule {
+  Name = WeeklyCopy
+  Run = 2nd-5th sat at 03:05
+}
+
+Schedule {
+  Name = MonthlyCopy
+  Run = 1st sat at 03:05
+}
+{% endif %}
 {% endif %}
 
 #-------------------------------------------------------------------------------
@@ -612,7 +640,7 @@ Pool {
   # Volume retention period is set to 90 days.
   VolumeRetention = 90d
 {% if backup_linked_to_dropbox %}
-  Next Pool = WeeklyCopy
+  Next Pool = MonthlyCopy
 {% endif %}
 }
 
@@ -702,7 +730,20 @@ Pool {
   Maximum Volume Jobs = 1
   AutoPrune = yes
   Recycle = yes
-  VolumeRetention = 6d
+  VolumeRetention = 30d
+  Storage = FileCopy
+}
+
+Pool {
+  # Pool for off-site copies of monthly backups of on-site servers
+  Name = MonthlyCopy
+  Pool Type = Copy
+  Label Format = MonthlyCopy
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  AutoPrune = yes
+  Recycle = yes
+  VolumeRetention = 90d
   Storage = FileCopy
 }
 {% endif %}
@@ -728,9 +769,9 @@ BackupCatalog, DailyCatalogCopy, DailyCatalogCopy
   StorageACL = File
 {% endif %}
 {% if  backup_director_schedules_active %}
-  ScheduleACL = Catalog, DailyCatalogCopy, DailyOffSite, DailyOnSite, DailyCopy
+  ScheduleACL = Catalog, DailyCatalogCopy, DailyOffSite, DailyOnSite, DailyCopy, WeeklyCopy, MonthlyCopy
 {% endif %}
-  PoolACL = Catalog, DailyOnSite, WeeklyOnSite, MonthlyOnSite, DailyOffSite, WeeklyOffsite, MonthlyOffite, CatalogCopy, DailyCopy, WeeklyCopy
+  PoolACL = Catalog, DailyOnSite, WeeklyOnSite, MonthlyOnSite, DailyOffSite, WeeklyOffsite, MonthlyOffite, CatalogCopy, DailyCopy, WeeklyCopy, MonthlyCopy
   FileSetACL = {% for hostname in hostnames %}{{ hostname }}, {% endfor %}
 Catalog, "Full Set"
   CatalogACL = MyCatalog
