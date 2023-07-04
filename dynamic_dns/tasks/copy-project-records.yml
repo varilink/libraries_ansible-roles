@@ -32,22 +32,26 @@
         patterns: ["*.{{ domain_name }}.yml"]
       register: find_result
 
-    - name: >-
-        Remove any dynamic DNS records that are already present on the host but
-        not longer wanted (presumably removed from the configuration)
-      ansible.builtin.file:
-        path: "{{ dynamic_dns_records_dir + '/' + item }}"
-        state: absent
-      loop: "{{ records_present | difference(records_wanted) }}"
-      vars:
+# Temporarily commenting out this step. I hadn't anticipated that this would
+# cause unwanted consequences when you copy dynamic DNS records for one project
+# it can of course remove records for another project.
+
+#    - name: >-
+#        Remove any dynamic DNS records that are already present on the host but
+#        not longer wanted (presumably removed from the configuration)
+#      ansible.builtin.file:
+#        path: "{{ dynamic_dns_records_dir + '/' + item }}"
+#        state: absent
+#      loop: "{{ records_present | difference(records_wanted) }}"
+#      vars:
         # The dynamic DNS records for the domain that are "present", i.e. found
         # in the dynamic_dns_records_dir on the host.
-        records_present: "\
-          {{ find_result.files | map(attribute='path') | map('basename') }}"
+#        records_present: "\
+#          {{ find_result.files | map(attribute='path') | map('basename') }}"
         # The dynamic DNS records for the domain that are "wanted", i.e. they
         # are configured via the domain_linode_dynamic_dns_records var.
-        records_wanted: >-
-          {{ domain_linode_dynamic_dns_records.keys() |
-          product(['.' + domain_name + '.yml']) | map('join') | list }}
+#        records_wanted: >-
+#          {{ domain_linode_dynamic_dns_records.keys() |
+#          product(['.' + domain_name + '.yml']) | map('join') | list }}
 
   become: yes
