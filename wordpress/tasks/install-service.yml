@@ -34,12 +34,24 @@
         dest: /usr/local/sbin/wp
         mode: '755'
 
-    - name: Make the .wp-cli folder for WP-CLI
+    - name: >-
+        Create the .wp-cli and .ansible directories within /var/www for the
+        www-data user
       ansible.builtin.file:
-        path: /var/www/.wp-cli
+        path: /var/www/{{ item }}
         state: directory
         owner: www-data
         group: www-data
+      loop: [ '.ansible', '.wp-cli' ]
+
+    - name: "\
+        Create the tmp directory within /var/www/.ansible for the www-data user"
+      ansible.builtin.file:
+        path: /var/www/.ansible/tmp
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: u=rwx,g=,o=
 
     - name: Install the WP-CLI find command's package
       ansible.builtin.command:
