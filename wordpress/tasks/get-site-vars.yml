@@ -1,3 +1,22 @@
+# ------------------------------------------------------------------------------
+# wordpress/tasks/get-site-vars.yml
+# ------------------------------------------------------------------------------
+
+---
+
+# This task list uses two variables; wordpress_sites, which is mandatory, and
+# wordpress_sites_private, which is optional and only defined if there are
+# sensitive values to protect and we are using GitHub as our origin remote. Each
+# of these variables must be an array of dictionary objects, which must contain
+# 'subdomain' as one of their keys.
+
+# These variables are matched to the subdomain currently in scope and the
+# associated dictionary object is converted to individual, scalar variables
+# whose names are "wordpress_site_KEY", where KEY corresponds to the dictionary
+# object keys. It also defines two further convenience variables, which are
+# "wordpress_site_server_name" and "wordpress_site_path", which are required by
+# this roles library.
+
 - name: >-
     Set facts from the elements of the wordpress_sites array for the current
     subdomain
@@ -10,8 +29,8 @@
   when: wordpress_sites_private is not defined
 
 - name: >-
-    Set facts from combining the elements from the wordpress_sites and
-    wordpress_sites_private variables for the current subdomain
+    Set facts from combining the elements of the wordpress_sites and
+    wordpress_sites_private arrays for the current subdomain
   ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
   loop: >-
     {{
