@@ -1,4 +1,15 @@
 - name: >-
+    Set facts from the elements of the wordpress_sites array for the current
+    subdomain
+  ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  loop: >-
+    {{
+      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      first | dict2items
+    }}
+  when: wordpress_sites_private is not defined
+
+- name: >-
     Set facts from combining the elements from the wordpress_sites and
     wordpress_sites_private variables for the current subdomain
   ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
@@ -10,6 +21,7 @@
       wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
       first | dict2items)
     }}
+  when: wordpress_sites_private is defined
 
 - name: Set the wordpress_site_server_name fact 
   ansible.builtin.set_fact:
