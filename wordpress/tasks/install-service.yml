@@ -18,10 +18,14 @@
           - php-gd
           - php-imagick
           - php-mysql
+          - php-xml
           - php-zip
           - rsync
           - unzip
         install_recommends: no
+      # When the PHP packages are installed, the Apache2 configuration must be
+      # reloaded for Apache2 to recognise their presence.
+      notify: Apache2 configuration changed
 
     - name: Install WP-CLI
       ansible.builtin.get_url:
