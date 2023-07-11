@@ -34,9 +34,9 @@
             cmd: >-
               wp --path={{ wordpress_site_path }}
               core download --locale=en_GB
-              {% if wordpress_site_version is defined %}
+              {% if wordpress_site_version is defined -%}
               --version={{ wordpress_site_version }}
-              {% endif %}
+              {%- endif %}
             creates: "{{ wordpress_site_path }}/index.php"
 
         - name: Create the WordPress config file
