@@ -97,9 +97,8 @@
             --title='{{ domain_organisation }}'
             --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
             --admin_password='{{ wordpress_site_admin_password }}'
-            --admin_email={{
-                wordpress_site_admin_email | default(admin_user_email)
-              }}
+            --admin_email={{ wordpress_site_admin_email
+            | default(admin_user_email) }}
             --locale=en_GB
             --skip-email
           # The rc from the `wp core is-installed` command is 0 if it is
