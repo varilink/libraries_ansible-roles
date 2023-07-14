@@ -92,10 +92,8 @@
             wp --path={{ wordpress_site_path }}
             core install
             --url=
-            {%- if wordpress_site_uses_ssl %}
-            https://
-            {%- else %}
-            http://
+            {%- if wordpress_site_uses_ssl %}https://
+            {%- else %}http://
             {%- endif %}
             {{- wordpress_site_server_name }}
             --title='{{ domain_organisation }}'
