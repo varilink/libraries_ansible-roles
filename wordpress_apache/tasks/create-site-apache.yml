@@ -9,6 +9,7 @@
     - name: Add to WordPress config to cater for being behind a proxy
       ansible.builtin.blockinfile:
         path: "{{ wordpress_site_path }}/wp-config.php"
+        marker: "# {mark} ANSIBLE MANAGED BEHIND PROXY BLOCK"
         block: |-
           {% if wordpress_site_uses_ssl %}
           $_SERVER['HTTPS']='on';

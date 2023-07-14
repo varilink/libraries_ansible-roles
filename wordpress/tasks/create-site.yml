@@ -59,8 +59,12 @@
               --extra-php
               --skip-check
             stdin: |
-              # BEGIN ANSIBLE MANAGED BLOCK
-              # END ANSIBLE MANAGED BLOCK
+              # BEGIN ANSIBLE MANAGED AUTO UPDATE CORE BLOCK
+              # END ANSIBLE MANAGED AUTO UPDATE CORE BLOCK
+              # BEGIN ANSIBLE MANAGED BEHIND PROXY BLOCK
+              # END ANSIBLE MANAGED BEHIND PROXY BLOCK
+              # BEGIN ANSIBLE MANAGED SITE SPECIFIC BLOCK
+              # END ANSIBLE MANAGED SITE SPECIFIC BLOCK
             creates: "{{ wordpress_site_path }}/wp-config.php"
 
         - name: Deny visibility of WordPress config file to others
