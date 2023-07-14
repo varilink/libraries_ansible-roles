@@ -121,6 +121,17 @@
 #         loop_control:
 #           loop_var: plugin
 
+        - name: >-
+            Disable automatic core updates unless explicitly instructed to keep
+            them enabled
+          ansible.builtin.blockinfile:
+            path: "{{ wordpress_site_path }}/wp-config.php"
+            marker: "# {mark} ANSIBLE MANAGED AUTO UPDATE CORE BLOCK"
+            block: define('WP_AUTO_UPDATE_CORE', false);
+          when: >-
+            wordpress_site_auto_update_core is not defined
+            or not wordpress_site_auto_update_core
+
         - ansible.builtin.synchronize:
             src: "{{ item.src }}"
             dest: "{{ wordpress_site_path }}/wp-content/plugins/{{ item.dest }}"
