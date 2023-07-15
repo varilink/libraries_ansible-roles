@@ -1,0 +1,51 @@
+- name: Check that the requested WP-CLI script exists on the controller.
+  ansible.builtin.stat:
+    path: ../wordpress/wp-cli-scripts/{{ script }}.sh
+  delegate_to: localhost
+  register: stat_script_result
+
+- name: Fail if the requests WP-CLI script is not found on the controller.
+  ansible.builtin.fail:
+    msg: >-
+      The script that you have requested is not present in
+      wordpress/wp-cli-scripts.
+  when: not stat_script_result.stat.exists
+
+- block:
+
+    - name: >-
+        Report that we are skipping this host if it is not configured to host
+        the subdomain specified to run a WP-CLI script against
+      ansible.builtin.debug:
+        msg: >-
+          Host {{ inventory_hostname }} is not configured to host the website
+          for subdomain {{subdomain}} of domain {{ domain_name }}. Skpping this
+          host.
+      when: subdomain not in subdomains_configured
+
+    - block:
+
+        - ansible.builtin.import_tasks: get-site-vars.yml
+
+        - name: Run the requested WP-CLI script against the requested subdomain.
+          ansible.builtin.script:
+            chdir: "{{ wordpress_site_path }}"
+            cmd: ../wordpress/wp-cli-scripts/{{ script }}.sh
+            executable: bash
+          become: yes
+          become_user: www-data
+          register: wp_cli_script_result
+
+        - debug:
+            var: wp_cli_script_result
+
+      when: subdomain in subdomains_configured
+
+  vars:
+    subdomains_configured: |-
+      {%- if wordpress_sites is defined %}
+      {{ wordpress_sites | map(attribute='subdomain') }}
+      {%- else %}
+      {{ [] }}
+      {%- endif %}
+  when: stat_script_result.stat.exists
