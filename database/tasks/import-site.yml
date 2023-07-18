@@ -1,0 +1,9 @@
+- debug:
+    var: wordpress_site_database_name
+
+- community.mysql.mysql_db:
+    name: "{{ wordpress_site_database_name }}"
+    state: import
+    target: /tmp/{{ dump_file }}
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
