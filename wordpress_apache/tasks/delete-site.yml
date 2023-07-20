@@ -4,6 +4,12 @@
 
 ---
 
+- name: Include either service or process Apache2 handlers as appropriate
+  ansible.builtin.include_role:
+    name: wordpress_apache
+    tasks_from: none
+    handlers_from: "{{ handlers_from }}"
+
 - ansible.builtin.import_role:
     name: wordpress
     tasks_from: get-site-vars
@@ -75,6 +81,5 @@
 - ansible.builtin.import_role:
     name: database
     tasks_from: delete-site
-    handlers_from: none # no handlers needed to create or delete databases
   delegate_to: "\
     {{ wordpress_site_database_host | default(inventory_hostname) }}"

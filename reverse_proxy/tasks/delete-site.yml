@@ -4,7 +4,11 @@
 
 ---
 
-- ansible.builtin.import_tasks: import-nginx-handlers.yml
+- name: Include either service or process Nginx handlers as appropriate
+  ansible.builtin.include_role:
+    name: nginx
+    tasks_from: none
+    handlers_from: "{{ handlers_from }}"
 
 - block:
 

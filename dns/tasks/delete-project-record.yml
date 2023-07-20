@@ -1,3 +1,8 @@
+- ansible.builtin.include_role:
+    name: dns
+    tasks_from: none
+    handlers_from: "{{ handlers_from }}"
+
 - name: Delete project DNS record
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts
