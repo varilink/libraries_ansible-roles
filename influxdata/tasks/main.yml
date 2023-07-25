@@ -40,9 +40,20 @@
           > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
 
-    - name: Install APT apt-transport-https package if Debian release is stretch
-      ansible.builtin.apt:
-        name: [apt-transport-https]
+    - block:
+
+        - name: Downgrade APT libnettle6 package if Debian release is stretch
+          ansible.builtin.apt:
+            name: [libnettle6=3.3-1+b2]
+            install_recommends: no
+            force: yes
+
+        - name: >-
+            Install APT apt-transport-https package if Debian release is stretch
+          ansible.builtin.apt:
+            name: [apt-transport-https]
+            install_recommends: no
+        
       when: lsb_release.stdout == 'stretch'
 
     - name: Update APT cache
