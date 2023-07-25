@@ -5,7 +5,7 @@
 ---
 
 - ansible.builtin.import_role:
-    name: backup
+    name: "{{ role_path }}/../backup"
 
 - ansible.builtin.import_tasks: install-service.yml
 

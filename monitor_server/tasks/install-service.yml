@@ -15,7 +15,7 @@
   become: yes
 
 - ansible.builtin.import_role:
-    name: influxdata
+    name: "{{ role_path }}/../influxdata"
 
 - name: Install InfluxDB APT packages
   ansible.builtin.apt:

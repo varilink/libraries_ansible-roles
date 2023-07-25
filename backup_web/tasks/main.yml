@@ -5,10 +5,10 @@
 ---
 
 - ansible.builtin.import_role:
-    name: nginx
+    name: "{{ role_path }}/../nginx"
 
 - ansible.builtin.import_role:
-    name: php_fpm
+    name: "{{ role_path }}/../php_fpm"
 
 - ansible.builtin.import_tasks: install-service.yml
 
