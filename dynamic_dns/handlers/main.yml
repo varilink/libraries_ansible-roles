@@ -1,0 +1,6 @@
+- name: Restart the cron service when its configuration has been changed
+  ansible.builtin.service:
+    name: cron
+    state: restarted # There is no reload job type for the cron.service unit
+  become: yes
+  listen: Cron configuration changed

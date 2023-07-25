@@ -1,0 +1,7 @@
+- name: >-
+    Reload the grafana-server service when the Grafana configuration has changed
+  ansible.builtin.service:
+    name: grafana-server
+    state: restarted # The is no reload job type for this unit
+  become: yes
+  listen: Grafana configuration changed
