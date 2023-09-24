@@ -5,7 +5,7 @@
 ---
 
 - ansible.builtin.import_role:
-    name: mail
+    name: "{{ role_path }}/../mail"
 
 - ansible.builtin.import_tasks: install-service.yml
 
