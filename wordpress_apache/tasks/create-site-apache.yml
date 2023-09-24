@@ -6,6 +6,15 @@
 
 - block:
 
+    - name: Insert block markers for the "behind proxy" block
+      ansible.builtin.lineinfile:
+        path: "{{ wordpress_site_path }}/wp-config.php"
+        line: "{{ item }}"
+        insertbefore: "^# END EXTRA PHP"
+      loop:
+        - "# BEGIN ANSIBLE MANAGED BEHIND PROXY BLOCK"
+        - "# END ANSIBLE MANAGED BEHIND PROXY BLOCK"
+
     - name: Add to WordPress config to cater for being behind a proxy
       ansible.builtin.blockinfile:
         path: "{{ wordpress_site_path }}/wp-config.php"
