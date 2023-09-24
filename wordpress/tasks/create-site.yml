@@ -59,12 +59,8 @@
               --extra-php
               --skip-check
             stdin: |
-              # BEGIN ANSIBLE MANAGED AUTO UPDATE CORE BLOCK
-              # END ANSIBLE MANAGED AUTO UPDATE CORE BLOCK
-              # BEGIN ANSIBLE MANAGED BEHIND PROXY BLOCK
-              # END ANSIBLE MANAGED BEHIND PROXY BLOCK
-              # BEGIN ANSIBLE MANAGED SITE SPECIFIC BLOCK
-              # END ANSIBLE MANAGED SITE SPECIFIC BLOCK
+              # BEGIN EXTRA PHP
+              # END EXTRA PHP
             creates: "{{ wordpress_site_path }}/wp-config.php"
 
         - name: Deny visibility of WordPress config file to others
@@ -111,16 +107,48 @@
         - name: >-
             Disable automatic core updates unless explicitly instructed to keep
             them enabled
-          ansible.builtin.blockinfile:
+          ansible.builtin.lineinfile:
             path: "{{ wordpress_site_path }}/wp-config.php"
-            marker: "# {mark} ANSIBLE MANAGED AUTO UPDATE CORE BLOCK"
-            block: define('WP_AUTO_UPDATE_CORE', false);
+            line: define('WP_AUTO_UPDATE_CORE', false);
+            insertafter: '^# BEGIN EXTRA PHP$'
           when: >-
             wordpress_site_auto_update_core is not defined
             or not wordpress_site_auto_update_core
 
-        - ansible.builtin.synchronize:
-            src: "{{ item.src }}"
+        - name: Enable automatic core updates if we are instructed to
+          ansible.builtin.lineinfile:
+            path: "{{ wordpress_site_path }}/wp-config.php"
+            line: define('WP_AUTO_UPDATE_CORE', false);
+            state: absent
+          when: >-
+            wordpress_site_auto_update_core is defined
+            and wordpress_site_auto_update_core
+
+        - name: Add site specific lines to the wp-config file
+          block:
+
+            - name: Insert block markers for the "site specific" block
+              ansible.builtin.lineinfile:
+                path: "{{ wordpress_site_path }}/wp-config.php"
+                line: "{{ item }}"
+                insertbefore: "^# END EXTRA PHP"
+              loop:
+                - "# BEGIN ANSIBLE MANAGED SITE SPECIFIC BLOCK"
+                - "# END ANSIBLE MANAGED SITE SPECIFIC BLOCK"
+
+            - name: Add site specific configuration to the wp-config file
+              ansible.builtin.blockinfile:
+                path: "{{ wordpress_site_path }}/wp-config.php"
+                marker: "# {mark} ANSIBLE MANAGED SITE SPECIFIC BLOCK"
+                block: "{{ wordpress_site_wp_config }}"
+
+          when: wordpress_site_wp_config is defined
+
+        - name: >-
+            Synchronize plugins defined in this repository to the wordpress
+            site's host
+          ansible.builtin.synchronize:
+            src: "../{{ item.src }}"
             dest: "{{ wordpress_site_path }}/wp-content/plugins/{{ item.dest }}"
             delete: yes
             rsync_opts: "{{ rsync_common_opts + rsync_plugin_opts }}"
@@ -131,11 +159,20 @@
           loop: "{{ wordpress_site_plugins }}"
           when: wordpress_site_plugins is defined
 
-        - ansible.builtin.synchronize:
-            src: "{{ item.src }}"
+        - name: >-
+            Synchronize theme defined in this repository to the wordpress
+            site's host
+          ansible.builtin.synchronize:
+            src: "../{{ item.src }}"
             dest: "{{ wordpress_site_path }}/wp-content/themes/{{ item.dest }}"
             delete: yes
             rsync_opts: "{{ rsync_common_opts + rsync_theme_opts }}"
+            rsync_path: |-
+              {%- if item.rsync_path is defined %}
+              {{ item.rsync_path }}
+              {%- else %}
+              sudo rsync
+              {%- endif %}
           vars:
             rsync_common_opts:
               - "--chown=www-data:www-data"
