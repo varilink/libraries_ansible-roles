@@ -26,10 +26,28 @@
   failed_when: grep_daemon_heavy.rc != 0 and grep_daemon_heavy.rc != 1
   changed_when: false
 
-- name: Install APT package(s) required by the mta role
-  ansible.builtin.apt:
-    name:
-      - exim4-daemon-light
-    install_recommends: no
-  become: yes
+- block:
+
+    - name: Get the codename of the Debian release on this host
+      ansible.builtin.command: lsb_release --codename --short
+      register: lsb_release
+      changed_when: false
+
+    - block:
+
+        - name: Downgrade APT libnettle6 package if Debian release is stretch
+          ansible.builtin.apt:
+            name: [libnettle6=3.3-1+b2]
+            install_recommends: no
+            force: yes
+          when: lsb_release.stdout == 'stretch'
+
+        - name: Install APT package(s) required by the mta role
+          ansible.builtin.apt:
+            name:
+              - exim4-daemon-light
+            install_recommends: no
+
+      become: yes
+
   when: grep_daemon_heavy.rc == 1
