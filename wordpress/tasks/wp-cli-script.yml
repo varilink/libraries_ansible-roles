@@ -1,14 +1,12 @@
 - name: Check that the requested WP-CLI script exists on the controller.
   ansible.builtin.stat:
-    path: ../wordpress/wp-cli-scripts/{{ script }}.sh
+    path: ../wordpress/scripts/{{ script }}.sh
   delegate_to: localhost
   register: stat_script_result
 
 - name: Fail if the requests WP-CLI script is not found on the controller.
   ansible.builtin.fail:
-    msg: >-
-      The script that you have requested is not present in
-      wordpress/wp-cli-scripts.
+    msg: The script that you have requested is not present in wordpress/scripts.
   when: not stat_script_result.stat.exists
 
 - block:
@@ -46,7 +44,7 @@
                 Run the requested WP-CLI script against the requested subdomain"
               ansible.builtin.script:
                 chdir: "{{ wordpress_site_path }}"
-                cmd: ../wordpress/wp-cli-scripts/{{ script }}.sh
+                cmd: ../wordpress/scripts/{{ script }}.sh
                 executable: bash
               register: wp_cli_script_result
 
