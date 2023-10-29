@@ -8,9 +8,9 @@
 
     - name: Delete database user for the WordPress site
       community.mysql.mysql_user:
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        name: "{{ wp_server_name | regex_replace ('\\.', '_') }}"
         host: |-
-          {% if wordpress_site_database_host is defined %}
+          {% if wp_database_host is defined %}
           {{- inventory_hostname }}.{{ home_domain }}
           {%- else -%}
           localhost
@@ -20,7 +20,7 @@
 
     - name: Delete database for the WordPress site
       community.mysql.mysql_db:
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        name: "{{ wp_server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
         state: absent
 

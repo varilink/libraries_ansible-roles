@@ -13,7 +13,7 @@
       # created, assuming that /var/www already exists but
       # /var/www/dev.varilink.co.uk did not.
       ansible.builtin.file:
-        path: "{{ wordpress_site_path }}"
+        path: "{{ wp_path }}"
         state: directory
 
     - name: Set required ownership of directory to hold site WordPress files
@@ -22,7 +22,7 @@
       # wordpress_site_path that were created in the previous step retain root
       # as their owner.
       ansible.builtin.file:
-        path: "{{ wordpress_site_path }}"
+        path: "{{ wp_path }}"
         state: directory
         owner: www-data
         group: www-data
@@ -32,51 +32,44 @@
         - name: Download WordPress files
           ansible.builtin.command:
             cmd: >-
-              wp --path={{ wordpress_site_path }}
-              core download --locale=en_GB
-              {% if wordpress_site_version is defined -%}
-              --version={{ wordpress_site_version }}
+              wp --path={{ wp_path }} core download --locale=en_GB
+              {% if wp_version is defined %}
+              --version={{ wp_version }}
               {%- endif %}
-            creates: "{{ wordpress_site_path }}/index.php"
+            creates: "{{ wp_path }}/index.php"
 
         - name: Create the WordPress config file
           ansible.builtin.command:
             cmd: >-
-              wp --path={{ wordpress_site_path }} config create
+              wp --path={{ wp_path }} config create
               --dbhost=
-              {%- if wordpress_site_database_host is not defined -%}
+              {%- if wp_database_host is not defined -%}
               localhost
               {%- else -%}
-              {{ wordpress_site_database_host }}
+              {{ wp_database_host }}
               {%- endif %}
-              --dbname={{
-                wordpress_site_server_name | regex_replace ('\.', '_')
-              }}
-              --dbuser={{
-                wordpress_site_server_name | regex_replace ('\.', '_')
-              }}
-              --dbpass='{{ wordpress_site_database_password }}'
+              --dbname={{ wp_server_name | regex_replace ('\.', '_') }}
+              --dbuser={{ wp_server_name | regex_replace ('\.', '_') }}
+              --dbpass='{{ wp_database_password }}'
               --extra-php
               --skip-check
             stdin: |
               # BEGIN EXTRA PHP
               # END EXTRA PHP
-            creates: "{{ wordpress_site_path }}/wp-config.php"
+            creates: "{{ wp_path }}/wp-config.php"
 
         - name: Deny visibility of WordPress config file to others
           ansible.builtin.file:
-            path: "{{ wordpress_site_path }}/wp-config.php"
+            path: "{{ wp_path }}/wp-config.php"
             mode: u=rw,g=r,o=
 
         - name: Remove WordPress sample config file
           ansible.builtin.file:
-            path: "{{ wordpress_site_path }}/wp-config-sample.php"
+            path: "{{ wp_path }}/wp-config-sample.php"
             state: absent
 
         - name: Check if WordPress is installed
-          ansible.builtin.shell: >-
-            wp --path={{ wordpress_site_path }}
-            core is-installed
+          ansible.builtin.shell: wp --path={{ wp_path }} core is-installed
           register: wp_installed
           # This task never changes anything.
           changed_when: false
@@ -85,18 +78,17 @@
 
         - name: Install WordPress
           ansible.builtin.command: >-
-            wp --path={{ wordpress_site_path }}
+            wp --path={{ wp_path }}
             core install
             --url=
-            {%- if wordpress_site_uses_ssl %}https://
+            {%- if wp_uses_ssl is not defined or wp_uses_ssl %}https://
             {%- else %}http://
             {%- endif %}
-            {{- wordpress_site_server_name }}
+            {{- wp_server_name }}
             --title="{{ domain_organisation }}"
-            --admin_user={{ wordpress_site_admin_user | default(admin_user) }}
-            --admin_password='{{ wordpress_site_admin_password }}'
-            --admin_email={{ wordpress_site_admin_email
-            | default(admin_user_email) }}
+            --admin_user={{ wp_admin_user | default(admin_user) }}
+            --admin_password='{{ wp_admin_password }}'
+            --admin_email={{ wp_admin_email | default(admin_user_email) }}
             --locale=en_GB
             --skip-email
           # The rc from the `wp core is-installed` command is 0 if it is
@@ -108,28 +100,24 @@
             Disable automatic core updates unless explicitly instructed to keep
             them enabled
           ansible.builtin.lineinfile:
-            path: "{{ wordpress_site_path }}/wp-config.php"
+            path: "{{ wp_path }}/wp-config.php"
             line: define('WP_AUTO_UPDATE_CORE', false);
             insertafter: '^# BEGIN EXTRA PHP$'
-          when: >-
-            wordpress_site_auto_update_core is not defined
-            or not wordpress_site_auto_update_core
+          when: wp_auto_update_core is not defined or not wp_auto_update_core
 
         - name: Enable automatic core updates if we are instructed to
           ansible.builtin.lineinfile:
-            path: "{{ wordpress_site_path }}/wp-config.php"
+            path: "{{ wp_path }}/wp-config.php"
             line: define('WP_AUTO_UPDATE_CORE', false);
             state: absent
-          when: >-
-            wordpress_site_auto_update_core is defined
-            and wordpress_site_auto_update_core
+          when: wp_auto_update_core is defined and wp_auto_update_core
 
         - name: Add site specific lines to the wp-config file
           block:
 
             - name: Insert block markers for the "site specific" block
               ansible.builtin.lineinfile:
-                path: "{{ wordpress_site_path }}/wp-config.php"
+                path: "{{ wp_path }}/wp-config.php"
                 line: "{{ item }}"
                 insertbefore: "^# END EXTRA PHP"
               loop:
@@ -138,33 +126,33 @@
 
             - name: Add site specific configuration to the wp-config file
               ansible.builtin.blockinfile:
-                path: "{{ wordpress_site_path }}/wp-config.php"
+                path: "{{ wp_path }}/wp-config.php"
                 marker: "# {mark} ANSIBLE MANAGED SITE SPECIFIC BLOCK"
-                block: "{{ wordpress_site_wp_config }}"
+                block: "{{ wp_config }}"
 
-          when: wordpress_site_wp_config is defined
+          when: wp_config is defined
 
         - name: >-
             Synchronize plugins defined in this repository to the wordpress
             site's host
           ansible.builtin.synchronize:
             src: "../{{ item.src }}"
-            dest: "{{ wordpress_site_path }}/wp-content/plugins/{{ item.dest }}"
+            dest: "{{ wp_path }}/wp-content/plugins/{{ item.dest }}"
             delete: yes
             rsync_opts: "{{ rsync_common_opts + rsync_plugin_opts }}"
           vars:
             rsync_common_opts:
               - "--chown=www-data:www-data"
             rsync_plugin_opts: "{{ item.rsync_opts | default([]) }}"
-          loop: "{{ wordpress_site_plugins }}"
-          when: wordpress_site_plugins is defined
+          loop: "{{ wp_plugins }}"
+          when: wp_plugins is defined
 
         - name: >-
             Synchronize theme defined in this repository to the wordpress
             site's host
           ansible.builtin.synchronize:
             src: "../{{ item.src }}"
-            dest: "{{ wordpress_site_path }}/wp-content/themes/{{ item.dest }}"
+            dest: "{{ wp_path }}/wp-content/themes/{{ item.dest }}"
             delete: yes
             rsync_opts: "{{ rsync_common_opts + rsync_theme_opts }}"
             rsync_path: |-
@@ -177,8 +165,8 @@
             rsync_common_opts:
               - "--chown=www-data:www-data"
             rsync_theme_opts: "{{ item.rsync_opts | default([]) }}"
-          loop: "{{ wordpress_site_themes }}"
-          when: wordpress_site_themes is defined
+          loop: "{{ wp_themes }}"
+          when: wp_themes is defined
 
       become_user: www-data
 

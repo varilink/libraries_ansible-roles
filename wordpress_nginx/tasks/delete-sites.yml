@@ -10,9 +10,9 @@
 
 - ansible.builtin.include_tasks: site/delete.yml
   vars:
-    site_dns_host: "{{ wordpress_site_dns_host }}"
-    site_host: "{{ wordpress_site_reverse_proxy_host }}"
-    site_server_name: "{{ wordpress_site_server_name }}"
+    site_dns_host: "{{ wp_dns_host }}"
+    site_host: "{{ wp_reverse_proxy_host }}"
+    site_server_name: "{{ wp_server_name }}"
   loop: "{{ subdomains }}"
   loop_control:
     loop_var: subdomain

@@ -8,7 +8,7 @@
 
     - name: Insert block markers for the "behind proxy" block
       ansible.builtin.lineinfile:
-        path: "{{ wordpress_site_path }}/wp-config.php"
+        path: "{{ wp_path }}/wp-config.php"
         line: "{{ item }}"
         insertbefore: "^# END EXTRA PHP"
       loop:
@@ -17,10 +17,10 @@
 
     - name: Add to WordPress config to cater for being behind a proxy
       ansible.builtin.blockinfile:
-        path: "{{ wordpress_site_path }}/wp-config.php"
+        path: "{{ wp_path }}/wp-config.php"
         marker: "# {mark} ANSIBLE MANAGED BEHIND PROXY BLOCK"
         block: |-
-          {% if wordpress_site_uses_ssl %}
+          {% if wp_uses_ssl %}
           $_SERVER['HTTPS']='on';
           {% endif %}
           if ( array_key_exists('HTTP_X_REAL_IP', $_SERVER) ) {
@@ -30,14 +30,14 @@
     - name: Make site apache2 configuration available
       ansible.builtin.template:
         src: apache2.conf.j2
-        dest: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
+        dest: /etc/apache2/sites-available/{{ wp_server_name }}.conf
       notify:
         - Apache2 configuration changed
 
     - name: Enable site apache2 configuration
       ansible.builtin.file:
-        src: /etc/apache2/sites-available/{{ wordpress_site_server_name }}.conf
-        dest: /etc/apache2/sites-enabled/{{ wordpress_site_server_name }}.conf
+        src: /etc/apache2/sites-available/{{ wp_server_name }}.conf
+        dest: /etc/apache2/sites-enabled/{{ wp_server_name }}.conf
         state: link
       notify:
         - Apache2 configuration changed
@@ -45,36 +45,32 @@
     - name: Listen on WordPress site's custom port on local interface only
       ansible.builtin.lineinfile:
         path: /etc/apache2/ports.conf
-        line: Listen 127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }} http
+        line: Listen 127.0.0.1:{{ wp_reverse_proxy_pass_port }} http
         insertafter: 'Listen 127.0.0.1:8080 http'
       notify:
         - Apache2 configuration changed
       # We do not expose Apache WordPress sites externally on this host at a
       # host level and this is not countermanded for this WordPress site.
       when: >-
-        not wordpress_expose_externally and (
-          wordpress_site_expose_externally is not defined
-          or not wordpress_site_expose_externally
+        not wp_expose_externally and (
+          wp_expose_externally is not defined
+          or not wp_expose_site_externally
         )
 
     - name: Listen on WordPress site's custom port on all interfaces
       ansible.builtin.lineinfile:
         path: /etc/apache2/ports.conf
-        line: Listen {{ wordpress_site_reverse_proxy_pass_port }} http
-        regexp: >-
-          ^Listen
-          (?:127\.0\.0\.1:)?{{
-            wordpress_site_reverse_proxy_pass_port
-          }}$'
+        line: Listen {{ wp_reverse_proxy_pass_port }} http
+        regexp: '^Listen (?:127\.0\.0\.1:)?{{ wp_reverse_proxy_pass_port }}$'
         insertafter: '# Custom site Listen entries'
       # We expose Apache WordPress sites externally on this host at a host level
       # and this is not countermanded for this WordPress site.
       notify:
         - Apache2 configuration changed
       when: >-
-        wordpress_expose_externally and (
-          wordpress_site_expose_externally is not defined
-          or wordpress_site_expose_externally
+        wp_expose_externally and (
+          wp_expose_site_externally is not defined
+          or wp_expose_site_externally
         )
 
   become: yes

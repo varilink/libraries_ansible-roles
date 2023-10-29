@@ -6,7 +6,7 @@
 
   - name: Configure WordPress to sit behind SSL enabled proxy
     ansible.builtin.blockinfile:
-      path: "{{ wordpress_site_path }}/wp-config.php"
+      path: "{{ wp_path }}/wp-config.php"
       marker: "# {mark} ANSIBLE MANAGED BEHIND PROXY BLOCK"
       block: |
         define('FORCE_SSL_ADMIN', false);
@@ -20,10 +20,10 @@
   - name: Change URLs within WordPress database from http:// to https://
     ansible.builtin.command:
       cmd: 
-        wp --path={{ wordpress_site_path }}
+        wp --path={{ wp_path }}
         search-replace
-        http://{{ wordpress_site_server_name }}
-        https://{{ wordpress_site_server_name }}
+        http://{{ wp_server_name }}
+        https://{{ wp_server_name }}
     become_user: www-data
     changed_when: false
     register: wp_search_replace

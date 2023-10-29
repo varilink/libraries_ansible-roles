@@ -37,6 +37,6 @@
       ansible.builtin.apt:
         name: [certbot]
         install_recommends: no
-      when: wordpress_site_uses_ssl is defined and wordpress_site_uses_ssl
+      when: wp_uses_ssl is defined and wp_uses_ssl
 
   become: yes

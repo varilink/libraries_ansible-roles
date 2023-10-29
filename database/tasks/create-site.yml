@@ -14,21 +14,21 @@
         # Name the database by substituting '_' for '.' in the site's server
         # name; for example database www_example_com for a site with the server
         # name www.example.com.
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        name: "{{ wp_server_name | regex_replace ('\\.', '_') }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
     - name: Create database user for the WordPress site
       community.mysql.mysql_user:
-        name: "{{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+        name: "{{ wp_server_name | regex_replace ('\\.', '_') }}"
         host: |-
-          {% if wordpress_site_database_host is defined %}
+          {% if wp_database_host is defined %}
           {{ inventory_hostname }}.{{ home_domain }}
           {%- else %}
           localhost
           {%- endif %}
-        password: "{{ wordpress_site_database_password }}"
+        password: "{{ wp_database_password }}"
         priv: "\
-          {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}.*:ALL"
+          {{ wp_server_name | regex_replace ('\\.', '_') }}.*:ALL"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
   become: yes

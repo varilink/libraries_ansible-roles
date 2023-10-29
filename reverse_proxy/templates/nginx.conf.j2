@@ -3,18 +3,18 @@ server {
   listen      80;
   listen      [::]:80;
   server_name
-{%- if wordpress_site_subdomain == 'www' %}
+{%- if wp_subdomain == 'www' %}
  {{ domain_name }}
 {%- endif %}
- {{ wordpress_site_server_name }};
+ {{ wp_server_name }};
 
-  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
-  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
+  access_log /var/log/nginx/{{ wp_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wp_server_name }}-error.log;
 
-{%- if wordpress_site_uses_ssl and wordpress_site_uses_ca %}
+{%- if wp_uses_ssl and wp_uses_ca %}
 
   location /.well-known/acme-challenge/ {
-    root      /var/www/{{ wordpress_site_server_name }}/html;
+    root      /var/www/{{ wp_server_name }}/html;
     try_files $uri =404;
     break;
   }
@@ -22,21 +22,17 @@ server {
 {%- endif %}
 
 {%-
-  if (
-    wordpress_site_uses_ssl and wordpress_site_uses_ca and
-    certbot_certificate_installed
-  ) or (
-    wordpress_site_uses_ssl and not wordpress_site_uses_ca
-  )
+  if ( wp_uses_ssl and wp_uses_ca and certbot_certificate_installed )
+  or ( wp_uses_ssl and not wp_uses_ca )
 %}
 
   location / {
-    return 301 https://{{ wordpress_site_server_name }}$request_uri;
+    return 301 https://{{ wp_server_name }}$request_uri;
   }
 
 }
 
-{%- if wordpress_site_subdomain == 'www' %}
+{%- if wp_subdomain == 'www' %}
 
 server {
 
@@ -44,62 +40,62 @@ server {
   listen      [::]:443 ssl;
   server_name {{ domain_name }};
 
-  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
-  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
+  access_log /var/log/nginx/{{ wp_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wp_server_name }}-error.log;
 
-{% if wordpress_site_uses_ca %}
+{% if wp_uses_ca %}
   ssl_certificate /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/fullchain.pem;
+  {{- wp_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/privkey.pem;
+  {{- wp_server_name }}/privkey.pem;
 {%- else %}
   ssl_certificate /etc/ssl/certs/
-  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  {{- wp_server_name | replace('.', '_') }}.pem;
   ssl_certificate_key /etc/ssl/private/
-  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  {{- wp_server_name | replace('.', '_') }}.pem;
 {%- endif %}
 
   location / {
-    return 301 https://{{ wordpress_site_server_name }}$request_uri;
+    return 301 https://{{ wp_server_name }}$request_uri;
   }
 
 }
-{% endif %}{# wordpress_site.subdomain == 'www' #}
+{% endif %}{# wp_subdomain == 'www' #}
 
 
 server {
 
   listen      443 ssl;
   listen      [::]:443 ssl;
-  server_name {{ wordpress_site_server_name }};
+  server_name {{ wp_server_name }};
 
-  access_log /var/log/nginx/{{ wordpress_site_server_name }}-access.log;
-  error_log /var/log/nginx/{{ wordpress_site_server_name }}-error.log;
+  access_log /var/log/nginx/{{ wp_server_name }}-access.log;
+  error_log /var/log/nginx/{{ wp_server_name }}-error.log;
 
-{% if wordpress_site_uses_ca %}
+{% if wp_uses_ca %}
   ssl_certificate /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/fullchain.pem;
+  {{- wp_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/privkey.pem;
+  {{- wp_server_name }}/privkey.pem;
 {%- else %}
   ssl_certificate /etc/ssl/certs/
-  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  {{- wp_server_name | replace('.', '_') }}.pem;
   ssl_certificate_key /etc/ssl/private/
-  {{- wordpress_site_server_name | replace('.', '_') }}.pem;
+  {{- wp_server_name | replace('.', '_') }}.pem;
 {%- endif %}
 
 {% endif %}
 
 
   location / {
-{% if wordpress_site_reverse_proxy_host is not defined %}
-    proxy_pass http://127.0.0.1:{{ wordpress_site_reverse_proxy_pass_port }};
+{% if wp_reverse_proxy_host is not defined %}
+    proxy_pass http://127.0.0.1:{{ wp_reverse_proxy_pass_port }};
 {% else %}
     proxy_pass http://
     {{- ansible_default_ipv4.address }}:
-    {{- wordpress_site_reverse_proxy_pass_port }};
+    {{- wp_reverse_proxy_pass_port }};
 {% endif %}
-    proxy_set_header Host {{ wordpress_site_server_name }};
+    proxy_set_header Host {{ wp_server_name }};
     proxy_set_header X-Real-IP $remote_addr;
   }
 

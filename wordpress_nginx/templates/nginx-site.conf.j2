@@ -1,10 +1,10 @@
 server {
 
   listen      80;
-  server_name	{{ wordpress_site_server_name }};
+  server_name	{{ wp_server_name }};
 
   location /.well-known/acme-challenge/ {
-    root /var/www/{{ wordpress_site_server_name }}/html;
+    root /var/www/{{ wp_server_name }}/html;
     auth_basic off;
     allow all;
     try_files $uri =404;
@@ -12,12 +12,12 @@ server {
   }
 
 {%
-  if wordpress_site_uses_ssl is defined and
-     wordpress_site_uses_ssl and
+  if wp_uses_ssl is defined and
+     wp_uses_ssl and
      certbot_certificate_installed == 'yes'
 %}
   location / {
-    return 301 https://{{ wordpress_site_server_name }};
+    return 301 https://{{ wp_server_name }};
   }
 
 }
@@ -25,23 +25,23 @@ server {
 server {
 
   listen      443 ssl;
-  server_name {{ wordpress_site_server_name }};
+  server_name {{ wp_server_name }};
 
   ssl_certificate /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/fullchain.pem;
+  {{- wp_server_name }}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/
-  {{- wordpress_site_server_name }}/privkey.pem;
+  {{- wp_server_name }}/privkey.pem;
 
 {% endif %}
 
   rewrite_log on;
-{% if wordpress_site_client_max_body_size is defined %}
-  client_max_body_size {{ wordpress_site_client_max_body_size }};
+{% if wp_client_max_body_size is defined %}
+  client_max_body_size {{ wp_client_max_body_size }};
 {% endif %}
-  root /var/www/{{ wordpress_site_server_name }}/html;
+  root /var/www/{{ wp_server_name }}/html;
   index index.html index.php;
-  access_log /var/log/nginx/{{ wordpress_site_server_name }}.uk-access.log;
-  error_log /var/log/nginx/{{ wordpress_site_server_name }}.uk-error.log;
+  access_log /var/log/nginx/{{ wp_server_name }}.uk-access.log;
+  error_log /var/log/nginx/{{ wp_server_name }}.uk-error.log;
 
 #  location ~ ^\/(\w+\/)*\w+\.php(\/\w+)*$ {
 

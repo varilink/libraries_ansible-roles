@@ -5,14 +5,14 @@
     clashes
   ansible.builtin.set_fact:
     dump_file: "\
-      {{ wordpress_site_database_name }}-\
+      {{ wp_database_name }}-\
       {{ ansible_facts['date_time']['date'] }}-\
       {% set hexchars = [0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f'] %}\
       {% for n in range(7) %}{{ hexchars | random }}{% endfor %}.sql.gz"
 
 - name: Dump WordPress site database
   community.mysql.mysql_db:
-    name: "{{ wordpress_site_database_name }}"
+    name: "{{ wp_database_name }}"
     state: dump
     target: /tmp/{{ dump_file }}
     login_unix_socket: /var/run/mysqld/mysqld.sock

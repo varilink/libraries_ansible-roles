@@ -6,8 +6,7 @@
     name: database
     tasks_from: create-site
     handlers_from: none
-  delegate_to: "\
-    {{ wordpress_site_database_host | default(inventory_hostname) }}"
+  delegate_to: "{{ wp_database_host | default(inventory_hostname) }}"
 
 - ansible.builtin.import_role:
     name: wordpress
@@ -18,14 +17,12 @@
 - ansible.builtin.import_role:
     name: reverse_proxy
     tasks_from: create-site
-  delegate_to: "\
-    {{ wordpress_site_reverse_proxy_host | default(inventory_hostname) }}"
+  delegate_to: "{{ wp_reverse_proxy_host | default(inventory_hostname) }}"
 
 - ansible.builtin.import_role:
     name: dns
     tasks_from: create-project-record
   vars:
-    dns_record_hostname: "{{ wordpress_site_server_name }}"
-  delegate_to: "\
-    {{ wordpress_site_dns_host | default(inventory_hostname) }}"
+    dns_record_hostname: "{{ wp_server_name }}"
+  delegate_to: "{{ wp_dns_host | default(inventory_hostname) }}"
   when: "'internal' in group_names"

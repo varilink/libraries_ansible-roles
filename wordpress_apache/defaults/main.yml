@@ -1,2 +1,2 @@
 # Do NOT expose service externally by default
-wordpress_expose_externally: false
+wp_expose_externally: false

@@ -1,7 +1,7 @@
-wordpress_site_uses_ssl: yes
+wp_uses_ssl: yes
 
 # Use certification authority certificates so that using self-signed
 # certificates instead is a conscious decision.
-wordpress_site_uses_ca: yes
+wp_uses_ca: yes
 
 

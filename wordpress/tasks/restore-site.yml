@@ -11,10 +11,10 @@
         src: >-
           {{ lookup('ansible.builtin.fileglob',
             playbook_dir + '/backup/' + (
-              source_wordpress_site_server_name | regex_replace ('\.', '_')
+              source_wp_server_name | regex_replace ('\.', '_')
               ) + '*.tar.gz'
           ) }}
-        dest: "/var/www/{{ wordpress_site_server_name }}/html"
+        dest: "/var/www/{{ wp_server_name }}/html"
         include: wp-content/uploads
         group: www-data
         owner: www-data
@@ -23,7 +23,7 @@
       ansible.builtin.command:
         cmd: >-
           wp --allow-root
-          --path=/var/www/{{ wordpress_site_server_name }}/html
+          --path=/var/www/{{ wp_server_name }}/html
           db import -
         # Use the contents of the database export that "with_fileglob" found as
         # stdin for the cmd.
@@ -34,7 +34,7 @@
         - >-
           {{
             playbook_dir + '/backup/' + (
-              source_wordpress_site_server_name | regex_replace ('\.', '_')
+              source_wp_server_name | regex_replace ('\.', '_')
             ) + '*.sql'
           }}
 
@@ -42,28 +42,28 @@
       ansible.builtin.command:
         cmd: >-
           wp --allow-root
-          --path=/var/www/{{ wordpress_site_server_name }}/html
+          --path=/var/www/{{ wp_server_name }}/html
           search-replace
-          {{ source_wordpress_site_server_name }}
-          {{ wordpress_site_server_name }}
-      when: source_wordpress_site_server_name != wordpress_site_server_name
+          {{ source_wp_server_name }}
+          {{ wp_server_name }}
+      when: source_wp_server_name != wp_server_name
 
     - debug:
-        var: wordpress_admin_user
+        var: wp_admin_user
 
     - debug:
-        var: wordpress_admin_password
+        var: wp_admin_password
 
     - debug:
-        var: wordpress_site_server_name
+        var: wp_server_name
 
     - name: Set the admin user's password for this environment
       ansible.builtin.command:
         cmd: >-
           wp --allow-root
-          --path=/var/www/{{ wordpress_site_server_name }}/html
-          user update {{ wordpress_site_admin_user }}
-          --user_pass='{{ wordpress_site_admin_password }}'
+          --path=/var/www/{{ wp_server_name }}/html
+          user update {{ wp_admin_user }}
+          --user_pass='{{ wp_admin_password }}'
       register: user_update
 
     - debug:

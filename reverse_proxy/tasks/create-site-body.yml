@@ -23,19 +23,17 @@
   # wordpress_site_reverse_proxy_host isn't enabled then the role's default
   # value will apply unless overridden in the inventory so it's much simpler.
   when: >-
-    wordpress_site_uses_ssl and (
+    wp_uses_ssl
+    and (
       (
-        wordpress_reverse_proxy_host
-          is defined and
-        hostvars[wordpress_site_reverse_proxy_host].host_enabled_for_ssl
-          is defined and not
-        hostvars[wordpress_site_reverse_proxy_host].host_enabled_for_ssl
+        wp_reverse_proxy_host is defined and
+        hostvars[wp_reverse_proxy_host].host_enabled_for_ssl is defined and
+        not hostvars[wp_reverse_proxy_host].host_enabled_for_ssl
       )
-    or
-      (
-        wordpress_reverse_proxy_host
-          is defined and not
-        host_enabled_for_ssl
+      or (
+        wp_reverse_proxy_host is not defined and
+        host_enabled_for_ssl is defined and
+        not host_enabled_for_ssl
       )
     )
 
@@ -45,42 +43,35 @@
       ansible.builtin.command:
         cmd: >-
           openssl req -new -x509 -nodes -days 1095
-          -out /etc/ssl/certs/{{
-          wordpress_site_server_name | replace('.', '_')
-          }}.pem
-          -keyout /etc/ssl/private/{{
-          wordpress_site_server_name | replace('.', '_')
-          }}.pem
-          -subj '/CN={{ wordpress_site_server_name }}'
-          {% if subdomain == 'www' %} -addext "subjectAltName = DNS:{{
-          domain_name
-          }}"
+          -out /etc/ssl/certs/{{ wp_server_name | replace('.', '_') }}.pem
+          -keyout /etc/ssl/private/{{ wp_server_name | replace('.', '_') }}.pem
+          -subj '/CN={{ wp_server_name }}'
+          {% if wp_subdomain == 'www' %}
+          -addext "subjectAltName = DNS:{{ domain_name }}"
           {%- endif %}
         creates: >-
           /etc/ssl/certs/{{
-          wordpress_site_server_name | replace('.', '_')
+          wp_server_name | replace('.', '_')
           }}.pem
       # The WordPress site is SSL enabled using a self-signed certificate, so we
       # must generate that certificate if it doesn't exist already.
-      when: wordpress_site_uses_ssl and not wordpress_site_uses_ca
+      when: wp_uses_ssl and not wp_uses_ca
 
     - name: >-
         Determine if a certification authority's certificate is installed
-      ansible.builtin.shell: >-
-        certbot certificates |
-        grep 'Certificate Name: {{ wordpress_site_server_name }}'
+      ansible.builtin.shell: "\
+        certbot certificates | grep 'Certificate Name: {{ wp_server_name }}'"
       register: certbot_certificates
       failed_when: certbot_certificates.rc != 0 and certbot_certificates.rc != 1
       changed_when: false
       # The WordPress site is SSL enabled using a CA certificate, so see if we
       # already have one installed.
-      when: wordpress_site_uses_ssl and wordpress_site_uses_ca
+      when: wp_uses_ssl and wp_uses_ca
 
     - name: Template site Nginx configuration to sites-available
       ansible.builtin.template:
         src: nginx.conf.j2
-        dest: "\
-          /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
+        dest: /etc/nginx/sites-available/{{ wp_server_name }}.conf
       notify:
         - Nginx configuration changed
       vars:
@@ -98,10 +89,8 @@
               
     - name: Enable site nginx configuration
       ansible.builtin.file:
-        src: "\
-          /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
-        dest: "\
-          /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf"
+        src: /etc/nginx/sites-available/{{ wp_server_name }}.conf
+        dest: /etc/nginx/sites-enabled/{{ wp_server_name }}.conf
         state: link
       notify:
         - Nginx configuration changed
@@ -118,21 +107,17 @@
         # and install one.
 
         - name: Install certbot certificate
-          ansible.builtin.command: |-
+          ansible.builtin.command: >-
             certbot -n certonly
-            --webroot -w {{ wordpress_site_path }}
-            -d {{ wordpress_site_server_name }}
-            {% if wordpress_site_subdomain == 'www' %}
+            --webroot -w {{ wp_path }} -d {{ wp_server_name }}
+            {% if wp_subdomain == 'www' -%}
             -d {{ domain_name }}
-            {% endif %}
+            {%- endif %}
 
         - name: Template site nginx configuration to sites-available
           ansible.builtin.template:
             src: nginx.conf.j2
-            dest: >-
-              /etc/nginx/sites-available/{{
-              wordpress_site_server_name
-              }}.conf
+            dest: /etc/nginx/sites-available/{{ wp_server_name }}.conf
           notify:
             - Nginx configuration changed
           vars:
@@ -140,7 +125,6 @@
 
       become: yes
       when: >-
-        wordpress_site_uses_ssl and wordpress_site_uses_ca and
-        certbot_certificates.rc == 1
+        wp_uses_ssl and wp_uses_ca and certbot_certificates.rc == 1
 
   become: yes

@@ -18,40 +18,38 @@
 # this roles library.
 
 - name: >-
-    Set facts from the elements of the wordpress_sites array for the current
+    Set facts from the elements of the wp_sites array for the current
     subdomain
-  ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+  ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
   loop: >-
     {{
-      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      wp_sites | selectattr('subdomain', 'equalto', subdomain) |
       first | dict2items
     }}
-  when: wordpress_sites_private is not defined
+  when: wp_sites_private is not defined
 
 - name: >-
-    Set facts from combining the elements of the wordpress_sites and
-    wordpress_sites_private arrays for the current subdomain
-  ansible.builtin.set_fact: "wordpress_site_{{ item.key }}={{ item.value }}"
+    Set facts from combining the elements of the wp_sites and
+    wp_sites_private arrays for the current subdomain
+  ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
   loop: >-
     {{
-      wordpress_sites | selectattr('subdomain', 'equalto', subdomain) |
+      wp_sites | selectattr('subdomain', 'equalto', subdomain) |
       first | dict2items |
       union(
-      wordpress_sites_private | selectattr('subdomain', 'equalto', subdomain) |
+      wp_sites_private | selectattr('subdomain', 'equalto', subdomain) |
       first | dict2items)
     }}
-  when: wordpress_sites_private is defined
+  when: wp_sites_private is defined
 
-- name: Set the wordpress_site_server_name fact 
+- name: Set the wp_server_name fact 
   ansible.builtin.set_fact:
-    wordpress_site_server_name: "\
-      {{ wordpress_site_subdomain }}.{{ domain_name }}"
+    wp_server_name: "{{ wp_subdomain }}.{{ domain_name }}"
 
-- name: Set the wordpress_site_database_name fact
+- name: Set the wp_database_name fact
   ansible.builtin.set_fact:
-    wordpress_site_database_name: "\
-      {{ wordpress_site_server_name | regex_replace ('\\.', '_') }}"
+    wp_database_name: "{{ wp_server_name | regex_replace ('\\.', '_') }}"
 
-- name: Set the wordpress_site_path fact
+- name: Set the wp_path fact
   ansible.builtin.set_fact:
-    wordpress_site_path: /var/www/{{ wordpress_site_server_name }}/html
+    wp_path: /var/www/{{ wp_server_name }}/html

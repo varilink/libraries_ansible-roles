@@ -25,7 +25,7 @@
       # anything. Otherwise this would fail the Ansible task.
       cmd: >-
         certbot certificates |
-        grep 'Certificate Name: {{ wordpress_site_server_name }}' || true
+        grep 'Certificate Name: {{ wp_server_name }}' || true
     register: certbot_certificates
     changed_when: false
     when: which_certbot.stdout
@@ -33,7 +33,7 @@
   - name: Make Nginx site configuration available
     ansible.builtin.template:
       src: nginx-site.conf.j2
-      dest: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
+      dest: /etc/nginx/sites-available/{{ wp_server_name }}.conf
     notify: Nginx configuration changed
     vars:
       certbot_certificate_installed: |-
@@ -45,8 +45,8 @@
 
   - name: Enable Nginx site configuration
     ansible.builtin.file:
-      src: /etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf
-      path: /etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf
+      src: /etc/nginx/sites-available/{{ wp_server_name }}.conf
+      path: /etc/nginx/sites-enabled/{{ wp_server_name }}.conf
       state: link
     notify: Nginx configuration changed
 

@@ -41,4 +41,4 @@
       {%- endif %}
     # The subdomains configured via the inventory in the current task context.
     subdomains_configured: "\
-      {{ wordpress_sites | map(attribute='subdomain') }}"
+      {{ wp_sites | map(attribute='subdomain') }}"

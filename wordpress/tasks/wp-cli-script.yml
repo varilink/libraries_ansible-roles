@@ -32,8 +32,7 @@
                 WP-CLI script
               ansible.builtin.copy:
                 src: "{{ playbook_dir }}/../wordpress/media/"
-                dest: "\
-                  {{ wordpress_site_path }}/wp-content/uploads/varilink-media/"
+                dest: "{{ wp_path }}/wp-content/uploads/varilink-media/"
               when: >-
                 lookup(
                   'ansible.builtin.fileglob',
@@ -43,7 +42,7 @@
             - name: "\
                 Run the requested WP-CLI script against the requested subdomain"
               ansible.builtin.script:
-                chdir: "{{ wordpress_site_path }}"
+                chdir: "{{ wp_path }}"
                 cmd: ../wordpress/scripts/{{ script }}.sh
                 executable: bash
               register: wp_cli_script_result
@@ -52,8 +51,7 @@
                 Remove the varilink-media directory that we created a couple of
                 tasks ago
               ansible.builtin.file:
-                path: "\
-                  {{ wordpress_site_path }}/wp-content/uploads/varilink-media/"
+                path: "{{ wp_path }}/wp-content/uploads/varilink-media/"
                 state: absent
 
           become: yes
@@ -66,8 +64,8 @@
 
   vars:
     subdomains_configured: |-
-      {%- if wordpress_sites is defined %}
-      {{ wordpress_sites | map(attribute='subdomain') }}
+      {%- if wp_sites is defined %}
+      {{ wp_sites | map(attribute='subdomain') }}
       {%- else %}
       {{ [] }}
       {%- endif %}

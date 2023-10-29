@@ -12,13 +12,13 @@
 
     - name: Disable Nginx site configuration
       ansible.builtin.file:
-        path: "/etc/nginx/sites-enabled/{{ wordpress_site_server_name }}.conf"
+        path: "/etc/nginx/sites-enabled/{{ wp_server_name }}.conf"
         state: absent
       notify: Nginx configuration changed
 
     - name: Make Nginx site configuration unavailable
       ansible.builtin.file:
-        path: "/etc/nginx/sites-available/{{ wordpress_site_server_name }}.conf"
+        path: "/etc/nginx/sites-available/{{ wp_server_name }}.conf"
         state: absent
       notify: Nginx configuration changed
 
@@ -35,12 +35,12 @@
             # doesn't find anything. Otherwise this would fail the Ansible task.
             cmd: >-
               certbot certificates |
-              grep 'Certficate Name: {{ wordpress_site_server_name }}' || true
+              grep 'Certficate Name: {{ wp_server_name }}' || true
           register: certbot_certificates
 
         - name: Delete ssl_certificate for Nginx WordPress site
           ansible.builtin.command: "\
-            certbot delete -n --cert-name {{ wordpress_site_server_name}}"
+            certbot delete -n --cert-name {{ wp_server_name}}"
           when: certbot_certificates.stdout
 
       when: which_certbot.stdout
