@@ -44,6 +44,15 @@
         group: www-data
       loop: [ '.ansible', '.wp-cli' ]
 
+    - name: Configure WP-CLI to be able to hard flush rewrite rules
+      ansible.builtin.copy:
+        dest: /var/www/.wp-cli/config.yml
+        content: |
+          apache_modules:
+            - mod_rewrite
+        owner: www-data
+        group: www-data
+
     - name: "\
         Create the tmp directory within /var/www/.ansible for the www-data user"
       ansible.builtin.file:
