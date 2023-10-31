@@ -1,0 +1,18 @@
+# ------------------------------------------------------------------------------
+# dynamic_dns/tasks/create-record.yml
+# ------------------------------------------------------------------------------
+
+# Create a dynamic DNS record file in the directory that contains such files.
+
+---
+
+- name: Create dynamic DNS record file
+  ansible.builtin.copy:
+    dest: "{{ dynamic_dns_records_dir }}/\
+      {{ dynamic_dns_record_hostname }}.{{ domain_name }}.yml"
+    content: |
+      domain: {{ linode_domain_id }}
+      record: {{
+        linode_domain_dynamic_dns_records[dynamic_dns_record_hostname]
+      }}
+  become: yes

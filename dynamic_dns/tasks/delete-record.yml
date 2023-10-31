@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------
+# dynamic_dns/tasks/delete-record.yml
+# ------------------------------------------------------------------------------
+
+# Delete a dynamic DNS record file from the directory that contains such files.
+
+---
+
+- name: Delete dynamic DNS record file
+  ansible.builtin.file:
+    path: "{{ dynamic_dns_records_dir }}/\
+      {{ dynamic_dns_record_hostname }}.{{ domain_name }}.yml"
+    state: absent
+  become: yes
