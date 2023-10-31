@@ -4,12 +4,6 @@
 
 ---
 
-- name: Include either service or process Nginx handlers as appropriate
-  ansible.builtin.include_role:
-    name: nginx
-    tasks_from: none
-    handlers_from: "{{ handlers_from }}"
-
 - block:
 
     - name: Disable site in Nginx service

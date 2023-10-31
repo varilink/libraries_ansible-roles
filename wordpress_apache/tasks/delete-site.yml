@@ -4,12 +4,6 @@
 
 ---
 
-- name: Include either service or process Apache2 handlers as appropriate
-  ansible.builtin.include_role:
-    name: wordpress_apache
-    tasks_from: none
-    handlers_from: "{{ handlers_from }}"
-
 - ansible.builtin.import_role:
     name: wordpress
     tasks_from: get-site-vars
