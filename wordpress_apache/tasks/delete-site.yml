@@ -4,23 +4,6 @@
 
 ---
 
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: get-site-vars
-
-- ansible.builtin.import_role:
-    name: dns
-    tasks_from: delete-project-record
-  vars:
-    dns_record_hostname: "{{ wp_server_name }}"
-  delegate_to: "{{ wp_dns_host | default(inventory_hostname) }}"
-  when: "'internal' in group_names"
-
-- ansible.builtin.import_role:
-    name: reverse_proxy
-    tasks_from: delete-site
-  delegate_to: "{{ wp_reverse_proxy_host | default(inventory_hostname) }}"
-
 - block:
 
     - name: "\
@@ -65,12 +48,3 @@
         - Apache2 configuration changed
 
   become: yes
-
-- ansible.builtin.import_role:
-    name: wordpress
-    tasks_from: delete-site
-
-- ansible.builtin.import_role:
-    name: database
-    tasks_from: delete-site
-  delegate_to: "{{ wp_database_host | default(inventory_hostname) }}"
