@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# reverse_proxy/defaults/main.yml
+# ------------------------------------------------------------------------------
+
+# Configure reverse proxy to use SSL based on a certification authority's
+# certificate by default.
+
+---
+
+wp_uses_ssl: yes
+wp_uses_ca: yes
