@@ -1,0 +1,63 @@
+# ------------------------------------------------------------------------------
+# wordpress/tasks/validate-site-action.yml
+# ------------------------------------------------------------------------------
+
+# This task list validates a "WordPress site action"; for example:
+#  - create a WordPress site
+#  - delete a WordPress site
+#  - Run a WP-CLI script against a WordPress site
+
+---
+
+- name: Fail if there isn't one and only one WordPress host in this play
+  # There is a risk that WordPress site actions are run against WordPress sites
+  # that aren't the intended target; for example when working on the dev site
+  # for a domain we inadvertently update the live site for the same domain
+  # because we haven't set --limit appropriately. This task enforces that
+  # --limit is set such that only one WordPress host is included in the play.
+  # Similarly, if there isn't a WordPress host in this play then the playbook as
+  # a whole is invalidate since we won't gathered the wp_server_name variable
+  # that subsequent plays use.
+  ansible.builtin.fail:
+    msg: >-
+      This playbook must be run with --limit set such that there is one and only
+      one WordPress host in this play
+  when: play_hosts | length != 1
+  run_once: yes
+
+- name: Fail if neither wp_subdomain nor wp_sites is defined
+  # We need to know the subdomain for the site that we are to act upon; for
+  # example 'dev' or 'test' or 'www'. For that to be the case we will either be
+  # be given a variable wp_subdomain containing that single subdomain or a
+  # variable wp_sites containing an associative array whose keys are subdomains
+  # from which we will be prompted to select a single target.
+  ansible.builtin.fail:
+    msg: >-
+      I must be provided with either a single wp_subdomain or a list of wp_sites
+  when: wp_subdomain is not defined and wp_sites is not defined
+  run_once: yes
+
+- block:
+
+    # Since wp_subdomain is not defined wp_sites must be and we must establish
+    # which of the subdomains configured in wp_sites we are to act upon.
+
+    - name: Prompt for the entry of a chosen subdomain from those in wp_sites
+      ansible.builtin.pause:
+        prompt: >-
+          Enter the name of the subdomain you want to act on
+          ({{ valid_wp_subdomains | join(', ') }})
+      register: entered_subdomain
+      vars:
+        valid_wp_subdomains: "{{ wp_sites.keys() }}"
+
+    - name: Validate that the entered subdomain is in wp_sites
+      ansible.builtin.fail:
+        msg: The subdomain name that you entered is invalid
+      when: entered_subdomain.user_input not in wp_sites.keys()
+
+    - name: Set the wp_subdomain fact to the entered subdomain
+      ansible.builtin.set_fact:
+        wp_subdomain: "{{ entered_subdomain.user_input }}"
+
+  when: wp_subdomain is not defined
