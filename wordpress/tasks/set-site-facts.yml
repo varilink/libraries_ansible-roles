@@ -1,46 +1,38 @@
 # ------------------------------------------------------------------------------
-# wordpress/tasks/get-site-vars.yml
+# wordpress/tasks/set-site-facts.yml
 # ------------------------------------------------------------------------------
+
+# Set some facts for the WordPress site we are acting upon, over and above any
+# that are set via group_vars and host_vars.
 
 ---
 
-# This task list uses two variables; wordpress_sites, which is mandatory, and
-# wordpress_sites_private, which is optional and only defined if there are
-# sensitive values to protect and we are using GitHub as our origin remote. Each
-# of these variables must be an array of dictionary objects, which must contain
-# 'subdomain' as one of their keys.
+- block:
 
-# These variables are matched to the subdomain currently in scope and the
-# associated dictionary object is converted to individual, scalar variables
-# whose names are "wordpress_site_KEY", where KEY corresponds to the dictionary
-# object keys. It also defines two further convenience variables, which are
-# "wordpress_site_server_name" and "wordpress_site_path", which are required by
-# this roles library.
+    # There is more than one WordPress site for the project's domain on the host
+    # that we are targetting. We know this because an associative array called
+    # wp_sites is defined with keys that correspond to the subdomains of each of
+    # those WordPress sites; for example 'www', 'test', etc.
 
-- name: >-
-    Set facts from the elements of the wp_sites array for the current
-    subdomain
-  ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
-  loop: >-
-    {{
-      wp_sites | selectattr('subdomain', 'equalto', subdomain) |
-      first | dict2items
-    }}
-  when: wp_sites_private is not defined
+    # When this is the case the playbook prompts for the variable wp_subdomain,
+    # so that the subdomain to target can be specified. Build variables for the
+    # WordPress site by extracting them from wp_sites for the chosen
+    # wp_subdomain.
 
-- name: >-
-    Set facts from combining the elements of the wp_sites and
-    wp_sites_private arrays for the current subdomain
-  ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
-  loop: >-
-    {{
-      wp_sites | selectattr('subdomain', 'equalto', subdomain) |
-      first | dict2items |
-      union(
-      wp_sites_private | selectattr('subdomain', 'equalto', subdomain) |
-      first | dict2items)
-    }}
-  when: wp_sites_private is defined
+    # When wp_sites is not defined, the equivalent variables have been directly
+    # set via group_vars and host_vars.
+
+    - name: >-
+        Set facts from the elements of the wp_sites array for the selected
+        wp_subdomain
+
+      ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
+      loop: "{{ wp_sites[ wp_subdomain ] | dict2items }}"
+
+  when: wp_sites is defined
+
+# Set a few extra convenience facts for the WordPress site, whose values are
+# derived from some of facts for the WordPress site that are already set.
 
 - name: Set the wp_server_name fact 
   ansible.builtin.set_fact:
