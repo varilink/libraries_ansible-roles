@@ -24,6 +24,14 @@
         regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
       notify: Apache2 configuration changed
 
+#    - name: >-
+#        In the event of an upgrade make sure that prior version PHP modules are
+#        disabled
+#      community.general.apache2_module:
+#        name: "{% if lsb_release.stdout == 'bullseye' %}php7.3{% endif %}"
+#        state: absent
+#      notify: Apache2 configuration changed
+
     - name: Disable apache2 mpm_event module
       community.general.apache2_module:
         name: mpm_event
@@ -40,7 +48,6 @@
     - name: Enable apache2 rewrite and php modules
       community.general.apache2_module:
         name: "{{ item }}"
-        state: present
       notify: Apache2 configuration changed
       loop:
         - rewrite
