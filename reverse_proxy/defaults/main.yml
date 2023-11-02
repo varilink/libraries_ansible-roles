@@ -2,10 +2,15 @@
 # reverse_proxy/defaults/main.yml
 # ------------------------------------------------------------------------------
 
-# Configure reverse proxy to use SSL based on a certification authority's
-# certificate by default.
-
 ---
 
+# When deleting a site, don't also delete its certbot certificate if it has one
+# by default. This is because sometimes we delete and create a site repeatedly
+# and would hit LetsEncrypt free usage limits if we deleted and created a new
+# certificate every time.
+delete_certbot_cert: no
+
+# Configure reverse proxy to use SSL based on a certification authority's
+# certificate by default.
 wp_uses_ssl: yes
 wp_uses_ca: yes

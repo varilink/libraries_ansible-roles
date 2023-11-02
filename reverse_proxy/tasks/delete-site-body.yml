@@ -30,10 +30,11 @@
 
     - name: >-
         If there is a certbot certificate installed for this WordPress site then
-        delete it
+        delete it if requested to do so
       ansible.builtin.command: "\
         certbot -n --cert-name {{ wp_server_name }} delete"
-      when: certbot_cert.rc == 0
+      when: >-
+        certbot_cert.rc == 0 and delete_certbot_cert
 
     - name: >-
         If there is a self-signed certificate installed for this WordPress site
