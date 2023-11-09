@@ -176,7 +176,7 @@
               {%- if item.rsync_path is defined %}
               {{ item.rsync_path }}
               {%- else %}
-              sudo rsync
+              sudo -u www-data rsync
               {%- endif %}
           vars:
             rsync_common_opts:
