@@ -1,3 +1,5 @@
-- ansible.builtin.import_tasks: import-nginx-handlers.yml
+- name: Import the Nginx handlers in environments with a service manager
+  ansible.builtin.import_tasks: import-nginx-handlers.yml
 
-- ansible.builtin.import_tasks: create-site-body.yml
+- name: Configure Nginx as a reverse proxy for the WordPress site
+  ansible.builtin.import_tasks: create-site-body.yml
