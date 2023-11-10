@@ -4,64 +4,74 @@
 
 ---
 
-- name: >-
-    Check if requested WP-CLI script exists in the project's wordpress
-    repository
-  ansible.builtin.stat:
-    path: ../wordpress/scripts/{{ wp_cli_script }}.sh
-  delegate_to: localhost
-  register: project_script_stat_result
-
-- name:
-    If the requests WP-CLI script is not in the project's wordpress repository
-    then check if it is in the Varilink library of shared WP-CLI scripts
-  ansible.builtin.stat:
-    path: ../wordpress/varilink-scripts/{{ wp_cli_script }}.sh
-  delegate_to: localhost
-  register: varilink_script_stat_result
-  when: not project_script_stat_result.stat.exists
-
-- name: Fail if the requested WP-CLI script could not be found
-  ansible.builtin.fail:
-    msg: The script that you have requested could not be found
-  when: >-
-    not project_script_stat_result.stat.exists and
-    not varilink_script_stat_result.stat.exists
-
 - block:
 
     - name: >-
-        Copy any media files that might need to be made available to the WP-CLI
-        script
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../wordpress/media/"
-        dest: "{{ wp_path }}/wp-content/uploads/{{ wp_project_name }}-media/"
+        Check if requested WP-CLI script exists in the project's wordpress
+        repository
+      ansible.builtin.stat:
+        path: ../wordpress/scripts/{{ wp_cli_script }}.sh
+      register: project_script_stat_result
+
+    - name:
+        If the requests WP-CLI script is not in the project's wordpress
+        repository then check if it is in the Varilink library of shared WP-CLI
+        scripts
+      ansible.builtin.stat:
+        path: ../wordpress/varilink-scripts/{{ wp_cli_script }}.sh
+      register: varilink_script_stat_result
+      when: not project_script_stat_result.stat.exists
+
+    - name: Fail if the requested WP-CLI script could not be found
+      ansible.builtin.fail:
+        msg: The script that you have requested could not be found
       when: >-
-        lookup(
-          'ansible.builtin.fileglob', playbook_dir + '/../wordpress/media/*'
-        )
+        not project_script_stat_result.stat.exists and
+        not varilink_script_stat_result.stat.exists
+
+    - name: >-
+        Register the directory that the requested wp-cli-script was found in as
+        a fact
+      ansible.builtin.set_fact:
+        wp_cli_script_path: |-
+          {% if project_script_stat_result.stat.exists %}
+          ../wordpress/scripts
+          {%- else %}
+          ../wordpress/varilink-scripts
+          {%- endif %}
+
+    - name: See if the requested wp-cli-script has precursor tasks defined
+      ansible.builtin.stat:
+        path: "{{ wp_cli_script_path }}/pre/{{ wp_cli_script }}.yml"
+      register: pre_script_stat_result
+
+    - name: See if the requested wp-cli-script has successor tasks defined
+      ansible.builtin.stat:
+        path: "{{ wp_cli_script_path }}/post/{{ wp_cli_script }}.yml"
+      register: post_script_stat_result
+
+  delegate_to: localhost
+
+- block:
+
+    - name: Run any tasks that must be run as precursors of the WP-CLI script
+      ansible.builtin.include_tasks: "{{ pre_script_stat_result.stat.path }}"
+      when: pre_script_stat_result.stat.exists
 
     - name: Run the requested WP-CLI script against the WordPress site
       ansible.builtin.script:
         chdir: "{{ wp_path }}"
         cmd: |-
-          {% if project_script_stat_result.stat.exists %}
-          ../wordpress/scripts/{{ wp_cli_script }}.sh
-          {%- else %}
-          ../wordpresss/varilink-scripts/{{ wp_cli_script }}.sh
-          {%- endif %}
+          {{ wp_cli_script_path }}/{{ wp_cli_script }}.sh
+          {%- if wp_script_args is defined %} {{ wp_script_args }}{% endif %}
         executable: bash
       environment:
         PROJECT_NAME: "{{ wp_project_name }}"
       register: wp_cli_script_result
 
-    - name: >-
-        Remove the varilink-media directory that we created a couple of
-        tasks ago
-      ansible.builtin.file:
-        path: "\
-          {{ wp_path }}/wp-content/uploads/{{ wp_project_name }}-media/"
-        state: absent
+    - name: Run any tasks that must be run as successors of the WP-CLI script
+      ansible.builtin.include_tasks: "{{ post_script_stat_result.stat.path }}"
+      when: post_script_stat_result.stat.exists
 
   become: yes
   become_user: www-data
