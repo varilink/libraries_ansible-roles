@@ -2,6 +2,9 @@
 # database/tasks/delete-site.yml
 # ------------------------------------------------------------------------------
 
+# Delete the database for a WordPress site and the associated user account to
+# access it.
+
 ---
 
 - block:

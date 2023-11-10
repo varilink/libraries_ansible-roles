@@ -8,19 +8,18 @@
 
     - name: Create directory to hold site WordPress files
       # NOTE: This will create any missing directories in the path; for example
-      # if the wordpress_site_path is dev.varilink.co.uk then both
-      # /var/www/dev.varilink.co.uk and /var/www/dev.varilink.co.uk/html will be
-      # created, assuming that /var/www already exists but
-      # /var/www/dev.varilink.co.uk did not.
+      # if wp_path=/var/www/dev.varilink.co.uk/html and /var/www exists but not
+      # /var/www/dev.varilink.co.uk, then /var/www/dev.varilink.co.uk will be
+      # created as well as /var/www/dev.varilink.co.uk/html.
       ansible.builtin.file:
         path: "{{ wp_path }}"
         state: directory
 
     - name: Set required ownership of directory to hold site WordPress files
       # NOTE: We repeat the previous task but this time with owner and group
-      # specified. This is so that any parent directories in the
-      # wordpress_site_path that were created in the previous step retain root
-      # as their owner.
+      # specified. This is so that any parent directories in the wp_path that
+      # were created in the previous step retain root as their owner but the
+      # wp_path directory has www-data as both its owner and group.
       ansible.builtin.file:
         path: "{{ wp_path }}"
         state: directory

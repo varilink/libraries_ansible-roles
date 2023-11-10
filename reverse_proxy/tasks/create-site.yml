@@ -1,3 +1,15 @@
+# ------------------------------------------------------------------------------
+# reverse_proxy/tasks/create-site.yml
+# ------------------------------------------------------------------------------
+
+# Create a site that is configured on a reverse proxy. This is split into two
+# imports, first Nginx service handlers and then the actual tasks. This is so
+# that when testing in a container based environment, which doesn't have a
+# service manager, the actual tasks can be imported alongside Nginx process
+# based handlers that are specific to that environment.
+
+---
+
 - name: Import the Nginx handlers in environments with a service manager
   ansible.builtin.import_tasks: import-nginx-handlers.yml
 

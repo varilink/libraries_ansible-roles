@@ -51,8 +51,7 @@
         insertafter: 'Listen 127.0.0.1:8080 http'
       notify:
         - Apache2 configuration changed
-      # We do not expose Apache WordPress sites externally on this host at a
-      # host level and this is not countermanded for this WordPress site.
+      # We do not expose this Apache WordPress site externally
       when: not wp_expose_externally
 
     - name: Listen on WordPress site's custom port on all interfaces
@@ -62,10 +61,9 @@
         regexp: "\
           ^Listen (?:127\.0\.0\.1:)?{{ wp_reverse_proxy_pass_port }} http$"
         insertafter: '# Custom site Listen entries'
-      # We expose Apache WordPress sites externally on this host at a host level
-      # and this is not countermanded for this WordPress site.
       notify:
         - Apache2 configuration changed
+      # We expose this Apache WordPress site externally
       when: wp_expose_externally
 
   become: yes

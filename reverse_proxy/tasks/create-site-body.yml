@@ -1,27 +1,29 @@
 # ------------------------------------------------------------------------------
-# reverse_proxy/tasks/create-site.yml
+# reverse_proxy/tasks/create-site-body.yml
 # ------------------------------------------------------------------------------
+
+# The tasks that create a site on a reverse proxy. See also the create-site.yml
+# task list within this same role.
 
 ---
 
 - name: "\
     Fail if WordPress site uses SSL but reverse proxy does not support SSL"
-  # A reverse proxy can be configured to support SSL or not via the
-  # host_enabled_for_ssl variable. A WordPress site can be configured to use SSL
-  # or not via the wordpress_site_uses_ssl variable. If a WordPress site is
-  # configured to use SSL via a reverse proxy that is not configured to support
-  # SSL, then fail.
+  # A reverse proxy host can be configured to support SSL or not, as indicated
+  # by the host_enabled_for_ssl variable, if it is defined. If it isn't defined
+  # then the host is configured to support SSL by default. Similarly, a
+  # WordPress site can be configured to use SSL or not, as indicated by the
+  # wp_uses_ssl variable, if it is defined. Again, if it isn't defined then the
+  # wordpress site uses SSL by default. If a WordPress site is configured to use
+  # SSL via a reverse proxy host that is not configured to support SSL, then
+  # fail.
   ansible.builtin.fail:
     msg: >-
       Invalid request to install a WordPress site that uses SSL via a
       reverse proxy that does not support SSL
-  # If wordpress_site_reverse_proxy_host is defined then this task has been
-  # delegated to that host. If that is the case then because the reverse_proxy
-  # role hasn't been imported on that host the role's default value for
-  # host_enabled_for_ssl won't apply there so if host_enabled_for_ssl isn't
-  # applied there via the inventory then it won't be defined. If
-  # wordpress_site_reverse_proxy_host isn't enabled then the role's default
-  # value will apply unless overridden in the inventory so it's much simpler.
+  # If wp_reverse_proxy_host is defined then this task has been delegated to
+  # another host and so we must determine if that host is enabled for SSL. If
+  # wp_reverse_proxy_host isn't defined then we must check the current host.
   when: >-
     wp_uses_ssl
     and (

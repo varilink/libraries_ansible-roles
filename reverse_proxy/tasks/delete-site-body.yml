@@ -1,6 +1,9 @@
 # ------------------------------------------------------------------------------
-# reverse_proxy/tasks/delete-site.yml
+# reverse_proxy/tasks/delete-site-body.yml
 # ------------------------------------------------------------------------------
+
+# The tasks that delete a site from a reverse proxy. See also the
+# delete-site.yml task list within this same role.
 
 ---
 

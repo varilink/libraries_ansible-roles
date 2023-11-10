@@ -2,10 +2,13 @@
 # database/tasks/create-site.yml
 # ------------------------------------------------------------------------------
 
-# TODO: Obfuscate the names of the WordPress site's database and user for
-# "security through obscurity".
+# Create the database for a WordPress site and an associated user account to
+# access it.
 
 ---
+
+# TODO: Obfuscate the names of the WordPress site's database and user for
+# "security through obscurity".
 
 - block:
 

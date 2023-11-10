@@ -2,8 +2,11 @@
 # dns/tasks/create-project-record.yml
 # ------------------------------------------------------------------------------
 
-# Create a project DNS record. These are added at the bottom of the
-# /etc/addn-hosts file, after the line '# Project records'.
+# Create a "project" DNS record. Project DNS records correspond to projects that
+# are created on top of the base services as opposed to host and base service
+# DNS records that are created as part of the install of those base services.
+# Within the /etc/addn-hosts file on the DNS server they are inserted after the
+# comment line '# Project records'
 
 ---
 

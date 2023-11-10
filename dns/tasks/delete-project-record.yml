@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------
+# dns/tasks/delete-project-record.yml
+# ------------------------------------------------------------------------------
+
+# Delete a "project" DNS record. Project DNS records correspond to projects that
+# are created on top of the base services as opposed to host and base service
+# DNS records that are created as part of the install of those base services.
+# Within the /etc/addn-hosts file on the DNS server they are inserted after the
+# comment line '# Project records'
+
+---
 
 - name: Delete project DNS record
   ansible.builtin.lineinfile:
