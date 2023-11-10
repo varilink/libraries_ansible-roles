@@ -14,11 +14,7 @@
         state: absent
       notify:
         - Apache2 configuration changed
-      when: >-
-        not wp_expose_externally and (
-          wp_expose_site_externally is not defined
-          or not wp_expose_site_externally
-        )
+      when: not wp_expose_externally
 
     - name: Stop listening on WordPress site's custom port on all interfaces
       ansible.builtin.lineinfile:
@@ -27,11 +23,7 @@
         state: absent
       notify:
         - Apache2 configuration changed
-      when: >-
-        wp_expose_externally and (
-          wp_expose_site_externally is not defined
-          or wp_expose_site_externally
-        )
+      when: wp_expose_externally
 
     - name: Disable site apache2 configuration
       ansible.builtin.file:
