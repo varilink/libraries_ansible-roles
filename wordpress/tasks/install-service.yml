@@ -15,6 +15,7 @@
           - jq
           - less
           - php
+          - php-curl
           - php-gd
           - php-imagick
           - php-mysql
