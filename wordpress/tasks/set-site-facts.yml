@@ -25,7 +25,6 @@
     - name: >-
         Set facts from the elements of the wp_sites array for the selected
         wp_subdomain
-
       ansible.builtin.set_fact: "wp_{{ item.key }}={{ item.value }}"
       loop: "{{ wp_sites[ wp_subdomain ] | dict2items }}"
 
