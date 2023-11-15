@@ -47,7 +47,7 @@
         path: /etc/apache2/ports.conf
         line: Listen 127.0.0.1:{{ wp_reverse_proxy_pass_port }} http
         regexp: "\
-          ^Listen (?:127\.0\.0\.1:)?{{ wp_reverse_proxy_pass_port }} http$"
+          ^Listen (?:127\\.0\\.0\\.1:)?{{ wp_reverse_proxy_pass_port }} http$"
         insertafter: 'Listen 127.0.0.1:8080 http'
       notify:
         - Apache2 configuration changed
@@ -59,7 +59,7 @@
         path: /etc/apache2/ports.conf
         line: Listen {{ wp_reverse_proxy_pass_port }} http
         regexp: "\
-          ^Listen (?:127\.0\.0\.1:)?{{ wp_reverse_proxy_pass_port }} http$"
+          ^Listen (?:127\\.0\\.0\\.1:)?{{ wp_reverse_proxy_pass_port }} http$"
         insertafter: '# Custom site Listen entries'
       notify:
         - Apache2 configuration changed
