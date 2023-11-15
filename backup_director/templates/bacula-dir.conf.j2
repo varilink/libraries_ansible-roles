@@ -88,7 +88,12 @@ configured to accept connections from outside of the office network for the
 storage director that is located on the office network.
 #}
 
-    {%- if  backup_director_schedules_active %}
+    {%-
+      if backup_director_schedules_active and (
+        hostvars[ hostname ].backup_client_schedule is not defined or
+        hostvars[ hostname ].backup_client_schedule
+      )
+    %}
 
   Schedule = DailyOffSite
 
@@ -106,7 +111,12 @@ directive, since both the server being backed up and the storage director are
 both on the office network.
 #}
 
-    {%- if  backup_director_schedules_active %}
+    {%-
+      if backup_director_schedules_active and (
+        hostvars[ hostname ].backup_client_schedule is not defined or
+        hostvars[ hostname ].backup_client_schedule
+      )
+    %}
 
   Schedule = DailyOnSite
 
