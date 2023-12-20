@@ -14,7 +14,7 @@
     - name: Generate my starting Telegraf configuration
       ansible.builtin.shell: >-
         telegraf config
-        --input-filter cpu:disk:mem:new:swap
+        --input-filter cpu:disk:mem:net:swap
         --output-filter influxdb_v2
         > /etc/telegraf/telegraf.conf
         && rm /etc/telegraf/telegraf.conf.sample
