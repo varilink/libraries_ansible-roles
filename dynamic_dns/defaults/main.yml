@@ -16,3 +16,9 @@ dynamic_dns_crontab_stride: 15
 # address by providing the relevant Linode DNS Ids for both the domain and the
 # record.
 dynamic_dns_records_dir: /usr/local/etc/dynamic-dns-records
+
+# Normally the dynamic-dns.pl script uses Linode's [remote_addr] placeholder for
+# the current, dynamically assigned IP address. However, there's been at least
+# one instance when this wasn't working due to a bug. So, this parameter can be
+# overridden to use the ipify API to get our IP address instead.
+dynamic_dns_use_ipify: no

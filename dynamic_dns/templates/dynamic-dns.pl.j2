@@ -20,6 +20,10 @@ use LWP::UserAgent;
 use Sys::Syslog qw(:standard :macros);
 use YAML qw(LoadFile);
 
+# --------
+# 1. Setup
+# --------
+
 # Script expects no arguments. Error and exit if any are provided.
 if ( @ARGV > 0 ) {
   print STDERR "This script should be run with no arguments\n";
@@ -48,6 +52,29 @@ syslog( LOG_INFO, 'Started check for Dynamic DNS updates' );
 # customer and home domains' mail services.
 my $config = Config::Tiny->read( '/usr/local/etc/dns-linode-credentials.ini' );
 
+# Normally the dynamic-dns.pl script uses Linode's [remote_addr] placeholder for
+# the current, dynamically assigned IP address. However, there's been at least
+# one instance when this wasn't working due to a bug. So, this parameter can be
+# overridden to use the ipify API to get our IP address instead - see also the
+# defaults/main.yml file for this role.
+my $use_ipify = {% if dynamic_dns_use_ipify %}1{% else %}0{% endif %};
+
+my $my_ip = 0; # false unless populated with an IP address
+if ( $use_ipify ) {
+  my $user_agent = new LWP::UserAgent( ssl_opts => { verify_hostname => 1 } );
+  my $response = $user_agent->get( 'https://api.ipify.org?format=json' );
+  if ( $response->is_success ) {
+    $my_ip = decode_json( $response->content )->{ ip };
+  } else {
+    print STDERR "Error when using ipify to get my IP address\n";
+    die;
+  }
+}
+
+# ---------
+# 2. Action
+# ---------
+
 if ( Config::Tiny->errstr ) {
 
   print STDERR
@@ -56,7 +83,10 @@ if ( Config::Tiny->errstr ) {
 
   foreach my $record_file ( @record_files ) {
 
-    syslog( LOG_INFO, "Processing record file $record_file" );
+    syslog(
+      LOG_ERR,
+      "Unable to process record file $record_file due to no Linode credentials"
+    );
 
   } # foreach my record_file ( @record_files )
 
@@ -111,9 +141,16 @@ if ( Config::Tiny->errstr ) {
       my $original_target = decode_json( $response->content )->{ target };
 
       # Set the content for the Domain Record Update. The special variable
-      # remote_addr will correspond to the current IP address provided to our
+      # remote_addr should correspond to the current IP address provided to our
       # office network by our ISP as Linode sees it on the incoming API request.
-      my $content = encode_json( { target => '[remote_addr]' } );
+      # However this can be overridden to use the ipify API to get the IP
+      # address instead.
+      my $content;
+      if ( $my_ip ) {
+        $content = encode_json( { target => $my_ip } );
+      } else {
+        $content = encode_json( { target => '[remote_addr]' } );
+      }
 
       # Invoke the Domain Record Update API for the current domain record.
       $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
@@ -161,6 +198,10 @@ if ( Config::Tiny->errstr ) {
   } # foreach my record_file ( @record_files )
 
 }
+
+# ----------
+# 3. Cleanup
+# ----------
 
 syslog( LOG_INFO, 'Finished check for Dynamic DNS updates' );
 closelog();
