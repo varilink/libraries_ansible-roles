@@ -11,6 +11,7 @@
       - ca-certificates
       - gosu
       - gpg
+      - python3-cryptography
     install_recommends: no
   become: yes
 

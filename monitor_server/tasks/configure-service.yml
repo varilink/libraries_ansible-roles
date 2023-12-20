@@ -6,51 +6,100 @@
 
 - block:
 
-    - name: Setup influx
-      ansible.builtin.command:
-        cmd: >-
-          influx setup
-          --bucket monitor
-          --username {{ admin_user }}
-          --password {{ monitor_password | default('my-password') }}
-          --org "{{ home_organisation }}"
-          --retention {{ monitor_retention }}
-          --force
-        creates: /var/lib/influxdb/.influxdbv2/configs
+    - name: Create directory to hold SSL artefacts for InfluxDB
+      ansible.builtin.file:
+        path: /usr/lib/influxdb/ssl
+        state: directory
 
-    - name: List the existing influxdb authorizations
-      ansible.builtin.command: influx auth list --json
-      changed_when: false
-      register: influx_auth_list
+    - name: >-
+        Generate private key for signing self-signed x509 certificate for
+        secure InfluxDB connections
+      community.crypto.openssl_privatekey:
+        path: /usr/lib/influxdb/ssl/selfsigned.key
+        size: 2048
+        group: influxdb
+        mode: u=rw,g=r,o=
+
+    - name: Generate certificate signing request for secure InfluxDB connections
+      community.crypto.openssl_csr_pipe:
+        common_name: influxdb.{{ domain_name }}
+        organization_name: Varilink Computing Ltd
+        privatekey_path: /usr/lib/influxdb/ssl/selfsigned.key
+      register: csr
+
+    - name: >-
+        Generate x509 certificate signed usng private key generated in
+        previous task for secure InfluxDB connections
+      community.crypto.x509_certificate:
+        provider: selfsigned
+        path: /usr/lib/influxdb/ssl/selfsigned.crt
+        csr_content: "{{ csr.csr }}"
+        privatekey_path: /usr/lib/influxdb/ssl/selfsigned.key
+
+    - name: Configure InfluxDB with path to TLS certificate
+      ansible.builtin.lineinfile:
+        path: /etc/influxdb/config.toml
+        line: 'tls-cert = "/usr/lib/influxdb/ssl/selfsigned.crt"'
+      notify: InfluxDB configuration changed
+
+    - name: Configure InfluxDB with path to TLS key
+      ansible.builtin.lineinfile:
+        path: /etc/influxdb/config.toml
+        line: 'tls-key = "/usr/lib/influxdb/ssl/selfsigned.key"'
+      notify: InfluxDB configuration changed
 
     - block:
 
-        - name: Create all access influx auth token
+        - name: Setup influx
+          ansible.builtin.command:
+            cmd: >-
+              influx setup
+              --host https://influxdb.{{ domain_name }}:8086 --skip-verify
+              --bucket monitor
+              --username {{ admin_user }}
+              --password {{ monitor_password | default('my-password') }}
+              --org "{{ home_organisation }}"
+              --retention {{ monitor_retention }}
+              --force
+            creates: /var/lib/influxdb/.influxdbv2/configs
+
+        - name: List the existing influxdb authorizations
           ansible.builtin.command: >-
-            influx auth create
-            --all-access
-            --description "All access token"
-            --host http://localhost:8086
+            influx auth list
+            --host https://influxdb.{{ domain_name }}:8086 --skip-verify
             --json
-            --org "{{ home_organisation }}"
-          register: influx_auth_create
-          when: tokens | length == 0
+          changed_when: false
+          register: influx_auth_list
 
-        - name: Set the influx access token as a fact
-          ansible.builtin.set_fact:
-            influx_access_token: |-
-              {% if tokens | length == 0 %}
-              {{ influx_auth_create.stdout | from_json |
-              community.general.json_query('token') }}
-              {%- else %}
-              {{ tokens | first }}
-              {%- endif %}
+        - block:
 
-      vars:
-        token_query: "[?description == 'All access token'].token"
-        tokens: >-
-          {{ influx_auth_list.stdout | from_json |
-          community.general.json_query(token_query) }}
+            - name: Create all access influx auth token
+              ansible.builtin.command: >-
+                influx auth create
+                --all-access
+                --description "All access token"
+                --host https://influxdb.{{ domain_name }}:8086 --skip-verify
+                --json
+                --org "{{ home_organisation }}"
+              register: influx_auth_create
+              when: tokens | length == 0
+
+            - name: Set the influx access token as a fact
+              ansible.builtin.set_fact:
+                influx_access_token: |-
+                  {% if tokens | length == 0 %}
+                  {{ influx_auth_create.stdout | from_json |
+                  community.general.json_query('token') }}
+                  {%- else %}
+                  {{ tokens | first }}
+                  {%- endif %}
+
+          vars:
+            token_query: "[?description == 'All access token'].token"
+            tokens: >-
+              {{ influx_auth_list.stdout | from_json |
+              community.general.json_query(token_query) }}
+
+      become_user: influxdb
 
   become: yes
-  become_user: influxdb

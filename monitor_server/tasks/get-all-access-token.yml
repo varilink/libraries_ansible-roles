@@ -1,7 +1,10 @@
 - block:
 
     - name: List the existing influxdb authorizations
-      ansible.builtin.command: influx auth list --json
+      ansible.builtin.command: >-
+        influx auth list
+        --host https://influxdb.{{ domain_name }}:8086 --skip-verify
+        --json
       changed_when: false
       register: influx_auth_list
 

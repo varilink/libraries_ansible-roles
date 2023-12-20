@@ -1,0 +1,7 @@
+- name: Restart the influxdb service
+  # No reload job type is defined for the systemd, influxdb.service unit.
+  ansible.builtin.service:
+    name: influxdb
+    state: restarted
+  become: yes
+  listen: InfluxDB configuration changed
