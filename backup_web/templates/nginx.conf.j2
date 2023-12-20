@@ -1,9 +1,9 @@
 server {
 
 	listen 80;
-	root /var/www/bacula-web/public;
+	root /var/www/backup.{{ domain_name}}/public;
 	index index.php;
-	server_name backup.{{ home_domain }};
+	server_name backup.{{ domain_name }};
 
 	location / {
 		try_files $uri $uri/ =404;

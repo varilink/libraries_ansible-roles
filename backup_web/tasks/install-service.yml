@@ -4,6 +4,11 @@
 
 ---
 
+- name: Find if the bacula-web project has already been created
+  ansible.builtin.stat:
+    path: /var/www/backup.{{ domain_name }}/
+  register: bacula_web
+
 - block:
 
     - name: Install APT packages for backup_web role
@@ -26,25 +31,22 @@
       notify: PHP FPM configuration changed
 
     - name: Enable write in /var/www for the www-data user
+      # Composer can not be run as root non-interactively since running as root
+      # triggers a prompt for confirmation. So we run it as www-data and
+      # therefore must enabled write within /var/www for that user.
       ansible.builtin.file:
         path: /var/www
         group: www-data
         mode: g+w
 
-  become: yes
+    - name: Create the bacula-web project
+      community.general.composer:
+        command: create-project
+        arguments: bacula-web/bacula-web backup.{{domain_name}}/
+        no_dev: true
+        prefer_dist: true
+        working_dir: /var/www
+      become_user: www-data
+      when: not bacula_web.stat.exists
 
-- name: Find if the bacula-web project has already been created
-  ansible.builtin.stat:
-    path: /var/www/bacula-web
-  register: bacula_web
-
-- name: Create the bacula-web project
-  community.general.composer:
-    command: create-project
-    arguments: bacula-web/bacula-web bacula-web
-    no_dev: true
-    prefer_dist: true
-    working_dir: /var/www
   become: yes
-  become_user: www-data
-  when: not bacula_web.stat.exists
