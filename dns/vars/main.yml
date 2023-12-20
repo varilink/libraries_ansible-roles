@@ -13,5 +13,7 @@ dns_service_lookups:
     role: monitor_server
   - name: monitor
     role: monitor_dashboard
+  - name: portal
+    role: monitor_dashboard
   - name: smtp
     role: mail_internal
