@@ -1,0 +1,19 @@
+monitor_dashboard_admin_password: grafana_password
+
+monitor_dashboard_datasources:
+
+  - uid: S8EtJHYVk
+    name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: https://influxdb.{{ home_domain }}:8086
+    jsonData:
+      defaultBucket: monitor
+      organization: Varilink Computing Ltd
+      tlsSkipVerify: true
+      version: Flux
+
+monitor_dashboard_dashboards:
+
+  - uid: a6571fcd-c292-47b4-b0db-8b43b69bf861
+    title: Live Websites

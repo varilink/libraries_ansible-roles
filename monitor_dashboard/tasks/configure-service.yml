@@ -1,7 +1,66 @@
-- name: Enable anonymous access to Grafana
-  ansible.builtin.lineinfile:
-    path: /etc/grafana/grafana.ini
-    insertafter: '^# enable anonymous access$'
-    line: 'enabled = true # anonymous access enabled'
+# ------------------------------------------------------------------------------
+# monitor_dashboard/tasks/configure-service.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Enable anonymous access to Grafana
+      ansible.builtin.lineinfile:
+        path: /etc/grafana/grafana.ini
+        insertafter: '^# enable anonymous access$'
+        line: 'enabled = true # anonymous access enabled'
+      notify: Grafana configuration changed
+
+    - name: Set the Grafana admin password
+      # Note that this task always reports a change, even if the password was
+      # set to the same value that it already had. However, there seems to be no
+      # way to determine if the password was truly changed from the output.
+      ansible.builtin.command: >-
+        grafana-cli --homepath /usr/share/grafana/
+        admin reset-admin-password {{ monitor_dashboard_admin_password }}
+
   become: yes
-  notify: Grafana configuration changed
+
+- name: Create or update datasources
+  ansible.builtin.include_tasks: datasource/create-or-update.yml
+  loop: "{{ monitor_dashboard_datasources }}"
+  loop_control:
+    loop_var: datasource
+
+- name: Create or update dashboards
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/dashboards/db
+    method: POST
+    url_username: admin
+    url_password: "{{ monitor_dashboard_admin_password }}"
+    force_basic_auth: yes
+    body: "{{ request_body | to_json }}"
+    body_format: json
+  vars:
+    request_body:
+      dashboard: "{{ dashboard }}"
+      overwrite: true
+  loop: "{{ monitor_dashboard_dashboards }}"
+  loop_control:
+    loop_var: dashboard
+
+- name: Import dashboard configurations
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/dashboards/import
+    method: POST
+    url_username: admin
+    url_password: "{{ monitor_dashboard_admin_password }}"
+    force_basic_auth: yes
+    body: "{{ request_body | to_json }}"
+    body_format: json
+  vars:
+    request_body:
+      dashboard: "\
+        {{ lookup('ansible.builtin.file', dashboard_json_file) | from_json }}"
+      overwrite: true
+  with_fileglob:
+    - "*-dashboard.json"
+  loop_control:
+    loop_var: dashboard_json_file

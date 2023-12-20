@@ -1,0 +1,33 @@
+- name: Test if a datasource with the specified uid already exists or not
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/datasources/uid/{{ datasource.uid }}
+    method: GET
+    url_username: admin
+    url_password: "{{ monitor_dashboard_admin_password }}"
+    force_basic_auth: yes
+  register: get_datasource
+  failed_when: >-
+    get_datasource.status is not defined or
+    get_datasource.status not in [ 200, 404 ] 
+
+- name: Create the datasource
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/datasources
+    method: POST
+    url_username: admin
+    url_password: "{{ monitor_dashboard_admin_password }}"
+    force_basic_auth: yes
+    body: "{{ datasource | to_json }}"
+    body_format: json
+  when: get_datasource.status == 404
+
+- name: Update the datasource
+  ansible.builtin.uri:
+    url: http://localhost:3000/api/datasources/uid/{{ datasource.uid }}
+    method: PUT
+    url_username: admin
+    url_password: "{{ monitor_dashboard_admin_password }}"
+    force_basic_auth: yes
+    body: "{{ datasource | to_json }}"
+    body_format: json
+  when: get_datasource.status == 200
