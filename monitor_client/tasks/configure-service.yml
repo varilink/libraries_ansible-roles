@@ -24,12 +24,7 @@
     - name: Configure URL for influxdb access
       ansible.builtin.lineinfile:
         path: /etc/telegraf/telegraf.conf
-        line: |-
-          {% if 'external' in group_names %}
-            urls = ["https://influxdb.{{ home_domain }}:8086"]
-          {%- else %}
-            urls = ["http://influxdb:8086"]
-          {%- endif %}
+        line: "  urls = [\"https://influxdb.{{ home_domain }}:8086\"]"
         regex: "\
           ^  urls = \\[\\\"https?://\
           (?:127\\.0\\.0\\.1|influxdb(?:\\.{{ home_domain | regex_escape }})?)\
@@ -63,7 +58,6 @@
         path: /etc/telegraf/telegraf.conf
         line: '  insecure_skip_verify = true'
         regex: '^  (?:# )insecure_skip_verify = (?:false|true)?$'
-      when: "'external' in group_names"
       notify: Telegraf configuration changed
 
   become: yes
