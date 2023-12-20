@@ -19,6 +19,7 @@
         > /etc/telegraf/telegraf.conf
         && rm /etc/telegraf/telegraf.conf.sample
       when: sample_config.stat.exists
+      notify: Telegraf configuration changed
 
     - name: Configure URL for influxdb access
       ansible.builtin.lineinfile:
@@ -33,12 +34,14 @@
           ^  urls = \\[\\\"https?://\
           (?:127\\.0\\.0\\.1|influxdb(?:\\.{{ home_domain | regex_escape }})?)\
           :8086\\\"\\]$"
+      notify: Telegraf configuration changed
 
     - name: Configure token for influxdb access
       ansible.builtin.lineinfile:
         path: /etc/telegraf/telegraf.conf
         line: '  token = "{{ influx_access_token }}"'
         regex: '^  token = \".*\"$'
+      notify: Telegraf configuration changed
 
     - name: Configure organisation for influxdb access
       ansible.builtin.lineinfile:
@@ -46,12 +49,14 @@
         line: '  organization = "{{ home_organisation }}"'
         regex: "\
           ^  organization = \"(?:{{ home_organisation | regex_escape }})?\"$"
+      notify: Telegraf configuration changed
 
     - name: Configure bucket for influxdb access
       ansible.builtin.lineinfile:
         path: /etc/telegraf/telegraf.conf
         line: '  bucket = "monitor"'
         regex: '^  bucket = "(?:monitor)?"$'
+      notify: Telegraf configuration changed
 
     - name: Disable CA verification for external connections
       ansible.builtin.lineinfile:
@@ -59,5 +64,6 @@
         line: '  insecure_skip_verify = true'
         regex: '^  (?:# )insecure_skip_verify = (?:false|true)?$'
       when: "'external' in group_names"
+      notify: Telegraf configuration changed
 
   become: yes

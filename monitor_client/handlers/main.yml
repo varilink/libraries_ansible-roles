@@ -1,0 +1,6 @@
+- name: Reload the telegraf services configuration when it has been changed
+  ansible.builtin.service:
+    name: telegraf
+    state: reloaded
+  become: yes
+  listen: Telegraf configuration changed
