@@ -36,8 +36,10 @@
         cmd: >-
           echo "deb
           [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg]
-          https://repos.influxdata.com/debian {{ lsb_release.stdout }} stable"
-          > /etc/apt/sources.list.d/influxdata.list
+          https://repos.influxdata.com/debian
+          {% if lsb_release.stdout == 'bookworm' %}bullseye
+          {%- else %}{{ lsb_release.stdout }}{% endif %}
+          stable" > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
 
     - block:
