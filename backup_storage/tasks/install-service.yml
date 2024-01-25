@@ -15,8 +15,7 @@
   register: lsb_release
   changed_when: false
 
-- name: "\
-    Install APT package(s) required by the backup_storage role from bullseye"
+- name: Install APT package(s) required by the backup_storage role
   ansible.builtin.apt:
     name:
       - bacula-bscan
@@ -24,7 +23,7 @@
       - bacula-sd
     install_recommends: no
   become: yes
-  when: lsb_release.stdout == 'bullseye'
+  when: lsb_release.stdout != 'buster'
 
 - block:
 

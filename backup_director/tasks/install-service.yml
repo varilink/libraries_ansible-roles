@@ -51,15 +51,13 @@
         debconf_show_result.current['bacula-director-mysql/mysql/app-pass']
         is not defined
 
-    - name: >-
-        Install APT package(s) required by the backup_director role from
-        bullseye
+    - name: Install APT package(s) required by the backup_director role
       ansible.builtin.apt:
         name:
           - bacula-director
           - bacula-director-mysql
         install_recommends: no
-      when: lsb_release.stdout == 'bullseye'
+      when: lsb_release.stdout != 'bullseye'
 
     - block:
 
