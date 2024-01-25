@@ -1,0 +1,35 @@
+- block:
+
+    - ansible.builtin.apt:
+        name:
+          - git
+        install_recommends: no
+
+    - ansible.builtin.user:
+        name: git
+        home: /var/local/git
+
+    - ansible.builtin.file:
+        path: /var/local/git/.ssh
+        state: directory
+        owner: git
+        group: git
+        mode: u=rwx,g=rx,o=rx
+
+    - ansible.builtin.file:
+        path: /var/local/git/.ssh/authorized_keys
+        state: touch
+        owner: git
+        group: git
+        mode: u=rw,g=r,o=r
+
+    - ansible.builtin.lineinfile:
+        path: /var/local/git/.ssh/authorized_keys
+        line: "{{ user.public_ssh_key }}"
+      become_user: git
+      when: user.public_ssh_key is defined and user.git
+      loop: "{{ staff_users }}"
+      loop_control:
+        loop_var: user
+
+  become: yes
