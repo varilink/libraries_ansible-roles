@@ -1,0 +1,6 @@
+- name: Reload Samba SMB Daemon configuration
+  ansible.builtin.service:
+    name: smbd
+    state: reloaded
+  become: yes
+  listen: Samba configuration changed

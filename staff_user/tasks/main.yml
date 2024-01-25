@@ -1,0 +1,133 @@
+# ------------------------------------------------------------------------------
+# staff_user/tasks/main.yml
+# ------------------------------------------------------------------------------
+
+# Add a staff user, i.e. an operating system user in the staff group. The
+# file_share, mail_external and mail_internal roles all require that staff users
+# are created. This task list will also change the password of the user if a new
+# password has been configured.
+
+---
+
+- name: Get the content of the /etc/shadow file that contains user passwords
+  ansible.builtin.slurp:
+    src: /etc/shadow
+  become: yes
+  register: shadow_file
+
+- name: Set variable to the user record in the shadow file if it is found
+  # When it is not found the variable will be set to an empty string.
+  ansible.builtin.set_fact:
+    shadow_file_user_rec: >-
+      {{
+        shadow_file.content | b64decode |
+        regex_search('^' + user.username + '.*$', multiline=True)
+      }}
+
+- block:
+
+    # We did find a record for this user in the shadow file so the user already
+    # exists but we may need to update it.
+
+    - name: >-
+        Determine the hash algorithm used to create the existing user record
+      ansible.builtin.set_fact:
+        hash_algorithm: >-
+          {{
+            shadow_file_user_rec |
+            regex_search( '^' + user.username + ':\$(.)\$', '\1' ) | first
+          }}
+
+    - block:
+
+        # The current shadow file user record does not use an SHA512 based
+        # password algorithm. The default algoritm used by Debian is yescrypt
+        # (y), which gives us an issue because we can't verify it using mkpasswd
+        # with the existing salt. So, we immediately replace it with a hash that
+        # uses the SHA512 password algorithm.
+
+        - name: >-
+            Generate hash of the configured password for the user using a
+            randomly generated salt
+          ansible.builtin.command: "\
+            mkpasswd --method=sha-512 '{{ user.password }}'"
+          changed_when: false
+          register: mkpasswd_result
+
+        - name: >-
+            Update an existing user using the SHA512 password hashing algorithm
+          ansible.builtin.user:
+            name: "{{ user.username }}"
+            password: "{{ mkpasswd_result.stdout }}"
+          become: yes
+
+      when: hash_algorithm != '6'
+
+    - block:
+
+        # The current shadow file user record already uses an SHA512 based
+        # password algorithm so we can test if we need to change the
+        # password or not okay.
+
+        - name: Set variable containing the existing hash
+          ansible.builtin.set_fact:
+            existing_hash: >-
+              {{
+                shadow_file_user_rec |
+                regex_search(
+                  '^' + user.username + ':(\$6\$.{16}\$.{86}):', '\1'
+                ) | first
+              }}
+
+        - name: >-
+            Generate hash of the configured password for the user using the same
+            salt in the existing hash
+          ansible.builtin.command: "\
+            mkpasswd --method=sha-512 --salt={{ salt }} {{ user.password }}"
+          changed_when: false
+          register: mkpasswd_result
+          vars:
+            salt: >-
+              {{
+                existing_hash | regex_search('^\$6\$(.{16})\$.{86}$', '\1') |
+                first
+              }}
+
+        - name: Change the password of an existing user
+          ansible.builtin.user:
+            name: "{{ user.username }}"
+            password: "{{ mkpasswd_result.stdout }}"
+          become: yes
+          when: mkpasswd_result.stdout != existing_hash
+
+      when: hash_algorithm == '6'
+
+  when: shadow_file_user_rec
+
+- block:
+
+    # We did not find a record for this user in the shadow file so the user
+    # does not already exist and must be created.
+
+    - name: >-
+        Generate hash of the configured password for the user using a
+        randomly generated salt
+      ansible.builtin.command: "\
+        mkpasswd --method=sha-512 '{{ user.password }}'"
+      changed_when: false
+      register: mkpasswd_result
+
+    - name: Create operating system user account
+      ansible.builtin.user:
+        name: "{{ user.username }}"
+        password: "{{ mkpasswd_result.stdout }}"
+      become: yes
+
+  when: not shadow_file_user_rec
+
+- name: Make sure that the user is in the staff group
+  ansible.builtin.user:
+    name: '{{ user.username }}'
+    groups: [ 'staff' ]
+    append: yes
+  become: yes

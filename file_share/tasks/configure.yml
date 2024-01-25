@@ -1,0 +1,60 @@
+- block:
+
+    - name: Make the homes share writeable
+      ansible.builtin.replace:
+        path: /etc/samba/smb.conf
+        after: '\[homes\]'
+        before: ';\[netlogon\]'
+        regexp: 'read only = yes'
+        replace: 'read only = no'
+      notify:
+        - Samba configuration changed
+
+    - name: Veto user mail directories within the homes share
+      ansible.builtin.blockinfile:
+        path: /etc/samba/smb.conf
+        insertafter: '^\[homes\]$'
+        block: |-
+          # Veto samba access to a user's mail in their /Maildir/ directory
+             veto files = /Maildir/
+        marker: '# {mark} ANSIBLE MANAGED HOMES BLOCK'
+      notify:
+        - Samba configuration changed
+
+    - name: Create directories for our required custom shares
+      ansible.builtin.file:
+        path: /var/local/samba/{{ item }}
+        state: directory
+        group: staff
+        mode: u=rwx,g=rwsx,o=rx
+      loop:
+        - house
+        - kodi
+
+    - name: Configure our required custom shares
+      ansible.builtin.blockinfile:
+        path: /etc/samba/smb.conf
+        block: |-
+          [house]
+            path = /var/local/samba/house
+            read only = no
+            create mask = 0664
+            directory mask = 0775
+            force group = staff
+
+          [kodi]
+            path = /var/local/samba/kodi
+            read only = no
+            create mask = 0664
+            directory mask = 0775
+            force group = staff
+        marker: '# {mark} ANSIBLE MANAGED CUSTOM SHARES BLOCK'
+      notify:
+        - Samba configuration changed
+
+  become: yes
+
+- ansible.builtin.include_tasks: user.yml
+  loop: "{{ staff_users }}"
+  loop_control:
+    loop_var: user

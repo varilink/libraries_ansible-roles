@@ -1,0 +1,12 @@
+- ansible.builtin.import_role:
+    name: staff_user
+
+- name: Create passwords for Samba users
+  # Note that this task reports a change even if the password hasn't changed and
+  # I haven't yet found a convenient way to test the exisiting password yet.
+  # We could perhaps use smbclient on the server to test it via an
+  # authentication attempt.
+  ansible.builtin.shell: >-
+    printf "{{ user.password }}\n{{ user.password }}\n" |
+    smbpasswd -a -s {{ user.username }}
+  become: yes
