@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/disable.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Disable the backup director service
+  ansible.builtin.service:
+    name: bacula-director
+    enabled: no
+  become: yes

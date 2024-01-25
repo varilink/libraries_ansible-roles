@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# backup_storage/tasks/stop.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Stop the backup storage service
+  ansible.builtin.service:
+    name: bacula-sd
+    state: stopped
+  become: yes

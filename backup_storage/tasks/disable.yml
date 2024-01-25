@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# backup_storage/tasks/disable.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Disable the backup storage service
+  ansible.builtin.service:
+    name: bacula-sd
+    enabled: no
+  become: yes

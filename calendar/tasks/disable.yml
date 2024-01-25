@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# calendar/tasks/disable.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Disable the calendar service
+  ansible.builtin.service:
+    name: radicale
+    enabled: no
+  become: yes

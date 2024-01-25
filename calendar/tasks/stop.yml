@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# calendar/tasks/stop.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Stop the calendar service
+  ansible.builtin.service:
+    name: radicale
+    state: stopped
+  become: yes

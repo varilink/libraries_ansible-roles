@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# file_share/tasks/disable.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Disable the smbd service
+  ansible.builtin.service:
+    name: smbd
+    enabled: no
+  become: yes

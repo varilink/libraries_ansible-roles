@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/stop.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Stop the backup director service
+  ansible.builtin.service:
+    name: bacula-director
+    state: stopped
+  become: yes

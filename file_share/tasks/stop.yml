@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# file_share/tasks/stop.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Stop the smbd service
+  ansible.builtin.service:
+    name: smbd
+    state: stopped
+  become: yes
