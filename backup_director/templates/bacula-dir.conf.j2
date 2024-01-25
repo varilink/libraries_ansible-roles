@@ -482,7 +482,13 @@ Schedule {
 {% for hostname in hostnames %}
 Client {
   Name = {{ hostname }}
-  Address = {{ hostvars[hostname]['ansible_host'] }}
+  Address =
+{%- if hostvars[hostname]['ansible_host'] is defined %}
+{{- ' ' + hostvars[hostname]['ansible_host'] }}
+{%- else %}
+{{- ' ' + hostname }}
+{%- endif %}
+
   FDPort = 9102
   Catalog = MyCatalog
   Password = "{{ hostvars[hostname]['backup_client_director_password'] }}"
