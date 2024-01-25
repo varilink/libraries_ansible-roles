@@ -4,14 +4,15 @@
 
 ---
 
-- name: Reload Bacula storage daemon configuration
+# Note that while systemctl supports relaod of the configuration for the
+# bacula-sd service, I have observed that following the install this does not
+# cause the service to start listening on the configured SDPort. Hence, we use
+# the restarted state intead of the reloaded state. Restarted this service does
+# not cause any disruption to customers.
+
+- name: Restart the Bacula storage daemon service
   ansible.builtin.service:
     name: bacula-sd
-    state: reloaded
+    state: restarted
   listen: Bacula storage daemon configuration changed
   become: yes
-
-- debug:
-    msg: If you are seeing this message then something has gone wrong
-  listen: Bacula storage daemon installed
-  when: false

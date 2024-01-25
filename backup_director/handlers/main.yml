@@ -9,35 +9,16 @@
 # configured the service with the correct details to access the catalog
 # database. When we configure the bacula-director service, we notify that the
 # "Bacula director configuration changed" event has happened.
-#
-# Subsequently, we may choose to reconfigure the bacula-director service, in
-# which case we will again notify that the "Bacula director configuration
-# changed" event has happened. We can therefore clearly see that when these
-# handlers receive notification that the "Bacula director configuration changed"
-# event has happened, the bacula-director service may or many not be running,
-# and in the circumstance that it isn't already running it is the action of
-# configuring the service that we want to start it running.
 
-- block:
+# Note that while systemctl supports relaod of the configuration for the
+# bacula-director service, I have observed that following the install this does
+# not cause the service to start listening on the configured DIRport. Hence, we
+# use the restarted state intead of the reloaded state. Restarted this service
+# does not cause any disruption to customers.
 
-    - name: Determine the current state of the bacula director service
-      ansible.builtin.service_facts:
-      listen: Bacula director configuration changed
-
-    - name: Reload bacula director configuration if the service is running
-      ansible.builtin.service:
-        name: bacula-director
-        state: reloaded
-      when: >-
-        ansible_facts['services']['bacula-director']['state']
-        == 'running'
-      listen: Bacula director configuration changed
-
-    - name: Start bacula director service if it isn't running
-      ansible.builtin.service:
-        name: bacula-director
-        # "started" is an idempotent action that won't run unless necessary
-        state: started
-      listen: Bacula director configuration changed
-
+- name: Restart the Bacula director service
+  ansible.builtin.service:
+    name: bacula-director
+    state: restarted
+  listen: Bacula director configuration changed
   become: yes
