@@ -24,6 +24,15 @@
       notify:
         - Dnsmasq configuration changed
 
+    - name: Set /etc/resolv.conf as required for a DNS server
+      ansible.builtin.copy:
+        dest: /etc/resolv.conf
+        content: |
+          # Deployed using Ansible dns role
+          domain {{ home_domain }}
+          search {{ home_domain }}
+          nameserver 127.0.0.1
+
     # Configure the "mask", i.e. the DNS resolution that our local DNS server
     # supplements its upstream resolution with. There are several aspects to
     # this.
@@ -55,6 +64,38 @@
         path: /etc/dnsmasq.conf
         regexp: '^#?addn-hosts='
         line: addn-hosts=/etc/addn-hosts
+      notify:
+        - Dnsmasq configuration changed
+
+    - name: Enable the integrated DHCP server
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?dhcp-range='
+        line: dhcp-range={{ dhcp_range }},12h
+      notify:
+        - Dnsmasq configuration changed
+
+    - name: Put the DHCP server in authoritative mode
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?dhcp-authoritative$'
+        line: dhcp-authoritative
+      notify:
+        - Dnsmasq configuration changed
+
+    - name: Override the default route supplied by dnsmasq
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        regexp: '^#?dhcp-option=option:router,'
+        line: dhcp-option=option:router,{{ office_router }}
+      notify:
+        - Dnsmasq configuration changed
+
+    - name: Set DNS servers supplied by DHCP
+      ansible.builtin.lineinfile:
+        path: /etc/dnsmasq.conf
+        line: "dhcp-option=option:dns-server,\
+          {{ dns_client_nameservers | join(',') }}"
       notify:
         - Dnsmasq configuration changed
 
