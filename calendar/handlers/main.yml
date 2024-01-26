@@ -2,8 +2,8 @@
 # calendar/handlers/main.yml
 # ------------------------------------------------------------------------------
 
-# When the radicale service is managed by systemd, we restart the service
-# whenever there is a configuration change.
+# When the radicale service is managed by systemd, we restart or start the
+# service whenever there is a configuration change.
 
 ---
 
@@ -14,7 +14,9 @@
       listen: Radicale configuration changed
 
     # The systemd radicale unit does not support reload, so we must restart it
-    # if it is running in order to reflect configuration change.
+    # if it is running or start it if it isn't running in order to reflect
+    # configuration change.
+
     - name: >-
         Restart the radicale service if it is running to reflect configuration
         change
@@ -22,6 +24,15 @@
         name: radicale
         state: restarted
       when: ansible_facts['services']['radicale']['state'] == 'running'
+      listen: Radicale configuration changed
+
+    - name: >-
+        Start the radicale service if it isn't running to reflect configuration
+        change
+      ansible.builtin.service:
+        name: radicale
+        state: restarted
+      when: ansible_facts['services']['radicale']['state'] == 'stopped'
       listen: Radicale configuration changed
 
   become: yes
