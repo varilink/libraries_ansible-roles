@@ -7,13 +7,19 @@ dns_service_lookups:
     role: backup_storage
   - name: caldav
     role: calendar
+  - name: git
+    role: git_origin
   - name: imap
     role: mail_internal
   - name: influxdb
     role: monitor_server
+  - name: kodi
+    role: kodi
   - name: monitor
     role: monitor_dashboard
   - name: portal
     role: monitor_dashboard
+  - name: samba
+    role: file_share
   - name: smtp
     role: mail_internal
