@@ -48,6 +48,19 @@
             create mask = 0664
             directory mask = 0775
             force group = staff
+
+          [Movies]
+            path = /var/local/samba/kodi/Movies
+            read only = yes
+
+          [Music]
+            path = /var/local/samba/kodi/Music
+            read only = yes
+
+          [TV_Shows]
+            path = /var/local/samba/kodi/TV_Shows
+            read only = yes
+
         marker: '# {mark} ANSIBLE MANAGED CUSTOM SHARES BLOCK'
       notify:
         - Samba configuration changed
