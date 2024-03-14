@@ -14,7 +14,7 @@
   become: yes
 
 - ansible.builtin.import_role:
-    name: "{{ role_path }}/../influxdata"
+    name: influxdata
 
 - name: Install Telegraf APT package
   ansible.builtin.apt:

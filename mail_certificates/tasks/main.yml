@@ -5,7 +5,7 @@
 ---
 
 - ansible.builtin.import_role:
-    name: "{{ role_path }}/../dns_api"
+    name: dns_api
 
 - ansible.builtin.import_tasks: install-service.yml
 

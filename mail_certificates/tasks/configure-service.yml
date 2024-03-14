@@ -27,5 +27,5 @@
 - name: Fetch the id_rsa.pub file
   ansible.builtin.fetch:
     src: ~/.ssh/id_rsa.pub
-    dest: "{{ role_path }}/../mail_external/files/id_rsa.pub"
+    dest: mail_external/files/id_rsa.pub
     flat: yes

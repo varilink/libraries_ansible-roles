@@ -19,7 +19,7 @@
     # that the domain.yml tasks can be invoked without pulling the dns_api role
     # in again.
     - ansible.builtin.import_role:
-        name: "{{ role_path }}/../dns_api"
+        name: dns_api
 
     - name: Install APT packages used by the dynamic DNS role
       ansible.builtin.apt:
