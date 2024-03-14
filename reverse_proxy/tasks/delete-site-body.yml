@@ -13,15 +13,13 @@
       ansible.builtin.file:
         path: /etc/nginx/sites-enabled/{{ wp_server_name }}.conf
         state: absent
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
 
     - name: Make site unavailable in Nginx service
       ansible.builtin.file:
         path: /etc/nginx/sites-available/{{ wp_server_name }}.conf
         state: absent
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
 
     - name: See if a certbot SSL certificate is installed for this site
       ansible.builtin.shell: >-

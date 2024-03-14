@@ -19,8 +19,7 @@
       ansible.builtin.copy:
         src: exim-main/tls_inbound
         dest: /etc/exim4/conf.d/main/00_exim4-config_tls_inbound
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Add TLS_ON_CONNECT_PORTS section to Exim's main config tlsoptions
       # Actions the TLS on connect port defined in the previous task.
@@ -31,8 +30,7 @@
           .ifdef TLS_ON_CONNECT_PORTS
             tls_on_connect_ports = TLS_ON_CONNECT_PORTS
           .endif
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Generate generic, fallback, self-signed certificate and key files
       # The file that was deployed by the first task in this list defines two
@@ -85,7 +83,6 @@
       ansible.builtin.copy:
         src: exim-auth/server_side
         dest: /etc/exim4/conf.d/auth/10_exim4-config_server_side
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
   become: yes

@@ -20,8 +20,7 @@
           /etc/exim4/conf.d/router/\
           175_exim4-config_domain_smarthost\
           "
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Copy the remote_smtp_domain_smarthost Exim transport
       # Our custom transport for using our external smarthost provider. This
@@ -33,8 +32,7 @@
           /etc/exim4/conf.d/transport/\
           30_exim4-config_remote_smtp_smarthost_domain_smarthost\
           "
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Copy the skeleton domain.password.client file
       # As described in the previous task, we use our own password client file

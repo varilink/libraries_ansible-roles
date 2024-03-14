@@ -14,8 +14,7 @@
       ansible.builtin.copy:
         src: exim-main/tls_outbound
         dest: /etc/exim4/conf.d/main/00_exim4-config_tls_outbound
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Comment all examples in Exim's 30_exim4-config_examples file
       # This disables the Exim client side authentication mechanisms that are
@@ -32,8 +31,7 @@
         # not to have to rely on that being the case.
         regexp: '^([^#\n].*)$'
         replace: '# \1'
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Install our required Exim client side authenticators
       # Having disabled the default Exim client side authentication mechanisms
@@ -42,7 +40,6 @@
       ansible.builtin.copy:
         src: exim-auth/client_side
         dest: /etc/exim4/conf.d/auth/20_exim4-config_client_side
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
   become: yes

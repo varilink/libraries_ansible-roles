@@ -7,8 +7,7 @@
         before: ';\[netlogon\]'
         regexp: 'read only = yes'
         replace: 'read only = no'
-      notify:
-        - Samba configuration changed
+      notify: Samba configuration changed
 
     - name: Veto user mail directories within the homes share
       ansible.builtin.blockinfile:
@@ -18,8 +17,7 @@
           # Veto samba access to a user's mail in their /Maildir/ directory
              veto files = /Maildir/
         marker: '# {mark} ANSIBLE MANAGED HOMES BLOCK'
-      notify:
-        - Samba configuration changed
+      notify: Samba configuration changed
 
     - name: Create directories for our required custom shares
       ansible.builtin.file:
@@ -62,8 +60,7 @@
             read only = yes
 
         marker: '# {mark} ANSIBLE MANAGED CUSTOM SHARES BLOCK'
-      notify:
-        - Samba configuration changed
+      notify: Samba configuration changed
 
   become: yes
 

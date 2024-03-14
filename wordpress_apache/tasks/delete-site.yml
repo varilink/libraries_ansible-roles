@@ -12,8 +12,7 @@
         path: /etc/apache2/ports.conf
         line: Listen 127.0.0.1:{{ wp_reverse_proxy_pass_port }} http
         state: absent
-      notify:
-        - Apache2 configuration changed
+      notify: Apache2 configuration changed
       when: not wp_expose_externally
 
     - name: Stop listening on WordPress site's custom port on all interfaces
@@ -21,22 +20,19 @@
         path: /etc/apache2/ports.conf
         line: Listen {{ wp_reverse_proxy_pass_port }} http
         state: absent
-      notify:
-        - Apache2 configuration changed
+      notify: Apache2 configuration changed
       when: wp_expose_externally
 
     - name: Disable site apache2 configuration
       ansible.builtin.file:
         path: /etc/apache2/sites-enabled/{{ wp_server_name }}.conf
         state: absent
-      notify:
-        - Apache2 configuration changed
+      notify: Apache2 configuration changed
 
     - name: Make site apache2 configuration unavailable
       ansible.builtin.file:
         path: /etc/apache2/sites-available/{{ wp_server_name }}.conf
         state: absent
-      notify:
-        - Apache2 configuration changed
+      notify: Apache2 configuration changed
 
   become: yes

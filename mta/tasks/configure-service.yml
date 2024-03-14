@@ -28,8 +28,7 @@
       template:
         src: update-exim4.conf.conf.j2
         dest: /etc/exim4/update-exim4.conf.conf
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
       # Another role has imported this role and accepted the default config
       # type of "satellite" that this role sets. However, another role has
       # already overridden that to either "smarthost" or "internet". We need
@@ -43,8 +42,7 @@
       ansible.builtin.template:
         src: mailname.j2
         dest: /etc/mailname
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Add line to /etc/exim4/passwd.client if credentials supplied
       ansible.builtin.lineinfile:
@@ -61,7 +59,6 @@
       ansible.builtin.lineinfile:
         path: /etc/aliases
         line: "root: {{ admin_user }}"
-      notify:
-        - Aliases changed
+      notify: Aliases changed
 
   become: yes

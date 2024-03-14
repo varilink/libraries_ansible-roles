@@ -74,8 +74,7 @@
       ansible.builtin.template:
         src: nginx.conf.j2
         dest: /etc/nginx/sites-available/{{ wp_server_name }}.conf
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
       vars:
         certbot_certificate_installed_string: |-
           {%
@@ -94,8 +93,7 @@
         src: /etc/nginx/sites-available/{{ wp_server_name }}.conf
         dest: /etc/nginx/sites-enabled/{{ wp_server_name }}.conf
         state: link
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
 
     # Flush handlers so that if the site is newly configured it becomes
     # available immediately for the Let's Encrypt HTTP-01 challenge if we're
@@ -120,8 +118,7 @@
           ansible.builtin.template:
             src: nginx.conf.j2
             dest: /etc/nginx/sites-available/{{ wp_server_name }}.conf
-          notify:
-            - Nginx configuration changed
+          notify: Nginx configuration changed
           vars:
             certbot_certificate_installed: yes
 

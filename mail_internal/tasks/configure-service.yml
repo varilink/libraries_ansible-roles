@@ -13,8 +13,7 @@
         path: /etc/dovecot/dovecot.conf
         regexp: '^#?login_trusted_networks ='
         line: login_trusted_networks = {{ office_subnet }}
-      notify:
-        - Dovecot configuration changed
+      notify: Dovecot configuration changed
 
     - name: Copy the Exim localmacros file
       # The Exim localmacros file sets values that tweak our Exim configuration
@@ -22,8 +21,7 @@
       ansible.builtin.copy:
         src: exim-localmacros
         dest: /etc/exim4/exim4.conf.localmacros
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Add REQUIRE_PROTOCOL section to config template
       ansible.builtin.blockinfile:
@@ -33,8 +31,7 @@
           .ifdef REQUIRE_PROTOCOL
             protocol = REQUIRE_PROTOCOL
           .endif
-      notify:
-        - Exim configuration changed
+      notify: Exim configuration changed
 
     - name: Make fetchmail run in daemon mode
       ansible.builtin.lineinfile:

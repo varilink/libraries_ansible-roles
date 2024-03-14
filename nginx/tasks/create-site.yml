@@ -47,8 +47,7 @@
         src: nginx.conf.j2
         dest: "\
           /etc/nginx/sites-available/{{ site_server_name }}.conf"
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
       vars:
         certbot_certificate_installed: |-
           {%
@@ -67,8 +66,7 @@
         dest: "\
           /etc/nginx/sites-enabled/{{ site_server_name }}.conf"
         state: link
-      notify:
-        - Nginx configuration changed
+      notify: Nginx configuration changed
 
     # Flush handlers so that if the site is newly configured it becomes
     # available immediately for the Let's Encrypt HTTP-01 challenge if we're
@@ -97,8 +95,7 @@
               /etc/nginx/sites-available/{{
               site_server_name
               }}.conf
-          notify:
-            - Nginx configuration changed
+          notify: Nginx configuration changed
           vars:
             certbot_certificate_installed: yes
 
