@@ -22,15 +22,15 @@
 #
 # The first is the location for bacula configuration files. The second is the
 # bacula user's home folder. Though it can be seen that the top-level bacula
-# configuration folder is univesally accessible, the bacula configuration files
+# configuration folder is universally accessible, the bacula configuration files
 # within that folder are created with the following permissions and user/group
 # ownership:
 # -rw-r----- root bacula
 #
 # The following tasks enable convenient browsing for the admin user of both the
 # bacula configuration files and whatever files are written by bacula to its
-# its home direcotry, without having to sudo, via membership of the bacula
-# user's primary group.
+# home directory, without having to sudo, via membership of the bacula user's
+# primary group.
 #
 # Since the backup director and the backup storage hosts are also backup
 # clients, this is enabled for all three roles via the backup client role.

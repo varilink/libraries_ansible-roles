@@ -1,6 +1,9 @@
 # ------------------------------------------------------------------------------
-# mta/tasks/main.yml
+# mta/handlers/main.yml
 # ------------------------------------------------------------------------------
+
+# Default handlers file, which pulls in all handlers for an environment with a
+# a service manager such as systemd.
 
 ---
 

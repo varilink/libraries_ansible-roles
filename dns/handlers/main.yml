@@ -3,7 +3,9 @@
 # ------------------------------------------------------------------------------
 
 # When the dnsmasq service is managed by systemd, we restart the service
-# whenever there is a configuration change.
+# whenever there is a configuration change. The systemd dnsmasq unit does not
+# support reload, so we must restart it if it is running in order to reflect
+# configuration change.
 
 ---
 
@@ -13,8 +15,6 @@
       ansible.builtin.service_facts:
       listen: Dnsmasq configuration changed
 
-    # The systemd dnsmasq unit does not support reload, so we must restart it if
-    # it is running in order to reflect configuration change.
     - name: >-
         Restart the dnsmasq service if it is running to reflect configuration
         change

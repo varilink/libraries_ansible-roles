@@ -2,6 +2,12 @@
 # dns/tasks/configure-service.yml
 # ------------------------------------------------------------------------------
 
+# Tasks to configure the DNS service, which is based on Dnsmasq. There are three
+# aspects to this:
+# 1. The combination of upstream and self DNS "Resolvers".
+# 2. The "Mask" that Dnsmasq supplements the upstream resolution with.
+# 3. The "DHCP" service.
+
 ---
 
 - block:

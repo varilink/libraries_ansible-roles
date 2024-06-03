@@ -2,4 +2,6 @@
 # backup_client/handlers/none.yml
 # ------------------------------------------------------------------------------
 
+# Empty handlers file for role import in containers without systemd installed.
+
 ---

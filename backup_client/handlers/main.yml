@@ -2,6 +2,8 @@
 # backup_client/handlers/main.yml
 # ------------------------------------------------------------------------------
 
+# Handlers for the backup_client role when systemd is installed.
+
 ---
 
 - name: Reload Bacula file daemon configuration

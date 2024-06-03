@@ -2,4 +2,6 @@
 # dns/handlers/none.yml
 # ------------------------------------------------------------------------------
 
+# Empty handlers file to allow this role to be imported without handlers
+
 ---

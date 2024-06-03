@@ -2,6 +2,9 @@
 # backup_client/tasks/main.yml
 # ------------------------------------------------------------------------------
 
+# Installs the Bacula File Daemon service on a backup client, i.e. a host to be
+# backed up.
+
 ---
 
 - ansible.builtin.import_role:

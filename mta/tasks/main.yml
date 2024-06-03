@@ -2,6 +2,8 @@
 # mta/tasks/main.yml
 # ------------------------------------------------------------------------------
 
+# Installs and configures Exim4 as the Mail Transport Agent (MTA).
+
 ---
 
 - ansible.builtin.import_tasks: install-service.yml

@@ -2,6 +2,8 @@
 # backup_web/tasks/main.yml
 # ------------------------------------------------------------------------------
 
+# Install the web interface for monitoring backups.
+
 ---
 
 - ansible.builtin.import_role:
