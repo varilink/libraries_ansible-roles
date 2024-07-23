@@ -5,18 +5,18 @@
 # This task creates a DNS record in the DNS service, which is implemented using
 # Dnsmasq.
 #
-# The caller must provide an array of DNS records in a variable called
-# "dns_records". Each item in the array must be a dictionary object containing
-# the key "hostname", which is the hostname for the lookup to be added. A second
-# key of "target" is optional; if it is provided it must be the hostname in the
-# Ansible repository that is the target of the lookup, if it isn't provided then
-# the hostname of the current host is used. The target hostname is used to
-# lookup the "ansible_default_ipv4.address" for that host, which becomes the IP
-# address for the DNS record.
+# The caller MUST provide a value for dns_record_hostname, which is the name
+# that will be used for the DNS entry.
 #
-# The called can optionally pass a variable "dns_record_type", which can take
-# the values "host", "service" or "project". This is used to control the section
-# within the `/etc/add-hosts` file where the record is inserted.
+# The variable dns_record_target is optional; if it is provided it must be the
+# hostname in the Ansible repository that is the target of the lookup, if it
+# isn't provided then the hostname of the current host is used. The target
+# hostname is used to lookup the "ansible_default_ipv4.address" for that host,
+# which becomes the IP address for the DNS record.
+#
+# The caller can also optionally pass a variable "dns_record_type", which can
+# take the values "host", "service" or "project". This is used to control the
+# section within the `/etc/add-hosts` file where the record is inserted.
 
 ---
 
@@ -24,11 +24,11 @@
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts
     line: |-
-      {% if dns_record.target is defined %}
-      {{ hostvars[dns_record.target].ansible_default_ipv4.address }}
+      {% if dns_record_target is defined %}
+      {{ hostvars[dns_record_target].ansible_default_ipv4.address }}
       {%- else %}
       {{ ansible_default_ipv4.address }}
-      {%- endif %} {{ dns_record.hostname }}
+      {%- endif %} {{ dns_record_hostname }}
     insertafter: |-
       {% if dns_record_type is not defined %}
       EOF
@@ -43,6 +43,3 @@
       {% endif %}
   notify: Dnsmasq configuration changed
   become: yes
-  loop: "{{ dns_records }}"
-  loop_control:
-    loop_var: dns_record
