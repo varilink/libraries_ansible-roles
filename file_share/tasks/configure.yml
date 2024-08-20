@@ -33,6 +33,10 @@
       ansible.builtin.blockinfile:
         path: /etc/samba/smb.conf
         block: |-
+          [bacula]
+            path = /var/local/bacula
+            read only = yes
+
           [house]
             path = /var/local/samba/house
             read only = no
