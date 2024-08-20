@@ -42,9 +42,10 @@
     - name: >-
         Derive hosts in backup_clients and backup_exceptions inventory groups
       ansible.builtin.set_fact:
-        backup_clients: "{{ query('inventory_hostnames', 'backup_clients') }}"
-        backup_exceptions: >-
-          {{ query('inventory_hostnames', 'backup_exceptions') }}
+        backup_clients: "\
+          {{ groups['backup_clients'] | default('[]') }}"
+        backup_exceptions: "\
+          {{ groups['backup_exceptions'] | default('[]') }}"
 
     - name: >-
         Fail if there are hosts in both backup_clients and backup_exceptions
