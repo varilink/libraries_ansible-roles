@@ -2,12 +2,22 @@
 # wordpress_apache/tasks/configure-service.yml
 # ------------------------------------------------------------------------------
 
+# This task list configures a host for the WordPress service using the Apache2
+# HTTP server.
+
 ---
 
 - name: Get the codename of the Debian release on this host
   ansible.builtin.command: lsb_release --codename --short
   register: lsb_release
   changed_when: false
+
+- name: "\
+    Fail if the codename of the Debian release on this host isn't catered for"
+  ansible.builtin.fail:
+    msg: "\
+      The Debian release codenamed {{ lsb_release.stdout }} is not catered for"
+  when: lsb_release.stdout not in ['bookworm', 'trixie']
 
 - block:
 
@@ -17,33 +27,49 @@
         state: absent
       notify: Apache2 configuration changed
 
-    - name: Listening on port 8080 on the local interface using http protocol
+    - name: Listen on port 8080 on the local interface using http protocol
       ansible.builtin.lineinfile:
         path: /etc/apache2/ports.conf
         line: 'Listen 127.0.0.1:8080 http'
         regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
       notify: Apache2 configuration changed
 
-#    - name: >-
-#        In the event of an upgrade make sure that prior version PHP modules are
-#        disabled
+#    - name: Disable PHP modules from prior Debian release
+      # In the event of an upgrade from the previous Debian release, make sure
+      # that the prior version of PHP modules is disabled.
 #      community.general.apache2_module:
-#        name: "{% if lsb_release.stdout == 'bullseye' %}php7.3{% endif %}"
+#        name: |-
+#          {% if lsb_release.stdout == 'bookworm' %}
+#          php7.4
+#          {%- elif lsb_release.stdout == 'trixie' %}
+#          php8.2
+#          {%- endif %}
 #        state: absent
 #      notify: Apache2 configuration changed
 
-    - name: Disable apache2 mpm_event module
-      community.general.apache2_module:
-        name: mpm_event
-        state: absent
-        ignore_configcheck: yes
-      notify: Apache2 configuration changed
+#    - name: Disable Apache2 mpm_event module
+#      community.general.apache2_module:
+#        name: mpm_event
+#        state: absent
+#        ignore_configcheck: yes
+#      notify: Apache2 configuration changed
 
-    - community.general.apache2_module:
-        name: mpm_prefork
-        state: present
-        ignore_configcheck: yes
-      notify: Apache2 configuration changed
+#    - name: Enable Apache2 mpm_prefork module
+#      community.general.apache2_module:
+#        name: mpm_prefork
+#        state: present
+#        ignore_configcheck: yes
+#      notify: Apache2 configuration changed
+
+#    - debug:
+#        msg: |-
+#          {% if lsb_release.stdout == 'bookworm' %}
+#          php8.2
+#          {%- elif lsb_release.stdout == 'trixie' %}
+#          php8.2
+#          {%- endif %}
+
+#    - meta: end_play
 
     - name: Enable apache2 rewrite and php modules
       community.general.apache2_module:
@@ -51,18 +77,18 @@
       notify: Apache2 configuration changed
       loop:
         - rewrite
-        - |-
-            {% if lsb_release.stdout == 'bullseye' %}
-            php7.4
-            {%- elif lsb_release.stdout == 'buster' %}
-            php7.3
-            {%- endif %}
+#        - |-
+#            {% if lsb_release.stdout == 'bookworm' %}
+#            php8.2
+#            {%- elif lsb_release.stdout == 'trixie' %}
+#            php8.2
+#            {%- endif %}
 
-    # Any host for the wordpress_apache role must also host the backup_client
-    # role. However, the playbook that applies these roles to the host may apply
-    # the backup_client role after the wordpress_apache role, in which case the
-    # /etc/bacula/scripts directory will not yet be in place.
     - name: Ensure that the /etc/bacula/scripts directory is present
+      # Any host for the wordpress_apache role must also host the backup_client
+      # role. However, the playbook that applies these roles to the host may
+      # apply the backup_client role after the wordpress_apache role, in which
+      # case the /etc/bacula/scripts directory will not yet be in place.
       ansible.builtin.file:
         path: /etc/bacula/scripts
         state: directory
