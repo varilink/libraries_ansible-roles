@@ -4,5 +4,5 @@
 
 ---
 
-# See https://github.com/varilink/libraries-ansible#unsafe_writes
+# See https://github.com/varilink/libraries-ansible_roles#unsafe_writes
 unsafe_writes: false
