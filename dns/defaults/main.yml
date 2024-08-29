@@ -4,7 +4,7 @@
 
 ---
 
-# See https://github.com/varilink/libraries-ansible#dns_host_patterns
-dns_host_patterns:
-  - string: all
-    description: All hosts
+dns_hosts_group: all
+
+# See https://github.com/varilink/libraries_ansible-roles#unsafe_writes
+unsafe_writes: false

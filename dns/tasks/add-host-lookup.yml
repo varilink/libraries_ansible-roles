@@ -1,0 +1,28 @@
+# ------------------------------------------------------------------------------
+# dns/tasks/add-host-lookup.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Gather IP address for a host if we don't already have it
+
+  # The setup module "Gathers facts about remote hosts".
+  ansible.builtin.setup:
+
+  # Both delegate the task to the host matching the pattern and also the fact
+  # gathered, since the IP address pertains to that host and not the DNS server.
+  delegate_to: "{{ lookup_host }}"
+  delegate_facts: true
+
+  # If we already have the default IPv4 address for the host then we don't need
+  # to do anything.
+  when: hostvars[lookup_host]['ansible_default_ipv4'] is not defined
+
+- name: Add host lookup to the /etc/addn-hosts file
+  ansible.builtin.lineinfile:
+    path: /etc/addn-hosts
+    line: >-
+      {{ hostvars[lookup_host].ansible_default_ipv4.address }}
+      {{ lookup_host }}
+    insertafter: '^# Hosts$'
+  notify: Dnsmasq configuration changed
