@@ -21,7 +21,7 @@
     shadow_file_user_rec: >-
       {{
         shadow_file.content | b64decode |
-        regex_search('^' + user.username + '.*$', multiline=True)
+        regex_search('^' + username + '.*$', multiline=True)
       }}
 
 - block:
@@ -35,7 +35,7 @@
         hash_algorithm: >-
           {{
             shadow_file_user_rec |
-            regex_search( '^' + user.username + ':\$(.)\$', '\1' ) | first
+            regex_search( '^' + username + ':\$(.)\$', '\1' ) | first
           }}
 
     - block:
@@ -50,14 +50,14 @@
             Generate hash of the configured password for the user using a
             randomly generated salt
           ansible.builtin.command: "\
-            mkpasswd --method=sha-512 '{{ user.password }}'"
+            mkpasswd --method=sha-512 '{{ password }}'"
           changed_when: false
           register: mkpasswd_result
 
         - name: >-
             Update an existing user using the SHA512 password hashing algorithm
           ansible.builtin.user:
-            name: "{{ user.username }}"
+            name: "{{ username }}"
             password: "{{ mkpasswd_result.stdout }}"
           become: yes
 
@@ -75,7 +75,7 @@
               {{
                 shadow_file_user_rec |
                 regex_search(
-                  '^' + user.username + ':(\$6\$.{16}\$.{86}):', '\1'
+                  '^' + username + ':(\$6\$.{16}\$.{86}):', '\1'
                 ) | first
               }}
 
@@ -83,7 +83,7 @@
             Generate hash of the configured password for the user using the same
             salt in the existing hash
           ansible.builtin.command: "\
-            mkpasswd --method=sha-512 --salt={{ salt }} {{ user.password }}"
+            mkpasswd --method=sha-512 --salt={{ salt }} {{ password }}"
           changed_when: false
           register: mkpasswd_result
           vars:
@@ -95,7 +95,7 @@
 
         - name: Change the password of an existing user
           ansible.builtin.user:
-            name: "{{ user.username }}"
+            name: "{{ username }}"
             password: "{{ mkpasswd_result.stdout }}"
           become: yes
           when: mkpasswd_result.stdout != existing_hash
@@ -112,14 +112,13 @@
     - name: >-
         Generate hash of the configured password for the user using a
         randomly generated salt
-      ansible.builtin.command: "\
-        mkpasswd --method=sha-512 '{{ user.password }}'"
+      ansible.builtin.command: mkpasswd --method=sha-512 '{{ password }}'
       changed_when: false
       register: mkpasswd_result
 
     - name: Create operating system user account
       ansible.builtin.user:
-        name: "{{ user.username }}"
+        name: "{{ username }}"
         password: "{{ mkpasswd_result.stdout }}"
       become: yes
 
@@ -127,7 +126,7 @@
 
 - name: Make sure that the user is in the staff group
   ansible.builtin.user:
-    name: '{{ user.username }}'
+    name: '{{ username }}'
     groups: [ 'staff' ]
     append: yes
   become: yes
