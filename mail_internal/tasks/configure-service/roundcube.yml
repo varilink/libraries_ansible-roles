@@ -1,0 +1,18 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/configure-service/roundcube.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Make Roundcube Webmail's Nginx site configuration available
+  ansible.builtin.template:
+    src: webmail-nginx-site.j2
+    dest: /etc/nginx/sites-available/webmail.{{ domain_name }}.conf
+  notify: Nginx configuration changed
+
+- name: Enable Roundcube Webmail's Nginx site configuration
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/webmail.{{ domain_name }}.conf
+    state: link
+    src: /etc/nginx/sites-available/webmail.{{ domain_name }}.conf
+  notify: Nginx configuration changed

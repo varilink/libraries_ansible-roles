@@ -1,0 +1,5 @@
+# The mail_external and mail_internal roles, which pull in this role via import,
+# both use a split exim configuration so that they can inject additional
+# configuration files.
+mta_use_split_config: 'true'
+

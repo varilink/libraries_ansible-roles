@@ -1,7 +1,7 @@
 ### transport/30_exim4-config_dovecot_lmtp
 ################################
 # This transport is used for delivering mail to local domains using Dovecot's
-# LMPT driver. We use this transport because enables us to use virtual email
+# LMTP driver. We use this transport because enables us to use virtual email
 # users and provides sieve language support, enabling SPAM filtering on incoming
 # emails.
 

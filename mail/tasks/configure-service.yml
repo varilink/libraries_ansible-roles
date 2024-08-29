@@ -4,9 +4,68 @@
 
 ---
 
-- name: Set Dovecot mail location to Maildir
-  ansible.builtin.lineinfile:
-    path: /etc/dovecot/conf.d/10-mail.conf
-    regexp: '^mail_location = '
-    line: mail_location = maildir:~/Maildir
+- block:
+
+    - name: Set Dovecot mail location to Maildir
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-mail.conf
+        line: mail_location = maildir:~/Maildir
+        regexp: '^mail_location = '
+      notify: Dovecot configuration changed
+
+    - name: Roundcube smtp_host config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: "$config['smtp_host'] = 'localhost:25';"
+        regexp: "^\\$config=\\['smtp_host'\\] = '.*';$"
+
+    - name: Roundcube support_url config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: "\
+          $config['support_url'] = 'https://{{ domain_name }}/roundcube/';"
+        regexp: "^\\$config=\\['support_url'\\] = '.*';$"
+
+    - name: Roundcube product_name config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: "$config['product_name'] = 'Varilink Webmail';"
+        regexp: "^\\$config=\\['product_name'\\] = '.*';$"
+
+    - name: Roundcube des_key config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: "$config['des_key'] = '{{ des_key | first }}';"
+        regexp: "^\\$config=\\['des_key'\\] = '.*';$"
+      vars:
+        des_key: "\
+          query('community.general.random_string', length=24, special=false)"
+
+    - name: Add BEGIN block marker for plugins config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: '# BEGIN ANSIBLE MANAGED BLOCK'
+        insertafter: '^// Debian: install roundcube-plugins first to have any$'
+
+    - name: Add END block marker for plugins config setting
+      ansible.builtin.lineinfile:
+        path: /etc/roundcube/config.inc.php
+        line: '# END ANSIBLE MANAGED BLOCK'
+        insertbefore: '^// skin name: folder from skins/$'
+
+    - name: Roundcude plugins config setting
+      ansible.builtin.blockinfile:
+        path: /etc/roundcube/config.inc.php
+        block: |-
+          $config['plugins'] = [
+            // 'archive',
+            // 'zipdownload',
+            'managesieve'
+          ];
+
+    - name: Replace the Roundcube logo with our own
+      ansible.builtin.copy:
+        src: logo.svg
+        dest: /var/lib/roundcube/skins/elastic/images/logo.svg
+
   become: yes

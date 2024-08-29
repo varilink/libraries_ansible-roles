@@ -1,0 +1,8 @@
+# Require TLS for connection to the mail_external smarthost
+REMOTE_SMTP_SMARTHOST_HOSTS_REQUIRE_TLS = *
+# Require the smtps protocol for connection to the mail_external smarthost
+REQUIRE_PROTOCOL = smtps
+{% if not mail_uses_ca %}
+# Don't verify the SSL certificate of the mail_external smarthost
+REMOTE_SMTP_SMARTHOST_TLS_VERIFY_HOSTS = !*
+{% endif %}

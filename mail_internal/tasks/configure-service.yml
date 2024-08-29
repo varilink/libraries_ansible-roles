@@ -6,45 +6,19 @@
 
 - block:
 
-    - name: Trust the IMAP connections from clients on the office network
-      # Where we have users on clients on the office network we choose to trust
-      # this client connections without authentication.
-      ansible.builtin.lineinfile:
-        path: /etc/dovecot/dovecot.conf
-        regexp: '^#?login_trusted_networks ='
-        line: login_trusted_networks = {{ office_subnet }}
-      notify: Dovecot configuration changed
+    - ansible.builtin.import_tasks: configure-service/fetchmail.yml
 
-    - name: Copy the Exim localmacros file
-      # The Exim localmacros file sets values that tweak our Exim configuration
-      # to our exact needs.
-      ansible.builtin.copy:
-        src: exim-localmacros
-        dest: /etc/exim4/exim4.conf.localmacros
-      notify: Exim configuration changed
+    - ansible.builtin.import_tasks: configure-service/exim-smtp-outbound.yml
 
-    - name: Add REQUIRE_PROTOCOL section to config template
-      ansible.builtin.blockinfile:
-        path: /etc/exim4/exim4.conf.template
-        insertbefore: '^\.ifdef REMOTE_SMTP_HEADERS_REWRITE$'
-        block: |-
-          .ifdef REQUIRE_PROTOCOL
-            protocol = REQUIRE_PROTOCOL
-          .endif
-      notify: Exim configuration changed
+    - ansible.builtin.import_tasks: configure-service/local-delivery.yml
 
-    - name: Make fetchmail run in daemon mode
-      ansible.builtin.lineinfile:
-        path: /etc/default/fetchmail
-        regexp: '^START_DAEMON=(?:yes|no)$'
-        line: START_DAEMON=yes
-      notify: Fetchmail configuration changed
+    - ansible.builtin.import_tasks: configure-service/dovecot.yml
 
-    - name: Add the interval option for fetchmail
-      ansible.builtin.lineinfile:
-        path: /etc/default/fetchmail
-        regexp: '^(?:# )?OPTIONS=(?:...|"-d 10")$'
-        line: OPTIONS="-d 10"
-      notify: Fetchmail configuration changed
+    - ansible.builtin.import_tasks: configure-service/roundcube.yml
+
+    - ansible.builtin.include_tasks: user.yml
+      loop: "{{ domain_users }}"
+      loop_control:
+        loop_var: user
 
   become: yes

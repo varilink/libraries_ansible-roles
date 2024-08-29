@@ -22,3 +22,10 @@
 - ansible.builtin.import_tasks: configure-service/local-delivery.yml
 
 - ansible.builtin.import_tasks: configure-service/remote-delivery.yml
+
+- ansible.builtin.include_role:
+    name: mail
+    tasks_from: create-user
+  loop: "{{ domain_users }}"
+  loop_control:
+    loop_var: user

@@ -4,6 +4,29 @@
 
 ---
 
-- ansible.builtin.import_tasks: configure-domain-handlers.yml
+- ansible.builtin.import_role:
+    name: mail
+    tasks_from: none
 
-- ansible.builtin.import_tasks: configure-domain-body.yml
+- ansible.builtin.import_role:
+    name: mta
+    tasks_from: none
+
+# Add the domain to the Dovecot service's configuration
+- ansible.builtin.import_tasks: configure-domain/dovecot.yml
+
+# Add the domain to the Exim service's configuration
+- ansible.builtin.import_tasks: configure-domain/exim.yml
+
+- ansible.builtin.include_tasks: configure-domain/user.yml
+  vars:
+    email: |-
+      {% if user.fname is defined and user.lname is defined %}
+      {{ user.fname | lower }}.{{ user.lname | lower }}@{{ domain_name }}
+      {%- else %}
+      {{ user.rname | lower }}@{{ domain_name }}
+      {%- endif %}
+    password: "{{ user.password }}"
+  loop: "{{ domain_users }}"
+  loop_control:
+    loop_var: user

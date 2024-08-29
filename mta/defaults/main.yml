@@ -17,4 +17,3 @@ mta_relay_nets: ''
 mta_use_split_config: 'false'
 mta_hide_mailname: 'true'
 mta_localdelivery: mail_spool
-mta_mailname: "{{ home_domain }}"

@@ -1,0 +1,53 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/user.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- ansible.builtin.import_role:
+    name: mail
+    tasks_from: create-user
+
+- block:
+
+    - block:
+
+        - name: Copy the starting user sieve script
+          ansible.builtin.copy:
+            dest: "~/.dovecot.sieve"
+            content: |-
+              require "fileinto";
+              if header :matches "X-Spam_bar" "+*" {
+                fileinto "Junk";
+              }
+          register: sieve_script_copy
+
+        - name: Compile the starting user sieve script
+          ansible.builtin.command: sievec ~/.dovecot.sieve
+          when: sieve_script_copy.changed
+
+      become: yes
+      become_user: "{{ username }}"
+
+    - name: "\
+        Ensure that Dovecot reflects any change to mail_location made earlier"
+      meta: flush_handlers
+
+    - name: List the mailboxes for this mail user
+      ansible.builtin.command: doveadm mailbox list -u {{ username }}
+      register: list_mailboxes
+      changed_when: false
+
+    - name: Create any required mailboxes for the user that are missing
+      ansible.builtin.command: >-
+        doveadm mailbox create -u {{ username }} -s
+        {{ missing_mailboxes | join(' ') }}
+      when: missing_mailboxes | length > 0
+      vars:
+        missing_mailboxes: >-
+          {{ ['Archive', 'Drafts', 'INBOX', 'Junk', 'Sent', 'Trash']
+          | difference(list_mailboxes.stdout_lines) }}
+      become: yes
+
+  vars:
+    username: "{{ user.fname | lower }}"

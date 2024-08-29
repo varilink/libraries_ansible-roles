@@ -1,0 +1,36 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/configure-service/exim-smtp-outbound.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Add a REQUIRE_PROTOCOL section to config template for remote SMTP
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/conf.d/transport/30_exim4-config_remote_smtp
+        block: |-
+          .ifdef REQUIRE_PROTOCOL
+            protocol = REQUIRE_PROTOCOL
+          .endif
+      notify: Exim configuration changed
+
+    - name: >-
+        Add a line to the passwd.client file for authentication to the
+        mail_external smarthost
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/passwd.client
+        line: >-
+          mail:smarthost:{{
+            mail_external_smarthost_password | default('smarthost_password')
+          }}
+
+    - name: Template out the Exim localmacros file for transport configuration
+      # The Exim localmacros file sets values that tweak our Exim configuration
+      # to our exact needs.
+      ansible.builtin.template:
+        src: exim-localmacros.j2
+        dest: /etc/exim4/conf.d/transport/01_exim4-config_localmacros
+      notify: Exim configuration changed
+
+  become: yes

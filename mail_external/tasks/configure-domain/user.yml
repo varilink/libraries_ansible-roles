@@ -1,0 +1,111 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/configure-domain/user.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Set a variable to the regex pattern to find the user in the users file
+  ansible.builtin.set_fact:
+    user_regex: '^{{ email | regex_escape() }}:'
+
+- name: Check if the user is already present in the users files
+  ansible.builtin.command: grep '{{ user_regex }}' /etc/dovecot/users
+  become: yes
+  become_user: dovecot
+  register: grep_user
+  failed_when: grep_user.rc != 0 and grep_user.rc != 1
+  changed_when: false
+
+- block:
+
+    # The user is already present in the /etc/dovecot/users file so we don't
+    # have to add it as new but we may change the password hash in the file but
+    # ONLY if the current hash doesn't match the current password.
+
+    - name: Get the current password hash when the user is found in the file
+      ansible.builtin.shell: "\
+        echo -n '{{ grep_user.stdout }}' | cut -d ':' -f 2"
+      register: current_hash
+      changed_when: false
+
+    - name: >-
+        Carry out a reverse password verification check against the current
+        hash
+      ansible.builtin.command: "\
+        doveadm pw -p '{{ password }}' -t '{{ current_hash.stdout }}'"
+      become: yes
+      become_user: dovecot
+      register: hash_verify
+      # The `doveadm pw` command's return code is 0 if the hash is verified
+      # and 75 if there is a password mismatch.
+      failed_when: hash_verify.rc != 0 and hash_verify.rc != 75
+      changed_when: false
+
+  when: grep_user.rc == 0
+
+- block:
+
+    # We need to either add the user to the users file or update the hash
+    # for a user that is already in the file, indicating that we must have
+    # changed the password for that user.
+
+    - name: Generate a Dovecot password hash for the user
+      ansible.builtin.command: doveadm pw -p '{{ password }}'
+      register: new_hash
+      changed_when: false
+
+    - name: >-
+        Add user to users file or update the hash for a user that is already in
+        the file
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/users
+        line: "{{ email }}:{{ new_hash.stdout }}::::/home/vmail/{{ email }}::"
+        regexp: "{{ user_regex }}"
+      become: yes
+
+  when: grep_user.rc == 1 or hash_verify.rc == 75
+
+- block:
+
+    - name: Create folder for the user's mailbox
+      ansible.builtin.file:
+        path: /home/vmail/{{ email }}
+        state: directory
+        owner: vmail
+        group: vmail
+
+    - block:
+
+        - name: Copy the starting user sieve script
+          ansible.builtin.copy:
+            dest: '/home/vmail/{{ email }}/.dovecot.sieve'
+            content: |-
+              require "fileinto";
+              if header :matches "X-Spam_bar" "+*" {
+                fileinto "Junk";
+              }
+          register: sieve_script_copy
+
+        - name: Compile the starting user sieve script
+          ansible.builtin.command: "\
+            sievec /home/vmail/{{ email }}/.dovecot.sieve"
+          when: sieve_script_copy.changed
+
+      become_user: vmail
+
+    - name: List the mailboxes for this mail user
+      ansible.builtin.command: doveadm mailbox list -u {{ email }}
+      register: list_mailboxes
+      changed_when: false
+
+    - name: Create any required mailboxes for the user that are missing
+      ansible.builtin.command: >-
+        doveadm mailbox create -u {{ email }} -s
+        {{ missing_mailboxes | join(' ') }}
+      when: missing_mailboxes | length > 0
+      vars:
+        missing_mailboxes: >-
+          {{ ['Archive', 'Drafts', 'INBOX', 'Junk', 'Sent', 'Trash']
+          | difference(list_mailboxes.stdout_lines) }}
+
+  become: yes

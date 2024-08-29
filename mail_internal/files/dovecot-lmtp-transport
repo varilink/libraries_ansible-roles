@@ -1,0 +1,6 @@
+### transport/30_exim4-config_transport-dovecot-lmtp
+#################################
+
+dovecot_lmtp:
+  driver = lmtp
+  socket = /var/run/dovecot/lmtp

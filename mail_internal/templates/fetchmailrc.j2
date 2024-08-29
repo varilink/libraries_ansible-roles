@@ -1,9 +1,5 @@
 poll {{ target_host }} proto imap
 {% for user in users %}
-{{
-  '  user ' + user.fname +
-  ' with password ' + user.passwd +
-  ' is ' + user.fname + ' here' +
-  ' no sslcertck'
-}}
+  user {{ user.fname | lower }} with password {{ user.password }}
+    is {{ user.fname | lower }} here no sslcertck;
 {% endfor %}

@@ -1,0 +1,28 @@
+# ------------------------------------------------------------------------------
+# mail/tasks/create-user.yml
+# ------------------------------------------------------------------------------
+
+# We are adding a user for a customer domain so we add the user as a Dovecot
+# virtual user rather than an operating system user. Note that the generated
+# password hash differs each time it is generated for the same password,
+# indicating perhaps that a random salt is used. If you know that then you will
+# understand some of the tasks below better.
+
+---
+
+- block:
+
+    - ansible.builtin.import_role:
+        name: staff_user
+
+    - name: Add alias for user to the /etc/aliases file
+      ansible.builtin.lineinfile:
+        path: /etc/aliases
+        line: '{{ username }}.{{ user.lname | lower }}: {{ username }}'
+      become: yes
+      notify: Aliases changed
+
+  vars:
+    username: "{{ user.fname | lower }}"
+    password: "{{ user.password }}"
+  when: domain_name == home_domain

@@ -85,4 +85,129 @@
         dest: /etc/exim4/conf.d/auth/10_exim4-config_server_side
       notify: Exim configuration changed
 
+    - name: >-
+        Generate a hash of the password to use for SMTP connections from the
+        mail_internal host when it uses the mail_external host as a smarthost
+      ansible.builtin.shell: >-
+        echo -n
+        {{ mail_external_smarthost_password | default('smarthost_password') }}
+        | mkpasswd --stdin
+      register: mkpasswd_result
+      changed_when: false
+
+    - name: >-
+        Create a user for authentication of SMTP connections from the
+        mail_internal host when it uses the mail_external host as a smarthost
+      ansible.builtin.user:
+        name: smarthost
+        password: "{{ mkpasswd_result.stdout }}"
+        system: yes
+        home: /nonexistent
+        shell: /usr/sbin/nologin
+
+    - name: >-
+        Insert BEGIN block marker for controlling SPAM settings in the ACL
+        configuration section
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        insertbefore: '^  (?:# )?# Remove internal headers$'
+        line: '# BEGIN SPAM ANSIBLE MANAGED BLOCK'
+      notify: Exim configuration changed
+
+    - name: >-
+        Insert END block marker for controlling SPAM settings in the ACL
+        configuration section
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        insertafter: "\
+          ^  #   message = Classified as spam \\(score \\$spam_score\\)$"
+        line: '# END SPAM ANSIBLE MANAGED BLOCK'
+      notify: Exim configuration changed
+
+    - name: Configure SPAM settings in the ACL configuration section
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        block: |-2
+            # Remove internal headers
+            warn
+              remove_header = X-Spam_score: X-Spam_score_int : X-Spam_bar : \
+                              X-Spam_report
+
+            warn
+              condition = ${if <{$message_size}{120k}{1}{0}}
+              # ":true" to add headers/acl variables even if not spam
+              spam = nobody:true
+              add_header = X-Spam_score: $spam_score
+              add_header = X-Spam_bar: $spam_bar
+              # Do not enable this unless you have shorted SpamAssassin's report
+              #add_header = X-Spam_report: $spam_report
+
+            # Reject spam messages (score >15.0).
+            # This breaks mailing list and forward messages.
+            # deny
+            #   condition = ${if <{$message_size}{120k}{1}{0}}
+            #   condition = ${if >{$spam_score_int}{150}{true}{false}}
+            #   message = Classified as spam (score $spam_score)
+        marker_begin: BEGIN SPAM
+        marker_end: END SPAM
+      notify: Exim configuration changed
+
+    - name: Define the interface to ClamAV for virus scanning inbound mail
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/main/02_exim4-config_options
+        line: av_scanner = clamd:/run/clamav/clamd.ctl
+        regexp: '^(?:# )?av_scanner = clamd:/run/clamav/clamd\.ctl$'
+
+    - name: >-
+        Insert BEGIN block marker for controlling VIRUS settings in the ACL
+        configuration section
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        insertafter: "\
+          ^  # exim4-daemon-heavy must be used for this section to work\\.$"
+        firstmatch: yes
+        line: '# BEGIN VIRUS ANSIBLE MANAGED BLOCK'
+      notify: Exim configuration changed
+
+    - name: >-
+        Insert END block marker for controlling VIRUS settings in the ACL
+        configuration section
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        insertafter: >-
+          ^  #   message = This message was detected as possible malware
+          \(\$malware_name\)\.$
+        line: '# END VIRUS ANSIBLE MANAGED BLOCK'
+      notify: Exim configuration changed
+
+    - name: Configure VIRUS settings in the ACL configuration section
+      ansible.builtin.blockinfile:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        block: |-2
+            #
+            deny
+              malware = *
+              message = This messages was detected as possible malware ($malware_name).
+        marker_begin: BEGIN VIRUS
+        marker_end: END VIRUS
+      notify: Exim configuration changed
+
+    - name: >-
+        Add the clamav user to the Debian-exim group so that ClamAV can scan
+        Exim files
+      ansible.builtin.user:
+        name: clamav
+        groups: [ Debian-exim ]
+        append: true
+      notify: Exim configuration changed
+
+    - name: >-
+        Add the Debian-exim user to the clamav group so that Exim can access the
+        clamav socket
+      ansible.builtin.user:
+        name: Debian-exim
+        groups: [ clamav ]
+        append: true
+      notify: ClamAV configuration changed
+
   become: yes

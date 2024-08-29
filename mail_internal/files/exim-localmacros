@@ -1,4 +1,0 @@
-# For connection to the smarthost to use TLS
-REMOTE_SMTP_SMARTHOST_HOSTS_REQUIRE_TLS = *
-# Require the smtps protocol for connection to the smarthost
-REQUIRE_PROTOCOL = smtps

@@ -1,0 +1,11 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name webmail.{{ domain_name }};
+    root /var/lib/roundcube/public_html;
+    index index.php;
+    location ~ \.php$ {
+        include /etc/nginx/snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+    }
+}

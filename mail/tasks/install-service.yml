@@ -4,9 +4,25 @@
 
 ---
 
+- ansible.builtin.import_role:
+    name: database
+
+- ansible.builtin.import_role:
+    name: php_fpm
+
+- ansible.builtin.import_role:
+    name: nginx
+
 - name: Install APT package(s) required by Dovecot
   ansible.builtin.apt:
     name:
       - dovecot-imapd
+      - dovecot-lmtpd
+      - dovecot-managesieved
+      - dovecot-sieve
+      - exim4-daemon-heavy
+      - roundcube
+      - roundcube-mysql
+      - roundcube-plugins
     install_recommends: no
   become: yes

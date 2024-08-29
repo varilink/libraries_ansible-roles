@@ -1,0 +1,24 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/configure-service/local-delivery.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: >-
+        Use dovecot_delivery transport instead of LOCAL_DELIVERY in the Exim
+        local_user router
+      ansible.builtin.lineinfile:
+        path: /etc/exim4/conf.d/router/900_exim4-config_local_user
+        line: '  transport = dovecot_lmtp'
+        regex: '^  transport = (?:LOCAL_DELIVERY|dovecot_lmtp)$'
+      notify: Exim configuration changed
+
+    - name: Copy the Dovecot LMTP transport configuration file
+      ansible.builtin.copy:
+        src: dovecot-lmtp-transport
+        dest: /etc/exim4/conf.d/transport/30_exim4-config_dovecot_lmtp
+      notify: Exim configuration changed
+
+  become: yes

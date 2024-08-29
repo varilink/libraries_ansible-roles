@@ -1,14 +1,24 @@
 # ------------------------------------------------------------------------------
-# mail_internal/tasks/configure-domain.yml
+# mail_internal/tasks/configure-services/fetchmail.yml
 # ------------------------------------------------------------------------------
 
 ---
 
-- ansible.builtin.import_role:
-    name: mail
-    tasks_from: domain
-
 - block:
+
+    - name: Make fetchmail run in daemon mode
+      ansible.builtin.lineinfile:
+        path: /etc/default/fetchmail
+        regexp: '^START_DAEMON=(?:yes|no)$'
+        line: START_DAEMON=yes
+      notify: Fetchmail configuration changed
+
+    - name: Add the interval option for fetchmail
+      ansible.builtin.lineinfile:
+        path: /etc/default/fetchmail
+        regexp: '^(?:# )?OPTIONS=(?:...|"-d 10")$'
+        line: OPTIONS="-d 10"
+      notify: Fetchmail configuration changed
 
     - name: Deploy fetchmailrc file
       ansible.builtin.template:

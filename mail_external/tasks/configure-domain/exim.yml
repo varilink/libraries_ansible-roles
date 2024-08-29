@@ -19,22 +19,47 @@
         regexp: "^{{ domain_name }}:"
       when: mta_configtype == 'smarthost'
 
-    - name: Check if the domain is already registered as a local domain
-      ansible.builtin.shell: >-
-        grep '^dc_other_hostnames=' /etc/exim4/update-exim4.conf.conf |
-        grep {{ domain_name }}
-      register: grep_domain
-      failed_when: grep_domain.rc != 0 and grep_domain.rc != 1
+    - name: Check if any domains have been registered as local domains yet
+      ansible.builtin.command: "\
+        grep \"^dc_other_hostnames=''$\" /etc/exim4/update-exim4.conf.conf"
+      register: grep_other_hostnames
+      failed_when: grep_other_hostnames.rc != 0 and grep_other_hostnames.rc != 1
       changed_when: false
 
-    - name: Register the domain as a local domain if it isn't already
+    - name: Configure this domain as the first local domain
+      # No domain names have yet been set for dc_other_hostnames, so set this
+      # domain name as the first to be configured.
       ansible.builtin.lineinfile:
         path: /etc/exim4/update-exim4.conf.conf
-        line: 'dc_other_hostnames=''\1;{{ domain_name }}'''
-        regexp: '^dc_other_hostnames=''(.*)''$'
-        backrefs: yes
-      when: grep_domain.rc == 1
+        line: "dc_other_hostnames='{{ domain_name }}'"
+        regexp: "^dc_other_hostnames='.*'$"
+      when: grep_other_hostnames.rc == 0
       notify: Exim configuration changed
+
+    - block:
+
+        # At least one domain name is set for dc_other_hostnames, so check if
+        # this domain name is one of them and if it isn't then add it to the
+        # list of domain names set for dc_other_hostnames.
+
+        - name: Check if the domain is already registered as a local domain
+          ansible.builtin.shell: >-
+            grep '^dc_other_hostnames=' /etc/exim4/update-exim4.conf.conf |
+            grep {{ domain_name }}
+          register: grep_domain
+          failed_when: grep_domain.rc != 0 and grep_domain.rc != 1
+          changed_when: false
+
+        - name: Register the domain as a local domain if it isn't already
+          ansible.builtin.lineinfile:
+            path: /etc/exim4/update-exim4.conf.conf
+            line: 'dc_other_hostnames=''\1;{{ domain_name }}'''
+            regexp: '^dc_other_hostnames=''(.*)''$'
+            backrefs: yes
+          when: grep_domain.rc == 1
+          notify: Exim configuration changed
+
+      when: grep_other_hostnames.rc == 1
 
     - block:
 
@@ -58,7 +83,7 @@
             creates: /etc/exim4/domains/{{ domain_name }}/cert.pem
           vars:
             subject: |-
-              /CN=imap.{{ domain_name }}
+              /CN=smtp.{{ domain_name }}
               {%- if domain_country is defined %}
               /C={{ domain_country }}
               {%- endif %}

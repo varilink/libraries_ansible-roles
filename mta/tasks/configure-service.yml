@@ -8,19 +8,33 @@
 
 ---
 
-- name: Determine the Exim configuration type that is set
-  # This is set to "local" on install of the exim4-daemon-light or
-  # exim4-daemon-heavy package. All roles that need to send or receive emails
-  # import this role that sets it to "satellite". Some roles then change it
-  # themselves to "smarthost" or "internet" depending on their need.
-  ansible.builtin.shell: >-
-    perl -nae'
-      if ( m/^dc_eximconfig_configtype='\''(\w+)'\''$/ ) {
-        print $1;
-      }
-    ' /etc/exim4/update-exim4.conf.conf
+- name: Get the current value for dc_other_hostnames
+  ansible.builtin.command: >-
+    perl -n -e
+    'print "$1" if /^dc_other_hostnames='\''(.*)'\''$/'
+    /etc/exim4/update-exim4.conf.conf
   changed_when: false
   register: perl_result
+
+  # When Exim is installed dc_other_hostnames is initially set to the empty
+  # string. The hosts of the mail_external and mail_internal roles immediately
+  # set it to the home domain when they configure Exim to their needs. When
+  # projects then configure their mail service they add their domain to it. If
+  # the install-services playbook is run again with the mail_external role in
+  # scope and the current value of dc_other_hostnames is anything other than the
+  # empty string or the home domain we know that at least one project has
+  # already been configured and so we must NOT clobber its current value. Only
+  # the host of the mail_external role can have a value other than the empty
+  # string or the home domain.
+- name: >-
+    Set the mta_other_hostnames variable to the current value of
+    dc_other_hostnames
+  ansible.builtin.set_fact:
+    mta_other_hostnames: "{{ perl_result.stdout }}"
+  when: >-
+    perl_result.stdout != ansible_hostname and
+    perl_result.stdout != '' and
+    perl_result.stdout != home_domain
 
 - block:
 
@@ -29,14 +43,6 @@
         src: update-exim4.conf.conf.j2
         dest: /etc/exim4/update-exim4.conf.conf
       notify: Exim configuration changed
-      # Another role has imported this role and accepted the default config
-      # type of "satellite" that this role sets. However, another role has
-      # already overridden that to either "smarthost" or "internet". We need
-      # that other role to remain in control of the Exim configuration.
-      when: >-
-        not ( mta_configtype == 'satellite' and (
-          perl_result.stdout == 'smarthost' or perl_result.stdout == 'internet'
-        ) )
 
     - name: Template out the Exim4 mailname file
       ansible.builtin.template:

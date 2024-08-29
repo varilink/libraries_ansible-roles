@@ -4,4 +4,6 @@
 
 ---
 
-mail_uses_ca: no
+mail_uses_ca: yes
+mta_configtype: smarthost
+mta_hide_mailname: 'false'

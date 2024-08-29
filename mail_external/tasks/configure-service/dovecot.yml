@@ -95,4 +95,11 @@
         src: dovecot-local.conf
         dest: /etc/dovecot/local.conf
 
+    - name: Activate the sieve mail plugin for Dovecot LMTP
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/20-lmtp.conf
+        line: '  mail_plugins = $mail_plugins sieve'
+        regex: '^  #?mail_plugins = \$mail_plugins(?: sieve)?$'
+      notify: Dovecot configuration changed
+
   become: yes

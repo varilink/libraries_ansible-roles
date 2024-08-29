@@ -50,3 +50,10 @@
         force: no
 
   become: yes
+
+  when: mta_configtype == 'smarthost'
+  # We only configure a smarthost router, transport and client password file IF
+  # the Exim configuration type is "smarthost". This is our setup in live,
+  # however when we're testing the setup of mail services in a container based
+  # environment, then by default we use an Exim configuration type of "internet"
+  # instead rather than integrate with our production, SMTP gateway provider.

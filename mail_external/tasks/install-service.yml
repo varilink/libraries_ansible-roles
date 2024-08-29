@@ -19,8 +19,10 @@
   ansible.builtin.apt:
     name:
       - ca-certificates
-      - dovecot-lmtpd
-      - dovecot-sieve
-      - exim4-daemon-heavy
+      - clamav-daemon
+      - clamav-freshclam
+      - clamdscan
+      - spamassassin
+      - spamd
     install_recommends: no
   become: yes

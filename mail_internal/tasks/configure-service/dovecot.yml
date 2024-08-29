@@ -1,0 +1,32 @@
+# ------------------------------------------------------------------------------
+# mail_internal/tasks/configure-service/dovecot.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    - name: Trust the IMAP connections from clients on the office network
+      # Where we have users on clients on the office network we choose to trust
+      # this client connections without authentication.
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/dovecot.conf
+        regexp: '^#?login_trusted_networks ='
+        line: 'login_trusted_networks = {{ office_subnet }}'
+      notify: Dovecot configuration changed
+
+    - name: Remove the domain name from recipients for local delivery
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/10-auth.conf
+        regexp: '^#?auth_username_format = %L[nu]$'
+        line: 'auth_username_format = %Ln'
+      notify: Dovecot configuration changed
+
+    - name: Activate the sieve mail plugin for Dovecot LMTP
+      ansible.builtin.lineinfile:
+        path: /etc/dovecot/conf.d/20-lmtp.conf
+        line: '  mail_plugins = $mail_plugins sieve'
+        regex: '^  #?mail_plugins = \$mail_plugins(?: sieve)?$'
+      notify: Dovecot configuration changed
+
+  become: yes
