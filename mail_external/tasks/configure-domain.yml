@@ -12,11 +12,17 @@
     name: mta
     tasks_from: none
 
+- ansible.builtin.import_role:
+    name: nginx
+    tasks_from: none
+
 # Add the domain to the Dovecot service's configuration
 - ansible.builtin.import_tasks: configure-domain/dovecot.yml
 
 # Add the domain to the Exim service's configuration
 - ansible.builtin.import_tasks: configure-domain/exim.yml
+
+- ansible.builtin.import_tasks: configure-domain/roundcube.yml
 
 - ansible.builtin.include_tasks: configure-domain/user.yml
   vars:

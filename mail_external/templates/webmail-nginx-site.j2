@@ -1,0 +1,26 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name webmail.{{ domain_name }};
+    access_log /var/log/nginx/webmail.{{ domain_name }}-access.log;
+    error_log /var/log/nginx/webmail.{{ domain_name }}-error.log;
+    location / {
+      return 301 https://webmail.{{ domain_name }}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name webmail.{{ domain_name }};
+    ssl_certificate /etc/ssl/certs/
+    {{- ( 'webmail.' + domain_name ) | replace('.', '_') }}.pem;
+    ssl_certificate_key /etc/ssl/private/
+    {{- ( 'webmail.' + domain_name ) | replace('.', '_') }}.key;
+    root /var/lib/roundcube/public_html;
+    index index.php;
+    location ~ \.php$ {
+        include /etc/nginx/snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+    }
+}
