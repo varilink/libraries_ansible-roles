@@ -37,26 +37,10 @@
           echo "deb
           [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg]
           https://repos.influxdata.com/debian
-          {% if lsb_release.stdout == 'bookworm' %}bullseye
+          {% if lsb_release.stdout == 'trixie' %}bookworm
           {%- else %}{{ lsb_release.stdout }}{% endif %}
           stable" > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
-
-    - block:
-
-        - name: Downgrade APT libnettle6 package if Debian release is stretch
-          ansible.builtin.apt:
-            name: [libnettle6=3.3-1+b2]
-            install_recommends: no
-            force: yes
-
-        - name: >-
-            Install APT apt-transport-https package if Debian release is stretch
-          ansible.builtin.apt:
-            name: [apt-transport-https]
-            install_recommends: no
-        
-      when: lsb_release.stdout == 'stretch'
 
     - name: Update APT cache
       ansible.builtin.apt:

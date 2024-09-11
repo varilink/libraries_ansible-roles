@@ -7,18 +7,6 @@
 
 ---
 
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
-
-- name: "\
-    Fail if the codename of the Debian release on this host isn't catered for"
-  ansible.builtin.fail:
-    msg: "\
-      The Debian release codenamed {{ lsb_release.stdout }} is not catered for"
-  when: lsb_release.stdout not in ['bookworm', 'trixie']
-
 - block:
 
     - name: Disable the default Apache site
@@ -34,55 +22,13 @@
         regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
       notify: Apache2 configuration changed
 
-#    - name: Disable PHP modules from prior Debian release
-      # In the event of an upgrade from the previous Debian release, make sure
-      # that the prior version of PHP modules is disabled.
-#      community.general.apache2_module:
-#        name: |-
-#          {% if lsb_release.stdout == 'bookworm' %}
-#          php7.4
-#          {%- elif lsb_release.stdout == 'trixie' %}
-#          php8.2
-#          {%- endif %}
-#        state: absent
-#      notify: Apache2 configuration changed
-
-#    - name: Disable Apache2 mpm_event module
-#      community.general.apache2_module:
-#        name: mpm_event
-#        state: absent
-#        ignore_configcheck: yes
-#      notify: Apache2 configuration changed
-
-#    - name: Enable Apache2 mpm_prefork module
-#      community.general.apache2_module:
-#        name: mpm_prefork
-#        state: present
-#        ignore_configcheck: yes
-#      notify: Apache2 configuration changed
-
-#    - debug:
-#        msg: |-
-#          {% if lsb_release.stdout == 'bookworm' %}
-#          php8.2
-#          {%- elif lsb_release.stdout == 'trixie' %}
-#          php8.2
-#          {%- endif %}
-
-#    - meta: end_play
-
-    - name: Enable apache2 rewrite and php modules
+    - name: Enable Apache2 php and rewrite modules
       community.general.apache2_module:
         name: "{{ item }}"
       notify: Apache2 configuration changed
       loop:
+        - php8.2
         - rewrite
-#        - |-
-#            {% if lsb_release.stdout == 'bookworm' %}
-#            php8.2
-#            {%- elif lsb_release.stdout == 'trixie' %}
-#            php8.2
-#            {%- endif %}
 
     - name: Ensure that the /etc/bacula/scripts directory is present
       # Any host for the wordpress_apache role must also host the backup_client

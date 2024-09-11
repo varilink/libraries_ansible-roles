@@ -2,77 +2,13 @@
 # backup_client/tasks/install.yml
 # ------------------------------------------------------------------------------
 
-# Installs the APT packages required by the backup_client role. Across our
-# various environments we have backup clients on stretch, buster and bullseye.
-# We also have backup directors and backup storage daemons on buster and
-# bullseye.
-
-# If the backup director or backup storage daemon is installed on buster, then
-# we use buster-backports for compatibility with backup clients installed on
-# bullseye. The host of the backup director and/or backup storage daemon is also
-# a backup client and if that host uses buster then the backup client can not be
-# installed unless it uses buster-backports too. The easiest way to address this
-# is to use buster-backports whenever a backup client is installed on buster.
+# Installs the APT packages required by the backup_client role.
 
 ---
 
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
-
-- name: >-
-    Install APT package(s) required by the backup_client role from bullseye or
-    stretch
+- name: Install APT package(s) required by the backup_client role
   ansible.builtin.apt:
     name:
       - bacula-fd
     install_recommends: no
   become: yes
-  when: lsb_release.stdout != 'buster' # hence must be bullseye or stretch
-
-- block:
-
-    - name: Add buster-backports to the sources list
-      ansible.builtin.lineinfile:
-        path: /etc/apt/sources.list
-        line: deb http://deb.debian.org/debian buster-backports main
-
-    - name: Get the machine hardware name
-      ansible.builtin.command: uname -m
-      register: uname_result
-      changed_when: false
-
-    - block:
-
-        - name: >-
-            See if we can export the "Debian Archive Automatic Signing Key
-            (10/buster)" APT key
-          ansible.builtin.command: >-
-            apt-key export 80D15823B7FD1561F9F7BCDDDC30D7C23CBBABEE
-          register: apt_key_export
-          changed_when: false
-
-        - name: Add the keys for buster backports if the architecture is arm
-          ansible.builtin.shell: |-
-            gpg --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138
-            gpg --export 648ACFD622F3D138 | sudo apt-key add -
-          when: not apt_key_export.stdout
-
-      when: uname_result.stdout is regex('^arm')
-
-    - name: Update APT cache to reflect the addition of buster-backports source
-      ansible.builtin.apt:
-        update_cache: yes
-
-    - name: >-
-        Install APT package(s) required by the backup_client role from
-        buster-backports
-      ansible.builtin.apt:
-        name:
-          - bacula-fd
-        install_recommends: no
-        default_release: buster-backports
-
-  become: yes
-  when: lsb_release.stdout == 'buster'

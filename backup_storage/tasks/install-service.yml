@@ -2,18 +2,9 @@
 # backup_storage/tasks/install-service.yml
 # ------------------------------------------------------------------------------
 
-# Installs the APT packages required by the backup_storage role. Across our
-# various environments we have backup clients on stretch, buster and bullseye
-# hosts and backup storage daemons on buster and bullseye hosts. Therefore, if
-# the backup_storage role is installed on a buster host then we must install it
-# from buster-backports for compatibility with backup clients on bullseye hosts.
+# Installs the APT packages required by the backup_storage role.
 
 ---
-
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
 
 - name: Install APT package(s) required by the backup_storage role
   ansible.builtin.apt:
@@ -23,29 +14,3 @@
       - bacula-sd
     install_recommends: no
   become: yes
-  when: lsb_release.stdout != 'buster'
-
-- block:
-
-    - name: Add buster-backports to the sources list
-      ansible.builtin.lineinfile:
-        path: /etc/apt/sources.list
-        line: deb http://deb.debian.org/debian buster-backports main
-
-    - name: Update APT cache to reflect the addition of buster-backports source
-      ansible.builtin.apt:
-        update_cache: yes
-
-    - name: >-
-        Install APT package(s) required by the backup_storage role from
-        buster-backports
-      ansible.builtin.apt:
-        name:
-          - bacula-bscan
-          - bacula-common-mysql
-          - bacula-sd
-        install_recommends: no
-        default_release: buster-backports
-
-  become: yes
-  when: lsb_release.stdout == 'buster'

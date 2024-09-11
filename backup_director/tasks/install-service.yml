@@ -2,11 +2,7 @@
 # backup_director/tasks/install-service.yml
 # ------------------------------------------------------------------------------
 
-# Installs the APT packages required by the backup_director role. Across our
-# various environments we have backup clients on stretch, buster and bullseye
-# hosts and backup directors on buster and bullseye hosts. Therefore, if the
-# backup_director role is installed on a buster host then we must install it
-# from buster-backports for compatibility with backup clients on bullseye hosts.
+# Installs the APT packages required by the backup_director role.
 
 # Ansible runs APT in non-interactive mode, which means that the install of
 # these packages completes without a configured catalog database in place, since
@@ -26,11 +22,6 @@
 # for consistency with other roles.
 
 ---
-
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
 
 - block:
 
@@ -57,30 +48,5 @@
           - bacula-director
           - bacula-director-mysql
         install_recommends: no
-      when: lsb_release.stdout != 'bullseye'
-
-    - block:
-
-        - name: Add buster-backports to the sources list
-          ansible.builtin.lineinfile:
-            path: /etc/apt/sources.list
-            line: deb http://deb.debian.org/debian buster-backports main
-
-        - name: "\
-            Update APT cache to reflect the addition of buster-backports source"
-          ansible.builtin.apt:
-            update_cache: yes
-
-        - name: >-
-            Install APT package(s) required by the backup_director role from
-            buster-backports
-          ansible.builtin.apt:
-            name:
-              - bacula-director
-              - bacula-director-mysql
-            install_recommends: no
-            default_release: buster-backports
-
-      when: lsb_release.stdout == 'buster'
 
   become: yes

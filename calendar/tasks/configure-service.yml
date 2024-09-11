@@ -4,11 +4,6 @@
 
 ---
 
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
-
 - block:
 
     # By default the Radicale service is only exposed on the local interface so
@@ -17,29 +12,17 @@
     - name: Expose calendar service on the network
       ansible.builtin.lineinfile:
         path: /etc/radicale/config
-        # Original line is:
-        # '#hosts = 127.0.0.1:5232' (Radicale 2 on buster); or
-        # '#hosts = localhost:5232' (Radicale 3 on bullseye or bookworm)
-        #
-        # Regex matches both original and replacement to ensure idempotence
+        # This regexp will match lines without or without the initial # and also
+        # with an address expressed as either localhost or any IP address.
         regexp: '^#?hosts = (?:localhost|(?:\d{1,3}\.){3}\d{1,3}):5232$'
         line: hosts = 0.0.0.0:5232
       notify: Radicale configuration changed
 
-    - name: Enable radicale version 2 as a service on buster
-      ansible.builtin.lineinfile:
-        path: /etc/default/radicale
-        line: ENABLE_RADICALE=yes
-        regex: '^#?ENABLE_RADICALE=yes'
-      notify: Radicale configuration changed
-      when: lsb_release.stdout == 'buster'
-
-    - name: Enable radicale version 3 as a service on bullseye or bookworm
+    - name: Enable radicale as a service
       ansible.builtin.service:
         name: radicale
         enabled: yes
       notify: Radicale configuration changed
-      when: lsb_release.stdout == 'bullseye' or lsb_release.stdout == 'bookworm'
 
     # TODO: Configure user authentication for access
     # We currently use Radicale only on the internal network for shared
