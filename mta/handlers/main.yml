@@ -2,16 +2,23 @@
 # mta/handlers/main.yml
 # ------------------------------------------------------------------------------
 
-# Default handlers file, which pulls in all handlers for an environment with a
-# a service manager such as systemd.
+# Default handlers file, which combines handlers for both the "Aliases changed"
+# and "Exim configuration changed" events.
 
 ---
 
-- ansible.builtin.import_tasks: ./common.yml
+- ansible.builtin.import_tasks: ./aliases.yml
 
-- name: Reload the Exim configuration if it is running
-  ansible.builtin.service:
-    name: exim4
-    state: reloaded
+- block:
+
+    - name: Run update-exim4.conf on any change affecting the Exim configuration
+      ansible.builtin.command: update-exim4.conf
+      listen: Exim configuration changed
+
+    - name: Reload the Exim configuration if it is running
+      ansible.builtin.service:
+        name: exim4
+        state: reloaded
+      listen: Exim configuration changed
+
   become: yes
-  listen: Exim configuration changed
