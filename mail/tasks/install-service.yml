@@ -21,6 +21,7 @@
       - dovecot-managesieved
       - dovecot-sieve
       - exim4-daemon-heavy
+      - php-mbstring
       - roundcube
       - roundcube-mysql
       - roundcube-plugins
