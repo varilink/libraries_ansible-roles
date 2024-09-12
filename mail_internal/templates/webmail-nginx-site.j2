@@ -1,7 +1,7 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name webmail.{{ domain_name }};
+    server_name webmail webmail.{{ home_domain }};
     root /var/lib/roundcube/public_html;
     index index.php;
     location ~ \.php$ {
