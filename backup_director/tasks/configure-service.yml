@@ -4,57 +4,58 @@
 
 ---
 
+- name: Give members of the bacula group access to the bacula home folder
+  ansible.builtin.file:
+    path: /var/lib/bacula
+    mode: u=rwx,g=rx,o=
+  become: yes
+
+- name: >-
+    Find all the Bacula FileSet files that are provided for roles in this
+    roles library
+  local_action:
+    module: ansible.builtin.find
+    paths: [ "{{ role_path }}/.." ]
+    patterns: [ "bacula-fileset.conf" ]
+    recurse: yes
+  register: fileset_find_result
+
+- set_fact:
+    fileset_files: "{{ fileset_find_result.files | map(attribute='path') }}"
+
+# The backup director is configured to backup one of:
+# 1. Hosts in the inventory group backup_clients.
+# 2. All hosts apart from those in the inventory group backup_exceptions.
+# 3. All hosts.
+#
+# Either backup_clients or backup_exceptions or neither should be configured as
+# inventory groups. It's not valid for both backup_clients and backup_exceptions
+# to be configured as inventory groups.
+#
+# The backup_client role must be allocated in plays that match the following
+# host patterns in those three scenarios:
+# 1. backup_clients
+# 2. all:!backup_exceptions
+# 3. all
+
+- name: >-
+    Derive hosts in backup_clients and backup_exceptions inventory groups
+  ansible.builtin.set_fact:
+    backup_clients: "\
+      {{ groups['backup_clients'] | default('[]') }}"
+    backup_exceptions: "\
+      {{ groups['backup_exceptions'] | default('[]') }}"
+
+- name: >-
+    Fail if there are hosts in both backup_clients and backup_exceptions
+    inventory groups
+  ansible.builtin.fail:
+    msg: >-
+      It's not valid to have both backup_clients and backup_exceptions
+      groups in your inventory
+  when: backup_clients | length > 0 and backup_exceptions | length > 0
+
 - block:
-
-    - name: Give members of the bacula group access to the bacula home folder
-      ansible.builtin.file:
-        path: /var/lib/bacula
-        mode: u=rwx,g=rx,o=
-
-    - name: >-
-        Find all the Bacula FileSet files that are provided for roles in this
-        roles library
-      local_action:
-        module: ansible.builtin.find
-        paths: [ "{{ role_path }}/.." ]
-        patterns: [ "bacula-fileset.conf" ]
-        recurse: yes
-      register: fileset_find_result
-
-    - set_fact:
-        fileset_files: "{{ fileset_find_result.files | map(attribute='path') }}"
-
-    # The backup director is configured to backup one of:
-    # 1. Hosts in the inventory group backup_clients.
-    # 2. All hosts apart from those in the inventory group backup_exceptions.
-    # 3. All hosts.
-    #
-    # Either backup_clients or backup_exceptions or neither should be configured
-    # as inventory groups. It's not valid for both backup_clients and
-    # backup_exceptions to be configured as inventory groups.
-    #
-    # The backup_client role must be allocated in plays that match the following
-    # host patterns in those three scenarios:
-    # 1. backup_clients
-    # 2. all:!backup_exceptions
-    # 3. all
-
-    - name: >-
-        Derive hosts in backup_clients and backup_exceptions inventory groups
-      ansible.builtin.set_fact:
-        backup_clients: "\
-          {{ groups['backup_clients'] | default('[]') }}"
-        backup_exceptions: "\
-          {{ groups['backup_exceptions'] | default('[]') }}"
-
-    - name: >-
-        Fail if there are hosts in both backup_clients and backup_exceptions
-        inventory groups
-      ansible.builtin.fail:
-        msg: >-
-          It's not valid to have both backup_clients and backup_exceptions
-          groups in your inventory
-      when: backup_clients | length > 0 and backup_exceptions | length > 0
 
     - name: Template bacula-dir.conf
       ansible.builtin.template:
