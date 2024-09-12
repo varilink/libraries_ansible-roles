@@ -20,6 +20,17 @@
 
 ---
 
+- name: "\
+    Gather the IPv4 address for the DNS record target if it isn't already known"
+  ansible.builtin.setup:
+    gather_subset:
+      - 'default_ipv4'
+  delegate_to: "{{ dns_record_target }}"
+  delegate_facts: true
+  when: >-
+    dns_record_target is defined and
+    hostvars[dns_record_target]['ansible_default_ipv4'] is not defined
+
 - name: Create DNS record
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts
