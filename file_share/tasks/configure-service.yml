@@ -3,8 +3,8 @@
     - name: Make the homes share writeable
       ansible.builtin.replace:
         path: /etc/samba/smb.conf
-        after: '\[homes\]'
-        before: ';\[netlogon\]'
+        after: '^\[homes\]$'
+        before: '^;\[netlogon\]$'
         regexp: 'read only = yes'
         replace: 'read only = no'
       notify: Samba configuration changed
