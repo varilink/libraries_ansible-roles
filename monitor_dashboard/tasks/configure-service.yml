@@ -23,6 +23,8 @@
 
   become: yes
 
+- meta: flush_handlers
+
 - name: Create or update datasources
   ansible.builtin.include_tasks: datasource/create-or-update.yml
   loop: "{{ monitor_dashboard_datasources }}"

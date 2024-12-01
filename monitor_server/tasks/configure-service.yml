@@ -48,6 +48,8 @@
         line: 'tls-key = "/usr/lib/influxdb/ssl/selfsigned.key"'
       notify: InfluxDB configuration changed
 
+    - meta: flush_handlers
+
     - block:
 
         - name: Setup influx
