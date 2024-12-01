@@ -7,7 +7,6 @@
 - ansible.builtin.import_role:
     name: nginx
     tasks_from: create-site
-    handlers_from: none
   vars:
     subdomain: influxdb
     site_subdomain: influxdb
