@@ -18,8 +18,10 @@
       # set to the same value that it already had. However, there seems to be no
       # way to determine if the password was truly changed from the output.
       ansible.builtin.command: >-
-        grafana-cli --homepath /usr/share/grafana/
-        admin reset-admin-password {{ monitor_dashboard_admin_password }}
+        grafana-cli --config /etc/grafana/grafana.ini
+        --homepath /usr/share/grafana/ admin reset-admin-password
+        {{ monitor_dashboard_admin_password }}
+      notify: Grafana configuration changed
 
   become: yes
 
