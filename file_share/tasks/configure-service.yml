@@ -68,7 +68,10 @@
 
   become: yes
 
-- ansible.builtin.include_tasks: user.yml
-  loop: "{{ staff_users }}"
+- ansible.builtin.include_tasks: create-user.yml
+  vars:
+    username: "{{ user.fname | lower }}"
+    password: "{{ user.password }}"
+  loop: "{{ domain_users }}"
   loop_control:
     loop_var: user

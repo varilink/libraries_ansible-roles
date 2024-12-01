@@ -7,6 +7,6 @@
   # We could perhaps use smbclient on the server to test it via an
   # authentication attempt.
   ansible.builtin.shell: >-
-    printf "{{ user.password }}\n{{ user.password }}\n" |
-    smbpasswd -a -s {{ user.username }}
+    printf "{{ password }}\n{{ password }}\n" |
+    smbpasswd -a -s {{ username }}
   become: yes
