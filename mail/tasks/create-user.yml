@@ -2,11 +2,12 @@
 # mail/tasks/create-user.yml
 # ------------------------------------------------------------------------------
 
-# We are adding a user for a customer domain so we add the user as a Dovecot
-# virtual user rather than an operating system user. Note that the generated
-# password hash differs each time it is generated for the same password,
-# indicating perhaps that a random salt is used. If you know that then you will
-# understand some of the tasks below better.
+# Both the mail_external and mail_internal roles must create operating system
+# accounts for each of the staff users within the home domain. For the home
+# domain, mail users are implemented as operating system users rather than as
+# virtual mail users, which is what we do for customer domains. This task list
+# provides a common mail wrapper for any tasks that both the mail_external and
+# mail_internal roles must incorporate when doing this.
 
 ---
 
