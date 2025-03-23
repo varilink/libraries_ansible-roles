@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# wordpress/tasks/site-action-precursors.yml
+# ------------------------------------------------------------------------------
+
+# Imports validate-site-action.yml and set-site-facts.yml so that playbooks can
+# simply import this task list without having to reflect that underlying detail.
+
+---
+
+- ansible.builtin.import_tasks: validate-site-action.yml
+
+- ansible.builtin.import_tasks: set-site-facts.yml
