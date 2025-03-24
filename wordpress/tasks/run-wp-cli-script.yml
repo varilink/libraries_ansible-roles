@@ -69,6 +69,10 @@
         PROJECT_NAME: "{{ wp_project_name }}"
       register: wp_cli_script_result
 
+    - name: Report the result of the WP CLI script to the console
+      debug:
+        var: wp_cli_script_result
+
     - name: Run any tasks that must be run as successors of the WP-CLI script
       ansible.builtin.include_tasks: "{{ post_script_stat_result.stat.path }}"
       when: post_script_stat_result.stat.exists
