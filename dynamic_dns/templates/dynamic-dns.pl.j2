@@ -110,7 +110,7 @@ if ( Config::Tiny->errstr ) {
     my $ids = LoadFile( "{{ dynamic_dns_records_dir }}/$record_file" );
 
     # Invoke the Domain View API for the domain id specified in the record file.
-    $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+    $response = $user_agent->get( '{{ dns_api_base_url }}/' .
       $ids->{ domain }
     );
 
@@ -130,7 +130,7 @@ if ( Config::Tiny->errstr ) {
 
     # Invoke the Domain Record View API for the domain id and record id
     # specified in the record file.
-    $response = $user_agent->get( '{{ dns_linode_base_url }}/' .
+    $response = $user_agent->get( '{{ dns_api_base_url }}/' .
       $ids->{ domain } . '/records/' . $ids->{ record }
     );
 
@@ -153,7 +153,7 @@ if ( Config::Tiny->errstr ) {
       }
 
       # Invoke the Domain Record Update API for the current domain record.
-      $response = $user_agent->put( '{{ dns_linode_base_url }}/' .
+      $response = $user_agent->put( '{{ dns_api_base_url }}/' .
         $ids->{ domain } . '/records/' . $ids->{ record },
         'Content-Type' => 'application/json',
         'Content' => $content

@@ -4,4 +4,4 @@
 
 ---
 
-dns_linode_base_url: https://api.linode.com/v4/domains
+dns_api_base_url: https://api.linode.com/v4/domains
