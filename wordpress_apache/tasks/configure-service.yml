@@ -22,13 +22,29 @@
         regexp: '^Listen (?:127\.0\.0\.1:)?(?:80|8080)(?: http)?$'
       notify: Apache2 configuration changed
 
-    - name: Enable Apache2 php and rewrite modules
+    - name: Disable apache2 mpm_event module
       community.general.apache2_module:
-        name: "{{ item }}"
+        name: mpm_event
+        state: absent
+        ignore_configcheck: yes
       notify: Apache2 configuration changed
-      loop:
-        - php8.2
-        - rewrite
+
+    - name: Enable apache2 mpm_prefork module
+      community.general.apache2_module:
+        name: mpm_prefork
+        ignore_configcheck: yes
+      notify: Apache2 configuration changed
+
+    - name: Enable apache2 php module
+      community.general.apache2_module:
+        name: php8.2
+        identifier: php
+      notify: Apache2 configuration changed
+
+    - name: Enable apache2 rewrite module
+      community.general.apache2_module:
+        name: rewrite
+      notify: Apache2 configuration changed
 
     - name: Ensure that the /etc/bacula/scripts directory is present
       # Any host for the wordpress_apache role must also host the backup_client
