@@ -28,7 +28,10 @@
       # reloaded for Apache2 to recognise their presence.
       notify: Apache2 configuration changed
 
-    - name: Install WP-CLI
+    - name: Install WP-CLI or update it to the latest version
+      # As the name of the task suggests, if the version of WP CLI available at
+      # the URL is later than the version already installed, then this command
+      # will replace the version installed with the version at the URL.
       ansible.builtin.get_url:
         url: "https://\
           raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
