@@ -68,7 +68,7 @@
 
     - name: Install the WP-CLI find command's package
       ansible.builtin.command:
-        cmd: wp package install wp-cli/find-command
+        cmd: wp package install wp-cli/find-command:@stable
         creates: ~/.wp-cli/packages/vendor/wp-cli/find-command
       become_user: www-data
 
