@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-# dns_api/tasks/create-or-update-wp-site-records.yml
+# dns_api/tasks/create-or-update-address-records.yml
 # ------------------------------------------------------------------------------
 
 ---
@@ -27,7 +27,7 @@
         selectattr('domain', 'equalto', domain_name) | first ).id
       }}
 
-- ansible.builtin.include_tasks: create-or-update-wp-site-record.yml
+- ansible.builtin.include_tasks: create-or-update-record.yml
   loop:
     - type: A
       target: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"
