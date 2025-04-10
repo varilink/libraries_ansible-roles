@@ -144,12 +144,13 @@ if ( Config::Tiny->errstr ) {
       # remote_addr should correspond to the current IP address provided to our
       # office network by our ISP as Linode sees it on the incoming API request.
       # However this can be overridden to use the ipify API to get the IP
-      # address instead.
+      # address instead. We set the TTL for dynamic DNS records to 300 seconds
+      # rather than the default reflecting the fact that they change more often.
       my $content;
       if ( $my_ip ) {
-        $content = encode_json( { target => $my_ip } );
+        $content = encode_json( { target => $my_ip, ttl_sec => 300 } );
       } else {
-        $content = encode_json( { target => '[remote_addr]' } );
+        $content = encode_json( { target => '[remote_addr]', ttl_sec => 300 } );
       }
 
       # Invoke the Domain Record Update API for the current domain record.
