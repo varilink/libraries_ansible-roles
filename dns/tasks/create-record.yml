@@ -39,7 +39,10 @@
       {{ hostvars[dns_record_target].ansible_default_ipv4.address }}
       {%- else %}
       {{ ansible_default_ipv4.address }}
-      {%- endif %} {{ dns_record_hostname }}
+      {%- endif %}
+      {%- if dns_record_group is defined and dns_record_group == 'project' %}
+       {{ dns_record_hostname }}.{{ domain_name }}
+      {%- endif %}
     insertafter: |-
       {% if dns_record_group is not defined %}
       EOF
