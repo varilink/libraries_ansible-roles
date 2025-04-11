@@ -23,6 +23,6 @@
     path: /etc/addn-hosts
     line: >-
       {{ hostvars[lookup_host].ansible_default_ipv4.address }}
-      {{ lookup_host }}
+      {{ hostvars[lookup_host].ansible_hostname }}
     insertafter: '^# Hosts$'
   notify: Dnsmasq configuration changed
