@@ -8,7 +8,7 @@
 
 - name: Create DNS record
   ansible.builtin.uri:
-    url: "https://api.linode.com/v4/domains/{{ domain_id }}/records"
+    url: "{{ dns_api_base_url }}/{{ domain_id }}/records"
     method: POST
     headers:
       Authorization: "Bearer {{ dns_linode_key }}"
@@ -26,9 +26,7 @@
 
 - name: Update DNS record
   ansible.builtin.uri:
-    url: "\
-      https://api.linode.com/v4/domains/{{ domain_id }}/records/\
-      {{ current_record.id }}"
+    url: "{{ dns_api_base_url }}/{{ domain_id }}/records/{{ dns_record_id }}"
     method: PUT
     headers:
       Authorization: "Bearer {{ dns_linode_key }}"
