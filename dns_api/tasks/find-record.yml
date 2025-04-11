@@ -1,0 +1,69 @@
+# ------------------------------------------------------------------------------
+# dns_api/tasks/find-record.yml
+# ------------------------------------------------------------------------------
+
+# This task list uses the DNS API to find a DNS record within the domain zone
+# corresponding to the project currently being worked on. The API endpoint for
+# doing this paginates the results, so this task list scrolls through the pages
+# until it either matches a record or it exhausts the pages without a match.
+#
+# The task lists sets a face "list_records_result", the name of which
+# corresponds to the name of the API endpoint that it uses. This will either
+# contain the page in which the record that it was searching for is found or it
+# will contain the last
+
+---
+
+- ansible.builtin.import_tasks: get-domain-id.yml
+
+- name: List DNS records for the domain until we find the one we're looking for
+    or we run out of records
+  ansible.builtin.uri:
+    url: "{{ dns_api_base_url }}/{{ domain_id }}/records?\
+      page={{ list_records_result.json.page | default(0) | int + 1 }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ dns_linode_key }}"
+  until: >-
+    list_records_result.json.data
+    | selectattr('name', 'equalto', dns_record_hostname)
+    | selectattr('type', 'equalto', dns_record_type)
+    or
+    list_records_result.json.page | int + 1
+    > list_records_result.json.pages | int
+  retries: 5
+  register: list_records_result
+
+- name: Set facts containing the DNS record id and target if a DNS record was
+    found
+  ansible.builtin.set_fact:
+    dns_record_id: "{{ dns_record.id }}"
+    dns_record_current_target: "{{ dns_record.target }}"
+  vars:
+    dns_record: >-
+      {{
+        list_records_result.json.data
+          | selectattr('name', 'equalto', dns_record_hostname)
+            | selectattr('type', 'equalto', dns_record_type)
+              | first
+      }}
+  when: >-
+    list_records_result.json.data
+      | selectattr('name', 'equalto', dns_record_hostname)
+        | selectattr('type', 'equalto', dns_record_type)
+
+- name: Reset the page in the results set to 0
+  # It's possible that we might use this task list more than once in the same
+  # play. To cater for that possibility, we need to reset the page to 0 so that
+  # the search starts from the beginning each time.
+  ansible.builtin.set_fact:
+    list_records_result: >-
+      {{
+        list_records_result
+        | ansible.builtin.combine({
+          'json': list_records_result.json
+          | ansible.builtin.combine({
+            'page': 0
+          })
+        })
+      }}

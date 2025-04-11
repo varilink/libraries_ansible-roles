@@ -1,0 +1,37 @@
+# ------------------------------------------------------------------------------
+# dns_api/tasks/get-domain-id.yml
+# ------------------------------------------------------------------------------
+
+# This task list is a required precursor to many (all?) operations that use the
+# DNS API. It looks up the domain name of the project currently being worked on
+# to determine the domain identifier by which the domain is accessed using the
+# API. It's overwhelmingly probable that subsequent steps in any DNS operation
+# carried out using the API will need this domain identifier.
+
+---
+
+- block:
+
+    - name: Get the page of domains from the DNS API that contains this
+        project's domain
+      ansible.builtin.uri:
+        url: "{{ dns_api_base_url }}?\
+          page={{ list_domains_result.attempts | default(0) | int + 1 }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ dns_linode_key }}"
+      until: >-
+        list_domains_result.json.data
+          | selectattr('domain', 'equalto', domain_name)
+      retries: 5
+      register: list_domains_result
+
+    - name: Set a fact that contains this project's API domain identifier
+      ansible.builtin.set_fact:
+        domain_id: >-
+          {{
+            (list_domains_result.json.data |
+            selectattr('domain', 'equalto', domain_name) | first ).id
+          }}
+
+  when: domain_id is not defined

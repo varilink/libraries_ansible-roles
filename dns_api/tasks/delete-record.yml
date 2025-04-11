@@ -1,0 +1,19 @@
+# ------------------------------------------------------------------------------
+# dns_api/tasks/delete-record.yml
+# ------------------------------------------------------------------------------
+
+# This task list deletes a DNS record using the DNS API. It is a generic task
+# list that can be used for any type of DNS record.
+
+---
+
+- ansible.builtin.import_tasks: find-record.yml
+
+- name: Delete DNS record
+  ansible.builtin.uri:
+    url: "{{ dns_api_base_url }}/{{ domain_id }}/records/{{ dns_record_id }}"
+    method: DELETE
+    headers:
+      Authorization: "Bearer {{ dns_linode_key }}"
+  register: delete_record_result
+  changed_when: delete_record_result.status == 200

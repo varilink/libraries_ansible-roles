@@ -1,0 +1,55 @@
+# ------------------------------------------------------------------------------
+# dns_api/tasks/detect-address-record-change.yml
+# ------------------------------------------------------------------------------
+
+# This task list compares requested values for the A and AAAA records for a
+# hostname. We refer to these record types as "address" records. It sets a
+# fact dns_address_record_change to indicate whether, if applied, the requested
+# values would be a change to the current values.
+#
+# Note that if the A or AAAA record changes then logically they must both
+# change, regardless of the logic below, which would make it appear that one
+# of them could change in isolation.
+
+---
+
+- ansible.builtin.import_tasks: find-record.yml
+  vars:
+    dns_record_type: A
+
+- name: Set a fact indicating whether to proceed would change the target for an
+    existing A record for this hostname
+  ansible.builtin.set_fact:
+    dns_address_record_change: |-
+      {%
+        if dns_record_id is defined
+        and
+        dns_record_current_target != ansible_default_ipv4.address
+      %}
+      yes
+      {%- else %}
+      no
+      {%- endif %}
+
+- block:
+
+    - ansible.builtin.import_tasks: find-record.yml
+      vars:
+        dns_record_type: AAAA
+
+    - name:  Set a fact indicating whether to proceed would change the target
+        for an existing AAAA record for this hostname
+      ansible.builtin.set_fact:
+        dns_address_record_change: |-
+          {%
+            if dns_record_id is defined
+            and
+            dns_record_current_target
+              != ansible_default_ipv6.address
+          %}
+          yes
+          {%- else %}
+          no
+          {%- endif %}
+
+  when: not dns_address_record_change
