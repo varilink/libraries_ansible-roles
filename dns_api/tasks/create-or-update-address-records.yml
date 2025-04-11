@@ -8,10 +8,11 @@
   when: domain_id is not defined
 
 - ansible.builtin.include_tasks: create-or-update-record.yml
+  vars:
+    dns_record_type: "{{ item.type }}"
+    dns_record_target: "{{ item.target }}"
   loop:
     - type: A
-      target: "{{ hostvars[inventory_hostname].ansible_default_ipv4.address }}"
+      target: "{{ ansible_default_ipv4.address }}"
     - type: AAAA
-      target: "{{ hostvars[inventory_hostname].ansible_default_ipv6.address }}"
-  loop_control:
-    loop_var: required_record
+      target: "{{ ansible_default_ipv6.address }}"

@@ -14,15 +14,12 @@
       Authorization: "Bearer {{ dns_linode_key }}"
     body_format: json
     body:
-      name: "{{ wp_subdomain }}"
-      type: "{{ required_record.type }}"
-      target: "{{ required_record.target }}"
+      name: "{{ dns_record_hostname }}"
+      type: "{{ dns_record_type }}"
+      target: "{{ dns_record_target }}"
   register: create_record_result
   changed_when: create_record_result.status == 200
-  when: >-
-    not list_records_result.json.data
-    | selectattr('name', 'equalto', wp_subdomain)
-    | selectattr('type', 'equalto', required_record.type)
+  when: dns_record_id is not defined
 
 - name: Update DNS record
   ansible.builtin.uri:
@@ -32,22 +29,10 @@
       Authorization: "Bearer {{ dns_linode_key }}"
     body_format: json
     body:
-      name: "{{ wp_subdomain }}"
-      type: "{{ required_record.type }}"
-      target: "{{ required_record.target }}"
-  when: >-
-    list_records_result.json.data
-    | selectattr('name', 'equalto', wp_subdomain)
-    | selectattr('type', 'equalto', required_record.type)
-    and
-    required_record.target != current_record.target
+      name: "{{ dns_record_hostname }}"
+      type: "{{ dns_record_type }}"
+      target: "{{ dns_record_target }}"
+  when: dns_record_id is defined
+    and dns_record_current_target != dns_record_target
   register: update_record_result
   changed_when: update_record_result.status == 200
-  vars:
-    current_record: >-
-      {{
-        list_records_result.json.data |
-        selectattr('name', 'equalto', wp_subdomain) |
-        selectattr('type', 'equalto', required_record.type) |
-        first
-      }}
