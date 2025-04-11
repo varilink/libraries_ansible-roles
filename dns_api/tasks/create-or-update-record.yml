@@ -4,35 +4,7 @@
 
 ---
 
-- name: Test if the DNS record has already been created or not
-  ansible.builtin.uri:
-    url: "\
-      https://api.linode.com/v4/domains/{{ domain_id }}/records?\
-      page={{ list_records_result.json.page | default(0) | int + 1 }}"
-    method: GET
-    headers:
-      Authorization: "Bearer {{ dns_linode_key }}"
-  until: >-
-    list_records_result.json.data
-    | selectattr('name', 'equalto', wp_subdomain)
-    | selectattr('type', 'equalto', required_record.type)
-    or
-    list_records_result.json.page | int + 1
-    > list_records_result.json.pages | int
-  retries: 5
-  register: list_records_result
-
-- set_fact:
-    list_records_result: >-
-      {{
-        list_records_result
-        | combine({
-          'json': list_records_result.json
-          | combine({
-            'page': 0
-          })
-        })
-      }}
+- ansible.builtin.import_tasks: find-record.yml
 
 - name: Create DNS record
   ansible.builtin.uri:
