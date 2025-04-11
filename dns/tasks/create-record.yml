@@ -14,7 +14,7 @@
 # hostname is used to lookup the "ansible_default_ipv4.address" for that host,
 # which becomes the IP address for the DNS record.
 #
-# The caller can also optionally pass a variable "dns_record_type", which can
+# The caller can also optionally pass a variable "dns_record_group", which can
 # take the values "host", "service" or "project". This is used to control the
 # section within the `/etc/add-hosts` file where the record is inserted.
 
@@ -41,13 +41,13 @@
       {{ ansible_default_ipv4.address }}
       {%- endif %} {{ dns_record_hostname }}
     insertafter: |-
-      {% if dns_record_type is not defined %}
+      {% if dns_record_group is not defined %}
       EOF
-      {%- elif dns_record_type == 'host' %}
+      {%- elif dns_record_group == 'host' %}
       ^# Hosts$
-      {%- elif dns_record_type == 'service' %}
+      {%- elif dns_record_group == 'service' %}
       ^# Services$
-      {%- elif dns_record_type == 'project' %}
+      {%- elif dns_record_group == 'project' %}
       ^# Projects$
       {%- else %}
       EOF
