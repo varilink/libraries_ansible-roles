@@ -9,6 +9,10 @@
 - name: Delete dynamic DNS record file
   ansible.builtin.file:
     path: "{{ dynamic_dns_records_dir }}/\
-      {{ dynamic_dns_record_hostname }}.{{ domain_name }}.yml"
+      {{ dns_record_hostname }}.{{ domain_name }}.yml"
     state: absent
   become: yes
+
+- ansible.builtin.import_role:
+    name: dns_api
+    tasks_from: delete-record

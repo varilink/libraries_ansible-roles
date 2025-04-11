@@ -6,13 +6,15 @@
 
 ---
 
+- ansible.builtin.import_role:
+    name: dns_api
+    tasks_from: find-record
+
 - name: Create dynamic DNS record file
   ansible.builtin.copy:
     dest: "{{ dynamic_dns_records_dir }}/\
-      {{ dynamic_dns_record_hostname }}.{{ domain_name }}.yml"
+      {{ dns_record_hostname }}.{{ domain_name }}.yml"
     content: |
-      domain: {{ linode_domain_id }}
-      record: {{
-        linode_domain_dynamic_dns_records[dynamic_dns_record_hostname]
-      }}
+      domain: {{ domain_id }}
+      record: {{ dns_record_id }}
   become: yes
