@@ -15,6 +15,7 @@
 ---
 
 - ansible.builtin.import_tasks: get-domain-id.yml
+  when: domain_id is not defined
 
 - name: List DNS records for the domain until we find the one we're looking for
     or we run out of records
