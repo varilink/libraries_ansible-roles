@@ -4,9 +4,6 @@
 
 ---
 
-- ansible.builtin.import_tasks: get-domain-id.yml
-  when: domain_id is not defined
-
 - ansible.builtin.include_tasks: create-or-update-record.yml
   vars:
     dns_record_type: "{{ item.type }}"
