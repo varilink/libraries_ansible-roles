@@ -161,7 +161,7 @@
               - "--chown=www-data:www-data"
             rsync_plugin_opts: "{{ item.rsync_opts | default([]) }}"
           loop: "{{ wp_plugins }}"
-          when: wp_plugins is defined
+          when: wp_plugins is defined and wp_plugins | length > 0
 
         - name: >-
             Synchronize theme defined in this repository to the wordpress
@@ -182,7 +182,7 @@
               - "--chown=www-data:www-data"
             rsync_theme_opts: "{{ item.rsync_opts | default([]) }}"
           loop: "{{ wp_themes }}"
-          when: wp_themes is defined
+          when: wp_themes is defined and wp_themes | length > 0
 #          register: theme_sync
 
 #        - debug:
