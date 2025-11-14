@@ -17,29 +17,32 @@
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
         line: "$config['smtp_host'] = 'localhost:25';"
-        regexp: "^\\$config=\\['smtp_host'\\] = '.*';$"
+        regexp: "^\\$config\\['smtp_host'\\] = '.*';$"
 
     - name: Roundcube support_url config setting
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
         line: "\
           $config['support_url'] = 'https://{{ domain_name }}/roundcube/';"
-        regexp: "^\\$config=\\['support_url'\\] = '.*';$"
+        regexp: "^\\$config\\['support_url'\\] = '.*';$"
 
     - name: Roundcube product_name config setting
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
         line: "$config['product_name'] = 'Varilink Webmail';"
-        regexp: "^\\$config=\\['product_name'\\] = '.*';$"
+        regexp: "^\\$config\\['product_name'\\] = '.*';$"
 
     - name: Roundcube des_key config setting
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
-        line: "$config['des_key'] = '{{ des_key | first }}';"
-        regexp: "^\\$config=\\['des_key'\\] = '.*';$"
+        line: "$config['des_key'] = '{{ des_key }}';"
+        regexp: "^\\$config\\['des_key'\\] = '.*';$"
       vars:
-        des_key: "\
-          query('community.general.random_string', length=24, special=false)"
+        des_key: >-
+          {{
+            query('community.general.random_string', length=24, special=false)
+            | first
+          }}
 
     - name: Add BEGIN block marker for plugins config setting
       ansible.builtin.lineinfile:
