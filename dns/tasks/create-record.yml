@@ -42,6 +42,8 @@
       {%- endif %}
       {%- if dns_record_group is defined and dns_record_group == 'project' %}
        {{ dns_record_hostname }}.{{ domain_name }}
+      {%- else %}
+       {{ dns_record_hostname }}
       {%- endif %}
     insertafter: |-
       {% if dns_record_group is not defined %}
@@ -55,5 +57,17 @@
       {%- else %}
       EOF
       {% endif %}
+    regexp: |-
+      {%- if dns_record_group is defined and dns_record_group == 'project' %}
+      {{
+        '^192\.168\.1\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)'
+        ~ dns_record_hostname ~ '.' ~ domain_name ~ '$'
+      }}
+      {%- else %}
+      {{
+        '^192\.168\.1\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d) '
+        ~ dns_record_hostname ~ '$'
+      }}
+      {%- endif %}
   notify: Dnsmasq configuration changed
   become: yes
