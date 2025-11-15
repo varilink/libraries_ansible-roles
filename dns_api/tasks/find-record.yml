@@ -40,6 +40,7 @@
   ansible.builtin.set_fact:
     dns_record_id: "{{ dns_record.id }}"
     dns_record_current_target: "{{ dns_record.target }}"
+    dns_record_current_ttl_sec: "{{ dns_record.ttl_sec }}"
   vars:
     dns_record: >-
       {{

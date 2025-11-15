@@ -8,7 +8,15 @@
 
 - ansible.builtin.import_role:
     name: dns_api
-    tasks_from: find-record
+    tasks_from: get-domain-id
+
+- ansible.builtin.import_role:
+    name: dns_api
+    tasks_from: create-or-update-record
+  vars:
+    dns_record_type: 'A'
+    dns_record_target: "{{ ansible_default_ipv4.address }}"
+    dns_record_ttl_sec: 300
 
 - name: Create dynamic DNS record file
   ansible.builtin.copy:

@@ -13,10 +13,15 @@
     headers:
       Authorization: "Bearer {{ dns_linode_key }}"
     body_format: json
-    body:
-      name: "{{ dns_record_hostname }}"
-      type: "{{ dns_record_type }}"
-      target: "{{ dns_record_target }}"
+    body: >-
+      {{
+        {
+          "name": dns_record_hostname,
+          "type": dns_record_type,
+          "target": dns_record_target,
+          "ttl_sec": (dns_record_ttl_sec | default(86400) | int)
+        } | to_json
+      }}
   register: create_record_result
   changed_when: create_record_result.status == 200
   when: dns_record_id is not defined
@@ -28,11 +33,20 @@
     headers:
       Authorization: "Bearer {{ dns_linode_key }}"
     body_format: json
-    body:
-      name: "{{ dns_record_hostname }}"
-      type: "{{ dns_record_type }}"
-      target: "{{ dns_record_target }}"
-  when: dns_record_id is defined
-    and dns_record_current_target != dns_record_target
+    body: >-
+      {{
+        {
+          "name": dns_record_hostname,
+          "type": dns_record_type,
+          "target": dns_record_target,
+          "ttl_sec": (dns_record_ttl_sec | default(86400) | int)
+        } | to_json
+      }}
+  when: dns_record_id is defined and
+    ( 
+      dns_record_current_target != dns_record_target or
+      dns_record_current_ttl_sec | int
+        != dns_record_ttl_sec | default(86400) | int
+    )
   register: update_record_result
   changed_when: update_record_result.status == 200
