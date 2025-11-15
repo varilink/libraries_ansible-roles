@@ -2,6 +2,14 @@
 # dns_api/tasks/create-or-update-record.yml
 # ------------------------------------------------------------------------------
 
+# Creates or updates a DNS record after having determined which of those actions
+# is required by doing a find for the record first. The hostname, type and
+# target for the record MUST be provided. The TTL seconds for the record can be
+# optionally provded and if omitted the Linode default of 604800 seconds will be
+# used. Note that before using this task list the Linode domain_id must be
+# established, which can be done using the get-domain-id.yml task list within
+# this role.
+
 ---
 
 - ansible.builtin.import_tasks: find-record.yml
