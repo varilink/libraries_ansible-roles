@@ -6,6 +6,14 @@
 
 - block:
 
+    - name: Template the Exim localmacros file
+      # This file sets Exim localmacros values that tweak our Exim configuration
+      # to our exact needs.
+      ansible.builtin.template:
+        src: exim-localmacros.j2
+        dest: /etc/exim4/conf.d/main/00_exim4-config_localmacros
+      notify: Exim configuration changed
+
     - ansible.builtin.import_tasks: configure-service/fetchmail.yml
 
     - ansible.builtin.import_tasks: configure-service/exim-smtp-outbound.yml

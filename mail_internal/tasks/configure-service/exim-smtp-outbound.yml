@@ -28,12 +28,4 @@
           {{ mta_smarthost.username }}:\
           {{ mta_smarthost.userpass }}"
 
-    - name: Template out the Exim localmacros file for transport configuration
-      # The Exim localmacros file sets values that tweak our Exim configuration
-      # to our exact needs.
-      ansible.builtin.template:
-        src: exim-localmacros.j2
-        dest: /etc/exim4/conf.d/transport/01_exim4-config_localmacros
-      notify: Exim configuration changed
-
   become: yes
