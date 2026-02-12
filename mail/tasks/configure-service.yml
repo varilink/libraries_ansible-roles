@@ -76,4 +76,16 @@
         src: logo.svg
         dest: /var/lib/roundcube/skins/elastic/images/logo.svg
 
+    - name: Drop rather than deny in the Exim check data ACL
+      ansible.builtin.replace:
+        path: /etc/exim4/conf.d/acl/40_exim4-config_check_data
+        regexp: '(\.ifn?def {{ target_block }}[\s\S]*?\n)\s*deny\b'
+        replace: '\1 drop'
+      loop:
+        - IGNORE_SMTP_LINE_LENGTH_LIMIT
+        - NO_CHECK_DATA_VERIFY_HEADER_SYNTAX
+        - CHECK_DATA_VERIFY_HEADER_SENDER
+      loop_control:
+        loop_var: target_block
+
   become: yes
