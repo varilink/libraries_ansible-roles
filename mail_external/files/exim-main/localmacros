@@ -1,0 +1,2 @@
+# Accept messages of any line length
+IGNORE_SMTP_LINE_LENGTH_LIMIT = 1

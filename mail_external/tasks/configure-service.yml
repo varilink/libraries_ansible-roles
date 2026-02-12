@@ -15,6 +15,14 @@
 
 - ansible.builtin.import_tasks: configure-service/dovecot.yml
 
+- name: Copy the Exim localmacros file
+  # This file sets Exim localmacros values that tweak our Exim configuration
+  # to our exact needs.
+  ansible.builtin.copy:
+    src: exim-main/localmacros
+    dest: /etc/exim4/conf.d/main/00_exim4-config_localmacros
+  notify: Exim configuration changed
+
 - ansible.builtin.import_tasks: configure-service/exim-smtp-inbound.yml
 
 - ansible.builtin.import_tasks: configure-service/exim-smtp-outbound.yml
