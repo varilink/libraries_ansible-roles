@@ -4,3 +4,9 @@ poll {{ hostvars[target_host].ansible_host }}.
   user {{ user.fname | lower }} with password {{ user.password }}
     is {{ user.fname | lower }} here no sslcertck;
 {% endfor %}
+
+{% for poll in addn_fetchmail_polls %}
+poll {{ poll.hostname }} proto {{ poll.proto }} bad-header reject
+  user {{ poll.username }} with password {{ poll.password }}
+    is {{ poll.local_username }} here no sslcertck;
+{% endfor %}
