@@ -7,8 +7,8 @@
 - block:
 
     - name: Trust the IMAP connections from clients on the office network
-      # Where we have users on clients on the office network we choose to trust
-      # this client connections without authentication.
+      # Where we have clients connecting from the office network we choose to
+      # trust those clients without authentication.
       ansible.builtin.lineinfile:
         path: /etc/dovecot/dovecot.conf
         regexp: '^#?login_trusted_networks ='

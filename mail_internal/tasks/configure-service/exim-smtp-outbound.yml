@@ -15,6 +15,9 @@
           .endif
       notify: Exim configuration changed
 
+    # This may be a duplicate for the task "Add line to /etc/exim4/passwd.client
+    # if credentials supplied" which is in the configure-service.yml task list
+    # of the mta role.
     - name: >-
         Add a line to the passwd.client file for authentication to the
         mail_external smarthost

@@ -33,7 +33,8 @@
     - name: Enable write in /var/www for the www-data user
       # Composer can not be run as root non-interactively since running as root
       # triggers a prompt for confirmation. So we run it as www-data and
-      # therefore must enabled write within /var/www for that user.
+      # therefore must enable write within /var/www for that user so it can
+      # create the Ansible temporary directory okay - see next step.
       ansible.builtin.file:
         path: /var/www
         group: www-data

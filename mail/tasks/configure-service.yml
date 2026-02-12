@@ -14,6 +14,8 @@
       notify: Dovecot configuration changed
 
     - name: Roundcube smtp_host config setting
+      # Roundcube uses port 587 by default but we prefer 25 for trusted,
+      # unauthenticated and unecrypted connections on the localhost interface.
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
         line: "$config['smtp_host'] = 'localhost:25';"
@@ -33,6 +35,9 @@
         regexp: "^\\$config\\['product_name'\\] = '.*';$"
 
     - name: Roundcube des_key config setting
+      # This task generates a new, random DES key each time it is executed.
+      # Therefore it will always report a change, since the new key replaces
+      # any key that was previously in the file.
       ansible.builtin.lineinfile:
         path: /etc/roundcube/config.inc.php
         line: "$config['des_key'] = '{{ des_key }}';"
