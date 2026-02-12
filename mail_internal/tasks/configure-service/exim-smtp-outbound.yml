@@ -20,10 +20,10 @@
         mail_external smarthost
       ansible.builtin.lineinfile:
         path: /etc/exim4/passwd.client
-        line: >-
-          mail:smarthost:{{
-            mail_external_smarthost_password | default('smarthost_password')
-          }}
+        line: "\
+          {{ mta_smarthost.hostname }}:\
+          {{ mta_smarthost.username }}:\
+          {{ mta_smarthost.userpass }}"
 
     - name: Template out the Exim localmacros file for transport configuration
       # The Exim localmacros file sets values that tweak our Exim configuration
