@@ -16,8 +16,8 @@
     - name: Add the interval option for fetchmail
       ansible.builtin.lineinfile:
         path: /etc/default/fetchmail
-        regexp: '^(?:# )?OPTIONS=(?:...|"-d 10")$'
-        line: OPTIONS="-d 10"
+        regexp: '^(?:# )?OPTIONS=(?:...|"-d \d+")$'
+        line: OPTIONS="-d {{ fetchmail_interval | default(300) }}"
       notify: Fetchmail configuration changed
 
     - name: Deploy fetchmailrc file
