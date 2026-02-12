@@ -33,7 +33,7 @@
           {{ host }}
           {%- endif %}
           {% endfor %}
-        users: "{{ domain_users }}"
+        users: "{{ hostvars[target_host].domain_users }}"
       notify: Fetchmail configuration changed
 
   become: yes

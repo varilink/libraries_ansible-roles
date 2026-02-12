@@ -1,4 +1,5 @@
-poll {{ target_host }} proto imap
+poll {{ hostvars[target_host].ansible_host }}.
+  {{- domain_name }} proto imap
 {% for user in users %}
   user {{ user.fname | lower }} with password {{ user.password }}
     is {{ user.fname | lower }} here no sslcertck;
