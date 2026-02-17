@@ -1,9 +1,0 @@
-upstream php-fpm {
-{% if debian_release == 'bullseye' %}
-  server unix:/run/php/php7.4-fpm.sock ;
-{% elif debian_release == 'buster' %}
-  server unix:/run/php/php7.3-fpm.sock ;
-{% elif debian_release == 'stretch' %}
-  server unix:/run/php/php7.0-fpm.sock ;
-{% endif %}
-}

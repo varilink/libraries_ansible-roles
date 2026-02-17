@@ -1,9 +1,0 @@
-# ------------------------------------------------------------------------------
-# wordpress_nginx/tasks/dependencies.yml
-# ------------------------------------------------------------------------------
-
----
-
-- name: Import the wordpress role
-  ansible.builtin.import_role:
-    name: wordpress
