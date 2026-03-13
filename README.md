@@ -70,6 +70,101 @@ This is deployed to every host that is backed up in my automated, backup schedul
 
 Backup director service based on the [Bacula Director](https://bacula.org/whitepapers/ConceptGuide.pdf#section.1.2) and using MariaDB to store its [Catalog](https://bacula.org/whitepapers/ConceptGuide.pdf#section.1.6).
 
+##### Automated, role based, Bacula FileSet configuration
+
+The [backup_director](#backup_director) role deploys a `bacula-dir.conf` file that defines a Bacula FileSet specific to each host that is backed up. It does this, first by reference to the [hosts_to_roles_map](#hosts_to_roles_map) variable and then by reference to the variables defined in the `vars/bacula-fileset.yml` file of roles that contain one.
+
+If a role contains a `vars/bacula-fileset.yml` file then it must contain a single variable who name is the name of the role. That variable must be a dictionary variable that contains one or both of included_files and included_roles keys. The values for those keys must be arrays with the contents as follows:
+
+**included_files**
+
+The items in the included_files list are used by the [backup_director](#backup_director) role to build Include blocks within the FileSet for hosts that the role is deployed to. Those items can be one of two types:
+
+1. A string
+
+Items that are strings will all be used in a single Include block as the values of File options within that Include block.
+
+For example:
+
+```yaml
+- "/etc/dovecot/"
+- "/etc/roundcube/"
+```
+
+Is translated into an Include block as follows:
+
+```conf
+Include {
+
+  File = /etc/dovecot/
+  File = /etc/roundcube
+
+  Options { 
+
+    Compression = GZIP
+    Signature = MD5
+
+  }
+
+}
+```
+
+2. An array
+
+The items of the array must be a string and another array of dictionary variables. These array items in included_files will be translated one-to-one to Include blocks, **not** combined into a single block. The subitems are used in that Include block as follows:
+- The string as above is used as the value of a File option.
+- The array of dictionary variables are used as options within an Options block or blocks for the Include block. There will be a separate Options block created for any dictionary variable that contains the key "Exclude" with a positive value.
+
+For example:
+
+```yaml
+- ["/home/",
+    [ 
+      {
+        RegExDir: '"^/home/[^/]+$"',
+        WildDir: '"/home/*/Maildir"',
+        Wild: '"/home/*/Maildir/*"'
+      },
+      {
+        Exclude: "yes",
+        Wild: '"/home/*"'
+      }
+    ]
+  ]
+```
+
+Is translated into an Include block as follows:
+
+```conf
+Include {
+
+  File = /home/
+
+  Options {
+
+    Compression = GZIP
+    Signature = MD5
+    RegExDir = "^/home/[^/]+$"
+    WildDir = "/home/*/Maildir"
+    Wild = "/home/*/Maildir/*"
+
+  }
+
+  Options {
+
+    Exclude = yes
+    Wild = "/home/*"
+
+  }
+}
+```
+
+**included_roles**
+
+The items in the included_roles list are used by the [backup_director](#backup_director) role to supplement the list of roles for hosts taken from the [host_to_roles_map](#host_to_roles_map). When it produces the FileSet for a host it drills-down from the list of roles for that host in the [host_to_roles_map](#host_to_roles_map) by following any chain of included_roles and add those included roles to the list. Roles in included_roles can themselves provide a list of roles in their own included_roles.
+
+The purpose of this facility is to be able to specify common included_files values for more than one role but associating that list with a role that is included into other roles via included_roles. For example, the [backup_client](#backup_client), [backup_director](#backup_director) and [backup_storage](#backup_storage) roles all take their configuration from the `/etc/bacula/` directory. So, `/etc/bacula/` is specified in the included_file for the [backup](#backup) role and that role is then specified in included_roles for the [backup_client](#backup_client), [backup_director](#backup_director) and [backup_storage](#backup_storage) roles.
+
 #### backup_dropbox
 
 [Dropbox](https://www.dropbox.com/) integration for making off-site copies of the backup media created by backups of on-site hosts for disaster recovery purposes. This is a dependency of both the [backup_director](#backup_director) and [backup_storage](#backup_storage) roles if backup integration with [Dropbox](https://www.dropbox.com/) is enabled.
