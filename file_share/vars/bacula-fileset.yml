@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# file_share/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+file_share:
+  included_files: ['/var/local/samba/house']

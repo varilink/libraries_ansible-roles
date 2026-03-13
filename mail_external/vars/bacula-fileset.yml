@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# mail_external/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+mail_external:
+  included_files: ['/home/vmail/']
+  included_roles: ['mail']

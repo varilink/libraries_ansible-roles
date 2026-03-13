@@ -1,0 +1,12 @@
+# ------------------------------------------------------------------------------
+# dns_api/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+dns_api:
+  included_files:
+    - "/usr/local/etc/dns-linode-credentials.ini"

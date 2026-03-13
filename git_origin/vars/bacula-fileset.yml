@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# git_origin/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+git_origin:
+  included_files: ['/var/local/git']

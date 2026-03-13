@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# dns_client/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+dns_client:
+  included_files: ['/etc/hosts', '/etc/resolv.conf']

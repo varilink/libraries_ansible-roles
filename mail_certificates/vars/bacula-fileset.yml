@@ -1,0 +1,15 @@
+# ------------------------------------------------------------------------------
+# mail_certificates/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+mail_certificates:
+  included_files: ['/etc/letsencrypt/accounts']
+  included_files: ['/etc/letsencrypt/live']
+  included_files: ['/usr/local/etc/certs']
+  included_files: ['/etc/letsencrypt/live']
+  included_roles: ['dns_api']

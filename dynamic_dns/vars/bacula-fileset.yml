@@ -1,0 +1,14 @@
+# ------------------------------------------------------------------------------
+# dynamic_dns/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+dynamic_dns:
+  included_files: 
+    - '/usr/local/src/dynamic-dns.pl'
+    - '/var/spool/cron/crontabs/root'
+  included_roles: ['dns_api']

@@ -1,0 +1,26 @@
+# ------------------------------------------------------------------------------
+# mail/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+mail:
+  included_files:
+    - "/etc/dovecot/"
+    - "/etc/roundcube/"
+    - ["/home/",
+        [ 
+          {
+            RegExDir: '"^/home/[^/]+$"',
+            WildDir: '"/home/*/Maildir"',
+            Wild: '"/home/*/Maildir/*"'
+          },
+          {
+            Exclude: "yes",
+            Wild: '"/home/*"'
+          }
+        ]
+      ]

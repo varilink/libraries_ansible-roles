@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# backup_director/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+backup_director:
+  included_roles: ["backup"]

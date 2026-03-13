@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# reverse_proxy/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+reverse_proxy:
+  included_roles: ['nginx']

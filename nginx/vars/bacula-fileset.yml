@@ -1,0 +1,11 @@
+# ------------------------------------------------------------------------------
+# nginx/vars/bacula-fileset.yml
+# ------------------------------------------------------------------------------
+
+See:
+https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+
+---
+
+nginx:
+  included_files: ['/etc/nginx/', /etc/letsencrypt/]
