@@ -98,6 +98,12 @@
           {{ lookup('inventory_hostnames', dns_hosts_group).split(',') }}"
       when: ansible_limit is not defined
 
+    # When the limit option is used for the Ansible command it may be that we
+    # have a partial environment that doesn't include all hosts in the
+    # inventory. This is often the case when testing in a Docker environment. If
+    # we attempt lookups on hosts that aren't present this will lead to
+    # failures, so we pass the limited hosts list here to prevent that
+    # happening.
     - ansible.builtin.include_tasks: add-host-lookup.yml
       loop: "{{ hosts_in_scope | intersect(hosts_limited_to) }}"
       loop_control:
