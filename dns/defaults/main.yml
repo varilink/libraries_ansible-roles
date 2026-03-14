@@ -4,7 +4,5 @@
 
 ---
 
-dns_hosts_group: all
-
 # See https://github.com/varilink/libraries_ansible-roles#unsafe_writes
 unsafe_writes: false
