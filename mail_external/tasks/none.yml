@@ -1,0 +1,8 @@
+# ------------------------------------------------------------------------------
+# mail_external/tasks/none.yml
+# ------------------------------------------------------------------------------
+
+# Empty task list so that this role can be imported without task for handlers,
+# vars, etc.
+
+---
