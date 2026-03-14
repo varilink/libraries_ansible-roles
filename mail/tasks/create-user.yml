@@ -16,13 +16,21 @@
     - ansible.builtin.import_role:
         name: staff_user
 
+    - name: Make sure that the user's Maildir exists
+      ansible.builtin.file:
+        path: /home/{{ username }}/Maildir/
+        state: directory
+        owner: "{{ username }}"
+        group: "{{ username }}"
+        mode: u=rwx,g=,o=
+
     - name: Add alias for user to the /etc/aliases file
       ansible.builtin.lineinfile:
         path: /etc/aliases
         line: '{{ username }}.{{ user.lname | lower }}: {{ username }}'
-      become: yes
       notify: Aliases changed
 
+  become: yes
   vars:
     username: "{{ user.fname | lower }}"
     password: "{{ user.password }}"
