@@ -1,0 +1,28 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/bacula-filesets/load-vars.yml
+# ------------------------------------------------------------------------------
+
+# Reads the contents of a bacula-fileset.yml vars file and loads it into the
+# variable role_fileset_spec. Then add role_fileset_spec to another variable
+# role_fileset_specs that contains entries for every role with a FileSet
+# specification.
+#
+# The specifictions consist of at least one of a list of included_files or a
+# list of included_roles. The specifications are separated within the
+# fole_fileset_specs variable by keys that are the role names.
+
+---
+
+- name: "Load the FileSet specification for the role {{ fileset_role }}"
+  ansible.builtin.include_vars:
+    file: "{{ file_path }}"
+    name: 'role_fileset_spec'
+
+- name: >-
+    Add the FileSet specifiction for the role {{ fileset_role }} to the list
+    of role FileSet specifications
+  ansible.builtin.set_fact:
+    role_fileset_specs: >-
+      {{
+        role_fileset_specs | default({}) | combine(role_fileset_spec)
+      }}

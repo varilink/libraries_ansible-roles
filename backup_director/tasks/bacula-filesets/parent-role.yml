@@ -1,0 +1,38 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/bacula-filesets/parent-role.yml
+# ------------------------------------------------------------------------------
+
+# For a "parent" role that specifies included_roles, this task list creates a
+# variable role_fileset_include_list that contains a list of included roles for
+# the parent role that has been derived by drilling down through the chain of
+# role includes from the parent.
+
+---
+
+- block:
+
+    - name: >-
+        Initialise role_fileset_include_list with the direct children of the
+        parent role before drilling down through the chain of role includes
+      ansible.builtin.set_fact:
+        role_fileset_include_list: >-
+          {{ role_fileset_specs[parent_role].included_roles }}
+
+    - name: Descend into the included roles for the parent role
+      ansible.builtin.include_tasks: ./included-role.yml
+      loop: "{{ role_fileset_specs[parent_role].included_roles }}"
+      loop_control:
+        loop_var: included_role
+
+    - name: Add role_fileset_include_list to role_fileset_include_lists
+      ansible.builtin.set_fact:
+        role_fileset_include_lists: >-
+          {{
+            role_fileset_include_lists | default({}) | combine({
+              parent_role: role_fileset_include_list
+            })
+          }}
+
+  vars:
+    parent_role_included_roles: "\
+      {{ role_fileset_specs[parent_role].included_roles }}"

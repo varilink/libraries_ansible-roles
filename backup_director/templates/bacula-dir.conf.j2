@@ -233,144 +233,218 @@ Job {
 
 FileSet {
 
-  # Client specific fileset for {{ hostname }}
   Name = {{ hostname }}
-  Ignore FileSet Changes = yes
 
-  # Catch-all files to include. These will be progressively replaced by role and
-  # client files to include from the client specific filesets. According to the
-  # Bacula documenation, if a file or directory is duplicated then that will
-  # lead to a repeat backup; for example '/' and 'usr'. The documentation
-  # doesn't say whether the same is true of an exact duplication. However, this
-  # makes it important that our FileSet definitions are as targeted as possible.
+  # Catch-all files to include for all hosts regardless of deployed roles.
 
   Include {
 
-    Options {
-      Compression=GZIP
-      signature = MD5
-    }
-
-    # Home folders excluding mail directories
-    File = /home
-    ExcludeDirContaining = maildirfolder
-
-  }
-
-  Exclude {
-
-    # Exclusions in /home that we don't need
-    File = /home/*/.ansible
-    File = /home/*/.cache
-    File = /home/osmc
-
-  }
-
-  Include {
-
-    Options {
-      Compression=GZIP
-      Signature = MD5
-    }
+    # Home folders
+    File = /home/
 
     # APT sources
     File = /etc/apt/sources.list
-    File = /etc/apt/sources.list.d
+    File = /etc/apt/sources.list.d/
 
     # Filesystem table
     File = /etc/fstab
 
     # Cron jobs
     File = /etc/crontab
-    File = /etc/cron.daily
-    File = /etc/cron.hourly
-    File = /etc/cron.monthly
-    File = /etc/cron.weekly
+    File = /etc/cron.d/
+    File = /etc/cron.daily/
+    File = /etc/cron.hourly/
+    File = /etc/cron.monthly/
+    File = /etc/cron.weekly/
+    File = /etc/cron.yearly/
 
     # Network interfaces
     File = /etc/network/interfaces
 
-    # Var localisations
-    File = /var/local
+    # /usr localisations
+    File = /usr/local/
 
-  }
+    # /var localisations
+    File = /var/local/
 
-  Include {
-
-    # User localisations
-    File = /usr/local
+    # Exim4 configuration - These should be moved to the MTA role
+    File = /etc/aliases
+    File = /etc/exim4/
+    File = /etc/mailname
 
     Options {
-      Compression=GZIP
+
+      Compression = GZIP
       Signature = MD5
-    }
-
-    # Exclude /usr/local/share/nginx using a WildDir option here as we want to
-    # include specific directories within this path in relevant roles.
-    Options {
       Exclude = yes
-      WildDir = "/usr/local/share/nginx"
+
+      # Prevent duplication between catch-all and role based includes
+      WildDir = "/home/*/Maildir"
+      WildDir = "/var/local/git"
+      WildDir = "/usr/local/lib/python*"
+
     }
 
   }
 
   Exclude {
 
+    # Hidden folders in home directories
+    File = /home/*/.ansible
+    File = /home/*/.cache
+    File = /home/*/.config
+    File = /home/*/.gnupg
+    File = /home/*/.local
+    File = /home/*/.ssh
+
+    # Unwanted users in home
+    File = /home/lost+found
+    File = /home/osmc
+
     File = /usr/local/share/man
     File = /usr/local/share/perl
-    File = /usr/local/lib/python3.5
-    File = /usr/local/lib/python3.9
     File = /usr/local/lib/arm-linux-gnueabihf/perl
 
   }
 
-# Include files for each role deployed to this host for which a file is provided
-{#-
-Define a variable to hold a sorted, unique list of roles for this host that
-contain a FileSet snippet file.
-#}
-{% set host_fileset_roles = [] %}
-{#
-Loop for each role that is explicitly deployed the current host. These are
-provided by the hosts_to_roles_map variable.
-#}
+  {%- set host_ns = namespace( roles = [] ) %}
+
   {%- for role in hosts_to_roles_map[hostname] %}
-{#
-For each role that is explicitly deployed to this host, examine the
-fileset_files variable to see if that role has a bacula-fileset.conf file. If it
-does then include that file within the FileSet for this host.
-#}
-    {%- for file in fileset_files %}
-      {%- if file | regex_search(role + '/files/bacula-fileset\.conf$') %}
-        {{- host_fileset_roles.append(role) or '' }}
-      {%- endif %}
-    {%- endfor %}{# files #}
-{#
-For each role that is explicitly deployed to this host, examine the
-role_dependencies variable to see if that role pulls in other roles as
-dependencies.
-#}
-    {%- if role_dependencies[role] is defined %}
-      {%- for dependency_role in role_dependencies[role] %}
-        {%- for file in fileset_files %}
-          {%- if file |
-                 regex_search(dependency_role + '/files/bacula-fileset\.conf$')
-          %}
-            {{- host_fileset_roles.append(dependency_role) or '' }}
-          {%- endif %}
-        {%- endfor %}{# files #}
-      {%- endfor %}{# dependency roles #}
+
+    {%- set host_ns.roles = host_ns.roles + [role] %}
+
+    {%- if role_fileset_include_lists[role] is defined %}
+
+      {%-
+        set host_ns.roles = host_ns.roles + role_fileset_include_lists[role]
+      %}
+
     {%- endif %}
-  {%- endfor %}{# explicitly deployed roles #}
+    {#- role_fileset_include_lists[role] is defined #}
 
-  {%- for role in host_fileset_roles | sort | unique %}
-
-@/etc/bacula/role-filesets/{{ role }}.conf
   {%- endfor %}
+  {#- role in hosts_to_roles_map[hostname] #}
 
+  {%- for role in host_ns.roles | sort | unique %}
+
+    {%- if role_fileset_file_lists[role] is defined %}
+
+      {%- set role_ns = namespace(
+          string_file_items = False,
+          array_file_items = False
+        )
+      %}
+
+      {#- Test what kind of file items the role contains #}
+      {%- for file in role_fileset_file_lists[role] %}
+        {%- if file is string %}
+          {%- set role_ns.string_file_items = True %}
+        {%- else %}
+          {#- If it's not a string, it must be an array in our use case. #}
+          {%- set role_ns.array_file_items = True %}
+        {%- endif %}
+      {%- endfor %}
+
+      {%- if role_ns.string_file_items %}
+
+
+  Include {
+
+    # Role {{ role }}
+
+        {%- for file in role_fileset_file_lists[role] %}
+          {%- if file is string %}
+
+    File = {{ file }}
+          {%- endif %}
+        {%- endfor %}
+
+
+    Options {
+
+      Compression = GZIP
+      Signature = MD5
+
+    }
+
+  }
+
+      {%- endif %}
+      {#- role_ns.string_file_items #}
+
+      {#- Process file includes that come with related, specific options. #}
+      {%- if role_ns.array_file_items %}
+
+        {%- for file in role_fileset_file_lists[role] %}
+
+          {%- if file is not string %}
+
+            {%- set pattern = file[0] %}
+            {%- set options_blocks = file[1] %}
+
+  Include {
+
+    # Role {{ role }}
+    File = {{ pattern }}
+
+            {%- for options_block in options_blocks %}
+
+              {%- if options_block.Exclude is defined %}
+
+
+    Options {
+{# Blank line after opening brace #}
+
+
+                {%- for key, value in options_block.items() %}
+
+      {{ key }} = {{ value }}
+                {%- endfor %}
+
+
+    }
+              {%- else %}
+
+
+    Options {
+
+      Compression = GZIP
+      Signature = MD5
+                {%- for key, value in options_block.items() %}
+
+      {{ key }} = {{ value }}
+                {%- endfor %}
+
+
+    }
+
+            {%- endif %}
+            {#- options_block.Exclude is defined #}
+
+          {%- endfor %}
+          {#- options_block in options_blocks #}
+
+  }
+
+          {%- endif %}
+          {#- file is not string #}
+
+        {%- endfor %}
+        {#- file in role_fileset_file_lists[role] #}
+
+      {%- endif %}
+      {#- role_ns.array_file_items #}
+
+    {%- endif %}
+    {#- role_fileset_file_lists[role] is defined #}
+
+  {%- endfor %}
+  {#- role in host_ns.roles | sort | unique #}
 
 }
-{% endfor %}{# hostname in hostnames #}
+
+{% endfor %}
+{# hostname in hostnames #}
 
 FileSet {
   Name = Catalog

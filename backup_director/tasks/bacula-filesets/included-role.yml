@@ -1,0 +1,27 @@
+# ------------------------------------------------------------------------------
+# backup_director/tasks/bacula-filesets/included-role.yml
+# ------------------------------------------------------------------------------
+
+# This task list is run for every role in the chain of included roles derived by
+# drilling down from the parent role.
+
+---
+
+- name: >-
+    Add included role to the list of included roles for the parent role if it
+    isn't already in that list
+  ansible.builtin.set_fact:
+    role_fileset_include_list: >-
+      {{
+        role_fileset_include_list + [included_role]
+      }}
+  when: included_role not in role_fileset_include_list
+
+- name: >-
+    Recursively call self for roles that are included by the current included
+    role
+  ansible.builtin.include_tasks: ./included-role.yml
+  loop: "{{ role_fileset_specs[included_role].included_roles }}"
+  loop_control:
+    loop_var: included_role
+  when: role_fileset_specs[included_role].included_roles is defined
