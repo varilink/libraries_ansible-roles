@@ -9,9 +9,6 @@
 - ansible.builtin.import_role:
     name: backup
 
-- ansible.builtin.import_role:
-    name: mta
-
 - ansible.builtin.import_tasks: install-service.yml
 
 - ansible.builtin.import_tasks: create-catalog.yml
