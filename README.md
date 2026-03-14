@@ -353,6 +353,7 @@ The values used in the **Where Set** column are one or more of:
 | dns_client_nameservers                 | dns_client                                                                                                               | Yes       | inventory/external<br>inventory/internal<br>inventory/host(s) <sup>8</sup>                |
 | dns_client_options                     | dns_client                                                                                                               | No        | nowhere                                                                                   |
 | dns_host_patterns                      | dns                                                                                                                      | Yes       | inventory/external <sup>9</sup>                                                           |
+| dns_host_groups                        | dns                                                                                                                      | No        | inventory/external <sup>9</sup>                                                           |
 | dns_linode_key                         | dns_api<br>dynamic_dns                                                                                                   | Yes       | inventory/all <sup>7</sup>                                                                |
 | dns_upstream_nameservers               | dns                                                                                                                      | Yes       | inventory/external<br>inventory/internal <sup>10</sup>                                    |
 | domain_country                         | mail_external                                                                                                            | No        | projects/all                                                                              |
@@ -524,6 +525,10 @@ The IP addresses of DNS nameservers that a DNS client should use. These are used
 #### dns_client_options
 
 Options to be set in the `/etc/resolv.conf` file for each host. If this is provided then it must be an array of strings, each of which will be added after `option` in a line within `/etc/resolv.conf`. This variable can be omitted if there are no options to set.
+
+#### dns_hosts_group ####
+
+This variable can be used to specify an inventory group that defines the hosts for which host lookups will be created when deploying the [dns](#dns) role. It's not necessary to specify it in the live environment as the office DNS service provides host lookups for all our hosts and so the role default value of *all* for this variable applies. It's only necessary to set a value of *external* for the *external* group in the inventory of the test environments provided in the [Services - Docker](https://github.com/varilink/services_docker) as these environments spoof our external DNS service.
 
 #### dns_host_patterns
 
