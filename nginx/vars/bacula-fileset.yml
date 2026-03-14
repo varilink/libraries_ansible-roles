@@ -2,8 +2,8 @@
 # nginx/vars/bacula-fileset.yml
 # ------------------------------------------------------------------------------
 
-See:
-https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
+# See:
+# https://github.com/varilink/libraries_ansible-roles/#automated-role-based-bacula-fileset-configuration
 
 ---
 
