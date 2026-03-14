@@ -369,7 +369,7 @@ The values used in the **Where Set** column are one or more of:
 | dynamic_dns_records_dir                | dynamic_dns                                                                                                              | No        | default                                                                                   |
 | home_domain                            | backup_director<br>backup_storage<br>dns<br>dns_client<br>mail<br>mail_external<br>mail_internal<br>mta                  | Yes       | inventory/all                                                                             |
 | host_enabled_for_ssl                   | reverse_proxy                                                                                                            | No        | inventory/internal<br>inventory/host(s) <sup>12</sup>                                     |
-| hosts_to_roles_map                     | backup_director<br>domain.yml                                                                                            | Yes       | inventory/all                                                                             |
+| hosts_to_roles_map                     | backup_director<br>dns<br>mail_internal                                                                                  | Yes       | inventory/all                                                                             |
 | mail_uses_ca                           | mail_certificates<br>mail_external                                                                                       | No        | default <sup>13</sup>                                                                     |
 | mta_smarthost_hostname                 | mta                                                                                                                      | Yes       |                                                                                           |
 | mta_smarthost_port                     | mta                                                                                                                      | Yes       |                                                                                           |
@@ -597,7 +597,15 @@ By default this is set to `yes`, which YAML recognises as boolean truth. It can 
 
 #### hosts_to_roles_map
 
-This is a dictionary object, the keys of which are the names of each host in the inventory. Each host entry should have its value set to the list of roles that are deployed to that host by your playbooks.
+This is a dictionary object, the keys of which are the names of each host in the inventory. Each host entry should have its value set to the list of roles that are **explicitly** deployed to that host by the `install-services.yml` playbook within the [Libraries - Ansible Playbooks](https://github.com/varilink/libraries_ansible-playbooks) - see the [`install-services.yml`](https://github.com/varilink/libraries_ansible-playbooks#install-servicesyml)
+
+The hosts_to_roles_map should be defined within the *all* group of the hosts inventory, to make it universally available. See [`install-services.yml`](https://github.com/varilink/libraries_ansible-playbooks#install-servicesyml) within the [Libraries - Ansible Playbooks](https://github.com/varilink/libraries_ansible-playbooks) for an analysis of which roles should be mapped to which hosts.
+
+While we keep the inventory for our live hosts private, you can also examine how hosts_to_roles_map is set within the [all group in the hosts inventory for the *now* environment](https://github.com/varilink/services_docker/blob/main/envs/now/inventory/group_vars/all/public.yml) in the [Services - Docker](https://github.com/varilink/services_docker) repository. Note that while the *now* [Services - Docker](https://github.com/varilink/services_docker) environment mirrors our current, live environment, the host `dns-external` defined in the *now* environment does not have an equivalent in our current live environemnt. It only exists in the *now* environemt to emulate Internet DNS servers that we might use but aren't in our hosts estate.
+
+The hosts_to_roles_map is used to:
+1. Build host specific Bacula FileSet configurations in the backup_director role.
+2. Identify the host that is the target for fetchmail polls in the mail_internal role.
 
 #### mail_uses_ca
 
