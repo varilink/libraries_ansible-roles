@@ -4,12 +4,9 @@
 
 ---
 
-mta_other_hostnames: '{{ home_domain }}'
 mta_local_interfaces: >-
   <;
   [127.0.0.1]:25;
   [{{ ansible_default_ipv4.address }}]:25;
   [{{ ansible_default_ipv4.address }}]:465;
   [{{ ansible_default_ipv4.address }}]:587
-mta_readhost: ''
-mta_localdelivery: 'maildir_home'
