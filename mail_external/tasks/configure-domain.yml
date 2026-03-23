@@ -9,10 +9,6 @@
     tasks_from: none
 
 - ansible.builtin.import_role:
-    name: mta
-    tasks_from: none
-
-- ansible.builtin.import_role:
     name: nginx
     tasks_from: none
 
