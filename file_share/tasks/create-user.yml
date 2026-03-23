@@ -1,3 +1,11 @@
+# ------------------------------------------------------------------------------
+# file_share/tasks/create-user.yml
+# ------------------------------------------------------------------------------
+
+# Creates a user account with access to the file share service.
+
+---
+
 - ansible.builtin.import_role:
     name: staff_user
 
