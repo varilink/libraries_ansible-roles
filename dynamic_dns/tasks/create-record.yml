@@ -10,12 +10,19 @@
     name: dns_api
     tasks_from: get-domain-id
 
+- name: Get the current externally facing IP address from ipify
+  ansible.builtin.uri:
+    url: "https://api.ipify.org?format=json"
+    method: GET
+    return_content: yes
+  register: ipify_response
+
 - ansible.builtin.import_role:
     name: dns_api
     tasks_from: create-or-update-record
   vars:
     dns_record_type: 'A'
-    dns_record_target: "{{ ansible_default_ipv4.address }}"
+    dns_record_target: "{{ ipify_response.json.ip }}"
     dns_record_ttl_sec: 300
 
 - name: Create dynamic DNS record file
@@ -25,4 +32,5 @@
     content: |
       domain: {{ domain_id }}
       record: {{ dns_record_id }}
+  register: dynamic_dns_record_file
   become: yes
