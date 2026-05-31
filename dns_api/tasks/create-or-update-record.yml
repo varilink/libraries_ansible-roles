@@ -50,9 +50,11 @@
           "ttl_sec": (dns_record_ttl_sec | default(86400) | int)
         } | to_json
       }}
-  when: dns_record_id is defined and
-    ( 
-      dns_record_current_target != dns_record_target or
+  when: >-
+    dns_record_id is defined and
+    (
+      dns_record_current_target != dns_record_target
+      or
       dns_record_current_ttl_sec | int
         != dns_record_ttl_sec | default(86400) | int
     )
