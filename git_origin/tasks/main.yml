@@ -6,30 +6,38 @@
 
 - block:
 
-    - ansible.builtin.apt:
+    - name: Install APT packages that are required by the git_origin role
+      ansible.builtin.apt:
         name:
           - git
         install_recommends: no
 
-    - ansible.builtin.user:
+    - name: Create the git user for access to the origin's repositories
+      ansible.builtin.user:
         name: git
         home: /var/local/git
 
-    - ansible.builtin.file:
+    - name: Create a .ssh directory for the git user
+      ansible.builtin.file:
         path: /var/local/git/.ssh
         state: directory
         owner: git
         group: git
         mode: u=rwx,g=rx,o=rx
 
-    - ansible.builtin.file:
+    - name: Create an authorized_keys file for access to the git user
+      # Note that this task always reports a change since touch updates the
+      # file's timestamp if it exists already. At some future point we'll code
+      # around this.
+      ansible.builtin.file:
         path: /var/local/git/.ssh/authorized_keys
         state: touch
         owner: git
         group: git
         mode: u=rw,g=r,o=r
 
-    - ansible.builtin.lineinfile:
+    - name: Copy the public SSH keys for staff users to authorized_kays
+      ansible.builtin.lineinfile:
         path: /var/local/git/.ssh/authorized_keys
         line: "{{ user.public_ssh_key }}"
       become_user: git
