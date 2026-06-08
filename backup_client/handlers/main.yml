@@ -6,9 +6,9 @@
 
 ---
 
-- name: Reload Bacula file daemon configuration
+- name: Restart Bacula file daemon configuration
   ansible.builtin.service:
     name: bacula-fd
-    state: reloaded
+    state: restarted
   listen: Bacula file daemon configuration changed
   become: yes
