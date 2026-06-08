@@ -28,15 +28,33 @@
       # reloaded for Apache2 to recognise their presence.
       notify: Apache2 configuration changed
 
-    - name: Install WP-CLI or update it to the latest version
+# ------------------------------------------------------------------------------
+# TEMPORARY WORKAROUND
+# This works around a problem running the ansible.builtin.get_url task on a
+# bookworm controller with a trixie target host. Once our desktops are upgraded
+# to trixie we can remove this workaround.
+#    - name: Install WP-CLI or update it to the latest version
       # As the name of the task suggests, if the version of WP CLI available at
       # the URL is later than the version already installed, then this command
       # will replace the version installed with the version at the URL.
-      ansible.builtin.get_url:
-        url: "https://\
-          raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
-        dest: /usr/local/sbin/wp
-        mode: '755'
+#      ansible.builtin.get_url:
+#        url: "https://\
+#          raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
+#        dest: /usr/local/sbin/wp
+#        mode: '755'
+
+    - name: Download WP-CLI
+      ansible.builtin.command:
+        cmd: >
+          wget -O /usr/local/sbin/wp
+          https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
+    - name: Make executable
+      ansible.builtin.file:
+        path: /usr/local/sbin/wp
+        mode: '0755'
+
+# ------------------------------------------------------------------------------
 
     - name: >-
         Create the .wp-cli and .ansible directories within /var/www for the
