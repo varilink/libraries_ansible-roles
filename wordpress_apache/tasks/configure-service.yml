@@ -7,6 +7,11 @@
 
 ---
 
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
 - block:
 
     - name: Disable the default Apache site
@@ -37,7 +42,9 @@
 
     - name: Enable apache2 php module
       community.general.apache2_module:
-        name: php8.2
+        name: |-
+          {% if lsb_release.stdout == 'bookworm' %}php8.2
+          {%- else %}php8.4{% endif %}
         identifier: php
       notify: Apache2 configuration changed
 
