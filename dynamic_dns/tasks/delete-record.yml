@@ -2,7 +2,10 @@
 # dynamic_dns/tasks/delete-record.yml
 # ------------------------------------------------------------------------------
 
-# Delete a dynamic DNS record file from the directory that contains such files.
+# Delete a dynamic DNS record. This task list wraps the delete-record.yml task
+# list from the dns_api role. It adds the awareness that the record type to be
+# deleted must be "A" and that we also need to remove a Dynamic DNS record
+# configuration file.
 
 ---
 
@@ -16,3 +19,5 @@
 - ansible.builtin.import_role:
     name: dns_api
     tasks_from: delete-record
+  vars:
+    dns_record_type: A

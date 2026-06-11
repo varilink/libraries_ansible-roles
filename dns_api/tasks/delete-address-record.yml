@@ -4,27 +4,16 @@
 
 # This is a convenience wrapper task list for the generic delete-record.yml
 # task list. Unlike delete-record.yml, this one is specific to "address"
-# records, by which we mean record types A and AAAA, for a hostname.
-#
-# This wrapper adds two functions:
-#   1. It derives the required target from the IP address of the current host,
-#      selecting the ipv4 or ipv6 address as appropriate for the record type.
-#   2. It skips the delete if the target of the current DNS record is not the
-#      same as the relevant IP address of the current host.
-#
-# The second of these functions allows us to safely delete a duplicate instance
-# of website on another host that we're using a DNS mask for.
+# records, by which we mean record types A and AAAA, for a hostname. Its
+# function is to ensure that the delete operation is only carried out IF the
+# IP address currently associated with the DNS record matches the target for
+# deletion. This is to prevent incorrect deletions if we were for example to
+# delete a website instance whose subdomain duplicated that of another website
+# instance on another host, which can happen during migrations.
 
 ---
 
-- name: Set target as appropriate to record type
-  ansible.builtin.set_fact:
-    dns_record_target: |-
-      {% if dns_record_type == 'A' %}
-      {{ ansible_default_ipv4.address }}
-      {%- else %}
-      {{ ansible_default_ipv6.address }}
-      {%- endif %}
+- ansible.builtin.import_tasks: find-record.yml
 
 - ansible.builtin.import_tasks: delete-record.yml
   when: dns_record_current_target == dns_record_target

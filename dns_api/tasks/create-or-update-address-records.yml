@@ -2,6 +2,27 @@
 # dns_api/tasks/create-or-update-address-records.yml
 # ------------------------------------------------------------------------------
 
+# This is a convenience wrapper for the create-or-update-record.yml task list.
+# Any playbook importing this task should set the dns_record_hostname variable.
+# This will then be used as the "name" for any DNS record that is created or
+# updated. This task list then includes the create-or-update-record.yml task
+# list twice, once with a DNS record type of "A" and once with a type of "AAAA".
+
+# This task list will by default set the DNS record target to either the Ansible
+# default IPv4 address of the current host (for record type "A") or the Ansible
+# default IPv6 address of the current host (for record type "AAAA"). However,
+# it's likely that calling playbooks will instead want to explicitly provide the
+# dns_record_inventory_host to be used instead of the current host.
+
+# There is a subtle and important distinction in variable names here that must
+# be understood:
+#
+# dns_record_hostname = The value to be used as the hostname in DNS records; for
+# example, "www", "mail", etc.
+#
+# dns_record_inventory_host = The name of the host in the inventory whose IP
+# addresses are to be used as the target for DNS records.
+
 ---
 
 - ansible.builtin.include_tasks: create-or-update-record.yml
@@ -10,6 +31,14 @@
     dns_record_target: "{{ item.target }}"
   loop:
     - type: A
-      target: "{{ ansible_default_ipv4.address }}"
+      target: >-
+        {{
+          hostvars['dns_record_inventory_host'].ansible_default_ipv4.address
+            | default(ansible_default_ipv4.address)
+        }}
     - type: AAAA
-      target: "{{ ansible_default_ipv6.address }}"
+      target: >-
+        {{
+          hostvars['dns_record_inventory_host'].ansible_default_ipv6.address
+            | default(ansible_default_ipv6.address)
+        }}
