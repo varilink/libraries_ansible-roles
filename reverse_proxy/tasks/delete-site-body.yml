@@ -38,6 +38,17 @@
         certbot_cert.rc == 0 and delete_certbot_cert
 
     - name: >-
+        Report that there was a certbot certificate to delete for this WordPress
+        site
+      debug:
+        msg: >-
+          There is a certbot certificate present for this website. If you want
+          to delete it you will need to run with the variable
+          delete_certbot_cert set to "yes"
+      when: >-
+        certbot_cert.rc == 0 and not delete_certbot_cert
+
+    - name: >-
         If there is a self-signed certificate installed for this WordPress site
         then delete it
       ansible.builtin.file:
