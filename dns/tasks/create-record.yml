@@ -2,17 +2,15 @@
 # dns/tasks/create-record.yml
 # ------------------------------------------------------------------------------
 
-# This task creates a DNS record in the DNS service, which is implemented using
-# Dnsmasq.
+# This task creates a DNS record in the internal/office DNS service, which is
+# implemented using Dnsmasq. The caller MUST provide a value for
+# dns_record_hostname, which is the name that will be used for the DNS record.
 #
-# The caller MUST provide a value for dns_record_hostname, which is the name
-# that will be used for the DNS entry.
-#
-# The variable dns_record_target is optional; if it is provided it must be the
-# hostname in the Ansible repository that is the target of the lookup, if it
-# isn't provided then the hostname of the current host is used. The target
-# hostname is used to lookup the "ansible_default_ipv4.address" for that host,
-# which becomes the IP address for the DNS record.
+# The variable dns_record_inventory_host is optional; if it is provided it must
+# be the name of the host in the Ansible inventory that is the target of the
+# lookup, if it isn't provided then the current play host is used. The target
+# inventory host is used to determine the "ansible_default_ipv4.address" to use
+# for the DNS record.
 #
 # The caller can also optionally pass a variable "dns_record_group", which can
 # take the values "host", "service" or "project". This is used to control the
@@ -20,23 +18,24 @@
 
 ---
 
-- name: "\
-    Gather the IPv4 address for the DNS record target if it isn't already known"
+- name: >-
+    Gather the IPv4 address for the DNS record inventory host if it isn't
+    already known
   ansible.builtin.setup:
     gather_subset:
       - 'default_ipv4'
-  delegate_to: "{{ dns_record_target }}"
+  delegate_to: "{{ dns_record_inventory_host }}"
   delegate_facts: true
   when: >-
-    dns_record_target is defined and
-    hostvars[dns_record_target]['ansible_default_ipv4'] is not defined
+    dns_record_inventory_host is defined and
+    hostvars[dns_record_inventory_host].ansible_default_ipv4 is not defined
 
 - name: Create DNS record
   ansible.builtin.lineinfile:
     path: /etc/addn-hosts
     line: |-
-      {% if dns_record_target is defined %}
-      {{ hostvars[dns_record_target].ansible_default_ipv4.address }}
+      {% if dns_record_inventory_host is defined %}
+      {{ hostvars[dns_record_inventory_host].ansible_default_ipv4.address }}
       {%- else %}
       {{ ansible_default_ipv4.address }}
       {%- endif %}
