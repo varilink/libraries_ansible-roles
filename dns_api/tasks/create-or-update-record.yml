@@ -60,3 +60,8 @@
     )
   register: update_record_result
   changed_when: update_record_result.status == 200
+
+- name: Set a fact for the id of the just created DNS record
+  ansible.builtin.set_fact:
+    dns_record_id: "{{ create_record_result.json.id }}"
+  when: dns_record_id is not defined
