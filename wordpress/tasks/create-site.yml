@@ -128,6 +128,27 @@
             state: absent
           when: wp_auto_update_core is defined and wp_auto_update_core
 
+        - name: Insert block markers for the "behind proxy" block
+          ansible.builtin.lineinfile:
+            path: "{{ wp_path }}/wp-config.php"
+            line: "{{ item }}"
+            insertbefore: "^# END EXTRA PHP"
+          loop:
+            - "# BEGIN ANSIBLE MANAGED BEHIND PROXY BLOCK"
+            - "# END ANSIBLE MANAGED BEHIND PROXY BLOCK"
+
+        - name: Add to WordPress config to cater for being behind a proxy
+          ansible.builtin.blockinfile:
+            path: "{{ wp_path }}/wp-config.php"
+            marker: "# {mark} ANSIBLE MANAGED BEHIND PROXY BLOCK"
+            block: |-
+              {% if wp_uses_ssl %}
+              $_SERVER['HTTPS']='on';
+              {% endif %}
+              if ( array_key_exists('HTTP_X_REAL_IP', $_SERVER) ) {
+                $_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_REAL_IP']; 
+              }
+
         - name: Add site specific lines to the wp-config file
           block:
 
