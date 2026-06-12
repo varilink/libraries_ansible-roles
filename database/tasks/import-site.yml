@@ -2,12 +2,15 @@
 # database/tasks/import-site.yml
 # ------------------------------------------------------------------------------
 
+# Imports a SQL dump file into a WordPress site's MariaDB database.
+
 ---
 
 - name: Import to the site database from the dump file
   community.mysql.mysql_db:
     name: "{{ wp_database_name }}"
     state: import
-    target: /tmp/{{ dump_file }}
+    target: "\
+      {{ dump_file if dump_file.startswith('/') else '/tmp/' ~ dump_file }}"
     login_unix_socket: /var/run/mysqld/mysqld.sock
   become: yes
