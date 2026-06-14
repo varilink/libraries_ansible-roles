@@ -33,12 +33,12 @@
     - type: A
       target: >-
         {{
-          hostvars['dns_record_inventory_host'].ansible_default_ipv4.address
+          hostvars[dns_record_inventory_host].ansible_default_ipv4.address
             | default(ansible_default_ipv4.address)
         }}
     - type: AAAA
       target: >-
         {{
-          hostvars['dns_record_inventory_host'].ansible_default_ipv6.address
+          hostvars[dns_record_inventory_host].ansible_default_ipv6.address
             | default(ansible_default_ipv6.address)
         }}
