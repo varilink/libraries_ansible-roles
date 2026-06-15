@@ -25,6 +25,11 @@
   when: play_hosts | length != 1
   run_once: yes
 
+- name: Set a fact for wp_subdomain from the var value
+  ansible.builtin.set_fact:
+    wp_subdomain: "{{ wp_subdomain }}"
+  when: wp_subdomain is defined
+
 - name: Fail if neither wp_subdomain nor wp_sites is defined
   # We need to know the subdomain for the site that we are to act upon; for
   # example 'dev' or 'test' or 'www'. For that to be the case we will either be
