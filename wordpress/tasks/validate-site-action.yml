@@ -28,7 +28,7 @@
 - name: Set a fact for wp_subdomain from the var value
   ansible.builtin.set_fact:
     wp_subdomain: "{{ wp_subdomain }}"
-  when: wp_subdomain is defined
+  when: wp_subdomain is defined and wp_subdomain not in [none, ""]
 
 - name: Fail if neither wp_subdomain nor wp_sites is defined
   # We need to know the subdomain for the site that we are to act upon; for
@@ -39,7 +39,9 @@
   ansible.builtin.fail:
     msg: >-
       I must be provided with either a single wp_subdomain or a list of wp_sites
-  when: wp_subdomain is not defined and wp_sites is not defined
+  when: >-
+    ( wp_subdomain is not defined or wp_subdomain in [none, ""] )and
+    wp_sites is not defined
   run_once: yes
 
 - block:
@@ -65,4 +67,4 @@
       ansible.builtin.set_fact:
         wp_subdomain: "{{ entered_subdomain.user_input }}"
 
-  when: wp_subdomain is not defined
+  when: wp_subdomain is not defined or wp_subdomain in [none, ""]
