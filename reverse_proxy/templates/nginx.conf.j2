@@ -86,6 +86,17 @@ server {
 
 {% endif %}
 
+  location = /xmlrpc.php {
+    access_log off;
+    log_not_found off;
+    return 444;
+  }
+
+  location ~* ^/(wp-config\.php|readme\.html|license\.txt)$ {
+    access_log off;
+    log_not_found off;
+    return 404;
+  }
 
   location / {
 {% if wp_reverse_proxy_host is not defined %}
