@@ -1,9 +1,11 @@
 # ------------------------------------------------------------------------------
-# nginx/tasks/main.yml
+# nginx/tasks/install-service.yml
 # ------------------------------------------------------------------------------
 
 ---
 
-- ansible.builtin.import_tasks: install-service.yml
-
-- ansible.builtin.import_tasks: configure-service.yml
+- name: Install APT packages for Nginx role
+  ansible.builtin.apt:
+    name: nginx
+    install_recommends: no
+  become: yes

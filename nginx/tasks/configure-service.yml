@@ -1,0 +1,49 @@
+# ------------------------------------------------------------------------------
+# nginx/tasks/configure-service.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- block:
+
+    # Apache2's default site is located at /var/www/html/index.html. Nginx's
+    # default site is located at /var/www/html/index.nginx-debian.html. When we
+    # have them both on the same server, we don't want the Nginx default site to
+    # display the Apache2 default site.
+    - name: |-
+        Change the order of index files that Nginx looks for in its default site
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/sites-available/default
+        line: "\tindex index.nginx-debian.html index.html index.htm;"
+        regexp: >-
+          ^\tindex (?:index\.nginx-debian\.html )?index\.html
+          index\.htm(?: index\.nginx-debian\.html)?;$
+      notify: Nginx configuration changed
+
+    - block:
+
+        - name: Install certbot APT package
+          ansible.builtin.apt:
+            name: certbot
+            install_recommends: no
+
+        - name: Register a certbot account on this host
+          ansible.builtin.command: >-
+            certbot register --email {{ admin_user_email }}
+            --eff-email --agree-tos
+          register: certbot_register_result
+          # Duplicate registration gives a return code of 1
+          changed_when: certbot_register_result.rc == 0
+          failed_when: certbot_register_result.rc not in [0, 1]
+
+        - name: Automate reload of Nginx configuration on certificate renewal
+          ansible.builtin.copy:
+            src: files/reload-nginx-config.sh
+            dest: /etc/letsencrypt/renewal-hooks/deploy/
+            owner: root
+            group: root
+            mode: '755'
+
+      when: host_enabled_for_ssl
+
+  become: yes
