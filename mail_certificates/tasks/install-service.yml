@@ -4,11 +4,45 @@
 
 ---
 
-- name: Install APT packages used by the mail certificates role
-  ansible.builtin.apt:
-    name:
-      - certbot
-      - cron
-      - python3-certbot-dns-linode
-    install_recommends: no
+- ansible.builtin.import_role:
+    name: common
+    tasks_from: get-debian-release
+
+- block:
+
+    - block:
+
+        - name: Add Debian Forky repository
+          ansible.builtin.apt_repository:
+            repo: "deb https://deb.debian.org/debian forky main"
+            filename: debian-forky
+            state: present
+
+        - name: Pin Certbot stack to Forky
+          ansible.builtin.copy:
+            dest: /etc/apt/preferences.d/certbot-forky
+            mode: '0644'
+            content: |
+              Package: certbot python3-certbot* python3-acme
+              Pin: release n=forky
+              Pin-Priority: 900
+
+              Package: *
+              Pin: release n=forky
+              Pin-Priority: 1
+
+        - name: Update APT cache
+          ansible.builtin.apt:
+            update_cache: true
+
+      when: debian_release == 'trixie'
+
+    - name: Install APT packages used by the mail certificates role
+      ansible.builtin.apt:
+        name:
+          - certbot
+          - cron
+          - python3-certbot-dns-linode
+        install_recommends: no
+
   become: yes
