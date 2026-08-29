@@ -22,7 +22,7 @@
     msg: >-
       This playbook must be run with --limit set such that there is one and only
       one WordPress host in this play
-  when: play_hosts | length != 1
+  when: ansible_play_batch | length != 1
   run_once: yes
 
 - name: Set a fact for wp_subdomain from the var value
