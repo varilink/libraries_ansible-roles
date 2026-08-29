@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# monitor_server/tasks/get-all-access-token.yml
+# ------------------------------------------------------------------------------
+
+---
+
 - block:
 
     - name: List the existing influxdb authorizations
