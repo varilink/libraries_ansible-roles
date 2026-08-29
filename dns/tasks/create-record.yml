@@ -24,11 +24,11 @@
   ansible.builtin.setup:
     gather_subset:
       - 'default_ipv4'
-  delegate_to: "{{ dns_record_inventory_host }}"
+  delegate_to: "{{ dns_record_inventory_host | default(inventory_hostname) }}"
   delegate_facts: true
-  when: >-
-    dns_record_inventory_host is defined and
-    hostvars[dns_record_inventory_host].ansible_default_ipv4 is not defined
+  when:
+    - dns_record_inventory_host is defined
+    - hostvars[dns_record_inventory_host].ansible_default_ipv4 is not defined
 
 - name: Create DNS record
   ansible.builtin.lineinfile:

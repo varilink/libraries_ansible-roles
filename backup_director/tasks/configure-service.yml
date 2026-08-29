@@ -29,9 +29,9 @@
     Derive hosts in backup_clients and backup_exceptions inventory groups
   ansible.builtin.set_fact:
     backup_clients: "\
-      {{ groups['backup_clients'] | default('[]') }}"
+      {{ groups['backup_clients'] | default([]) }}"
     backup_exceptions: "\
-      {{ groups['backup_exceptions'] | default('[]') }}"
+      {{ groups['backup_exceptions'] | default([]) }}"
 
 - name: >-
     Fail if there are hosts in both backup_clients and backup_exceptions
@@ -43,11 +43,11 @@
   when: backup_clients | length > 0 and backup_exceptions | length > 0
 
 - name: Discover all the role Bacula Fileset var files for roles in our library
-  local_action:
-    module: ansible.builtin.find
+  ansible.builtin.find:
     paths: [ "{{ role_path }}/.." ]
     patterns: [ "bacula-fileset.yml" ]
     recurse: yes
+  delegate_to: localhost
   register: fileset_find_result
 
 # The following three tasks convert the contents of the vars/bacula-fileset.yml
@@ -120,14 +120,14 @@
         mode: 0640
       vars:
         # hostnames = the hosts to be backup up - see above.
-        hostnames: |-
-          {% if backup_clients | length > 0 %}
-          {{ backup_clients }}
-          {% elif backup_exceptions | length > 0 %}
-          {{ query('inventory_hostnames', 'all:!backup_exceptions') }}
-          {% else %}
-          {{ query('inventory_hostnames', 'all') }}
-          {% endif %}
+        hostnames: >-
+          {{
+            backup_clients
+              if backup_clients | length > 0
+            else query('inventory_hostnames', 'all:!backup_exceptions')
+              if backup_exceptions | length > 0
+            else query('inventory_hostnames', 'all')
+          }}
       notify: Bacula director configuration changed
 
     - name: Determine if a folder has been created for Dropbox integration
