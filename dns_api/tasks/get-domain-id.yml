@@ -22,7 +22,7 @@
           Authorization: "Bearer {{ dns_linode_key }}"
       until: >-
         list_domains_result.json.data
-          | selectattr('domain', 'equalto', domain_name)
+          | selectattr('domain', 'equalto', domain_name) | length > 0
       retries: 5
       register: list_domains_result
 

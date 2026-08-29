@@ -27,11 +27,12 @@
       Authorization: "Bearer {{ dns_linode_key }}"
   until: >-
     list_records_result.json.data
-    | selectattr('name', 'equalto', dns_record_hostname)
-    | selectattr('type', 'equalto', dns_record_type)
+      | selectattr('name', 'equalto', dns_record_hostname)
+        | selectattr('type', 'equalto', dns_record_type)
+          | length > 0
     or
     list_records_result.json.page | int + 1
-    > list_records_result.json.pages | int
+      > list_records_result.json.pages | int
   retries: 5
   register: list_records_result
 
@@ -53,6 +54,7 @@
     list_records_result.json.data
       | selectattr('name', 'equalto', dns_record_hostname)
         | selectattr('type', 'equalto', dns_record_type)
+          | length > 0
 
 - name: Reset the page in the results set to 0
   # It's possible that we might use this task list more than once in the same
