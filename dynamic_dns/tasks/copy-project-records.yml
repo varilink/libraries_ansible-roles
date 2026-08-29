@@ -22,7 +22,7 @@
         content: |
           domain: {{ domain_linode_id }}
           record: {{ item.value }}
-      loop: "{{ domain_linode_dynamic_dns_records | dict2items }}"
+      loop: "{{ domain_linode_dynamic_dns_records | default({}) | dict2items }}"
 
     - name: >-
         Capture a list of project configuration file(s) present on the target
