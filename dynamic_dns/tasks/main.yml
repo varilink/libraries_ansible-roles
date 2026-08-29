@@ -21,13 +21,19 @@
     - ansible.builtin.import_role:
         name: dns_api
 
+    - ansible.builtin.import_role:
+        name: common
+        tasks_from: get-debian-release
+
     - name: Install APT packages used by the dynamic DNS role
       ansible.builtin.apt:
         name:
           - cron
           - libconfig-tiny-perl
           - libjson-perl
-          - libperl5.32
+          - |-
+            {% if debian_release == 'trixie' %}libperl5.40
+            {%-else %}libperl5.36{% endif %}
           - libwww-perl
           - libyaml-perl
           # Ensure that an editor is present in case we want to `crontab -e` if
