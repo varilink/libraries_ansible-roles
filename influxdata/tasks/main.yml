@@ -11,7 +11,7 @@
 - name: Download the Influx GPG key
   ansible.builtin.get_url:
     url: https://repos.influxdata.com/influxdata-archive.key
-    dest: /tmp
+    dest: /tmp/influxdata-archive.key
 
 - block:
 
