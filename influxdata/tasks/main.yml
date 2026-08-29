@@ -4,10 +4,9 @@
 
 ---
 
-- name: Get the codename of the Debian release on this host
-  ansible.builtin.command: lsb_release --codename --short
-  register: lsb_release
-  changed_when: false
+- ansible.builtin.import_role:
+    name: common
+    tasks_from: get-debian-release
 
 - name: Download the Influx GPG key
   ansible.builtin.get_url:
@@ -38,8 +37,8 @@
           echo "deb
           [signed-by=/etc/apt/keyrings/influxdata.gpg]
           https://repos.influxdata.com/debian
-          {% if lsb_release.stdout == 'trixie' %}bookworm
-          {%- else %}{{ lsb_release.stdout }}{% endif %}
+          {% if debian_release == 'trixie' %}bookworm
+          {%- else %}{{ debian_release }}{% endif %}
           stable" > /etc/apt/sources.list.d/influxdata.list
         creates: /etc/apt/sources.list.d/influxdata.list
 

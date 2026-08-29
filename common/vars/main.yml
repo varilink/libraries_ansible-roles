@@ -1,0 +1,1 @@
+supported_debian_releases: [ 'trixie', 'bookworm' ]

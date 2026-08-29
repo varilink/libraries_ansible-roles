@@ -1,0 +1,19 @@
+# ------------------------------------------------------------------------------
+# common/tasks/get-release-codename.yml
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Get the codename of the Debian release on this host
+  ansible.builtin.command: lsb_release --codename --short
+  register: lsb_release
+  changed_when: false
+
+- name: Set the release_codename fact
+  ansible.builtin.set_fact:
+    debian_release: "{{ lsb_release.stdout }}"
+
+- name: Fail if lsb_release isn't one that we currently support
+  ansible.builtin.fail:
+     msg: Unsupported Debian release
+  when: debian_release not in supported_debian_releases
