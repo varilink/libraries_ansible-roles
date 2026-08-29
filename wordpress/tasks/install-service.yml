@@ -11,6 +11,7 @@
         name:
           - acl
           - ca-certificates
+          - git
           - gosu
           - jq
           - less
@@ -28,66 +29,37 @@
       # reloaded for Apache2 to recognise their presence.
       notify: Apache2 configuration changed
 
-# ------------------------------------------------------------------------------
-# TEMPORARY WORKAROUND
-# This works around a problem running the ansible.builtin.get_url task on a
-# bookworm controller with a trixie target host. Once our desktops are upgraded
-# to trixie we can remove this workaround.
-#    - name: Install WP-CLI or update it to the latest version
-      # As the name of the task suggests, if the version of WP CLI available at
-      # the URL is later than the version already installed, then this command
-      # will replace the version installed with the version at the URL.
-#      ansible.builtin.get_url:
-#        url: "https://\
-#          raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
-#        dest: /usr/local/sbin/wp
-#        mode: '755'
-
     - name: Download WP-CLI
-      ansible.builtin.command:
-        cmd: >
-          wget -O /usr/local/sbin/wp
-          https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-
-    - name: Make executable
-      ansible.builtin.file:
-        path: /usr/local/sbin/wp
+      ansible.builtin.get_url:
+        url: "\
+          https://github.com/wp-cli/wp-cli/releases/download/\
+          v2.12.0/wp-cli-2.12.0.phar"
+        dest: /usr/local/sbin/wp
+        owner: www-data
+        group: www-data
         mode: '0755'
 
-# ------------------------------------------------------------------------------
+    - block:
 
-    - name: >-
-        Create the .wp-cli and .ansible directories within /var/www for the
-        www-data user
-      ansible.builtin.file:
-        path: /var/www/{{ item }}
-        state: directory
-        owner: www-data
-        group: www-data
-      loop: [ '.ansible', '.wp-cli' ]
+        - name: >-
+            Create required directories within /var/www for the www-data user
+          ansible.builtin.file:
+            path: /var/www/{{ item }}
+            state: directory
+          loop: [ '.ansible/', '.ansible/tmp/', '.cache/', '.wp-cli/' ]
 
-    - name: Configure WP-CLI to be able to hard flush rewrite rules
-      ansible.builtin.copy:
-        dest: /var/www/.wp-cli/config.yml
-        content: |
-          apache_modules:
-            - mod_rewrite
-        owner: www-data
-        group: www-data
+        - name: Configure WP-CLI to be able to hard flush rewrite rules
+          ansible.builtin.copy:
+            dest: /var/www/.wp-cli/config.yml
+            content: |
+              apache_modules:
+                - mod_rewrite
 
-    - name: "\
-        Create the tmp directory within /var/www/.ansible for the www-data user"
-      ansible.builtin.file:
-        path: /var/www/.ansible/tmp
-        state: directory
-        owner: www-data
-        group: www-data
-        mode: u=rwx,g=,o=
+        - name: Install the WP-CLI find command's package
+          ansible.builtin.command:
+            cmd: wp package install wp-cli/find-command:2.0.6
+            creates: /var/www/.wp-cli/packages/vendor/wp-cli/find-command
 
-    - name: Install the WP-CLI find command's package
-      ansible.builtin.command:
-        cmd: wp package install wp-cli/find-command:@stable
-        creates: ~/.wp-cli/packages/vendor/wp-cli/find-command
       become_user: www-data
 
   become: yes
