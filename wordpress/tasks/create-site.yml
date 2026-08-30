@@ -108,9 +108,8 @@
             --locale=en_GB
             --skip-email
           # The rc from the `wp core is-installed` command is 0 if it is
-          # installed and 1 if it isn't, so the when check is the reverse of
-          # what we might intuitively expect from reading it.
-          when: wp_installed.rc
+          # installed and 1 if it isn't.
+          when: wp_installed.rc == 1
 
         - name: >-
             Disable automatic core updates unless explicitly instructed to keep
