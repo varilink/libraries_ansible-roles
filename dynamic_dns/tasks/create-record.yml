@@ -32,5 +32,6 @@
     content: |
       domain: {{ domain_id }}
       record: {{ dns_record_id }}
+    mode: "u+rw,g=,o="
   register: dynamic_dns_record_file
   become: yes
