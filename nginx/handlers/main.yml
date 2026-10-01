@@ -6,22 +6,44 @@
 
 - block:
 
-  - name: Populate service facts
-    ansible.builtin.service_facts:
-    listen: Nginx configuration changed
+    # Nginx service handlers
 
-  - name: Reload nginx configuration if nginx is running
-    ansible.builtin.service:
-      name: nginx
-      state: reloaded
-    when: ansible_facts['services']['nginx']['state'] == 'running'
-    listen: Nginx configuration changed
+    - name: Populate service facts
+      ansible.builtin.service_facts:
+      listen: Nginx configuration changed
 
-  - name: Start nginx if it isn't running
-    ansible.builtin.service:
-      name: nginx
-      state: started
-    when: ansible_facts['services']['nginx']['state'] != 'running'
-    listen: Nginx configuration changed
+    - name: Reload nginx configuration if nginx is running
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+      when: ansible_facts['services']['nginx']['state'] == 'running'
+      listen: Nginx configuration changed
+
+    - name: Start nginx if it isn't running
+      ansible.builtin.service:
+        name: nginx
+        state: started
+      when: ansible_facts['services']['nginx']['state'] != 'running'
+      listen: Nginx configuration changed
+
+    # Fail2Ban service handlers
+
+    - name: Populate service facts
+      ansible.builtin.service_facts:
+      listen: Fail2Ban configuration changed
+
+    - name: Reload fail2ban configuration if fail2ban is running
+      ansible.builtin.service:
+        name: fail2ban
+        state: reloaded
+      when: ansible_facts['services']['fail2ban']['state'] == 'running'
+      listen: Fail2Ban configuration changed
+
+    - name: Start fail2ban if it isn't running
+      ansible.builtin.service:
+        name: fail2ban
+        state: started
+      when: ansible_facts['services']['fail2ban']['state'] != 'running'
+      listen: Fail2Ban configuration changed
 
   become: yes
