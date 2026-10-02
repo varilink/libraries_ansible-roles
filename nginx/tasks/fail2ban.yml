@@ -11,9 +11,9 @@
         dest: /etc/fail2ban/jail.local
       notify: Fail2Ban configuration changed
 
-    - name: Copy the varilink-wordpress jail configuration file
-      ansible.builtin.copy:
-        src: varilink-wordpress-jail.conf
+    - name: Template the varilink-wordpress jail configuration file
+      ansible.builtin.template:
+        src: varilink-wordpress-jail.conf.j2
         dest: /etc/fail2ban/jail.d/varilink-wordpress.conf
       notify: Fail2Ban configuration changed
 
