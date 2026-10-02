@@ -28,22 +28,14 @@
 
     # Fail2Ban service handlers
 
-    - name: Populate service facts
-      ansible.builtin.service_facts:
-      listen: Fail2Ban configuration changed
+    # Reloading the fail2ban configuration is not enough. It seems to me that
+    # this only reloads jail configuration that are already active and so it
+    # doesn't pick up on jail configurations that have been added.
 
-    - name: Reload fail2ban configuration if fail2ban is running
+    - name: Restart fail2ban if it isn't running
       ansible.builtin.service:
         name: fail2ban
-        state: reloaded
-      when: ansible_facts['services']['fail2ban']['state'] == 'running'
-      listen: Fail2Ban configuration changed
-
-    - name: Start fail2ban if it isn't running
-      ansible.builtin.service:
-        name: fail2ban
-        state: started
-      when: ansible_facts['services']['fail2ban']['state'] != 'running'
+        state: restarted
       listen: Fail2Ban configuration changed
 
   become: yes
