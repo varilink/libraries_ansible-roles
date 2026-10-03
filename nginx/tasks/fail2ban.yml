@@ -1,3 +1,11 @@
+# ------------------------------------------------------------------------------
+# nginx/tasks/fail2ban.yml
+# ------------------------------------------------------------------------------
+
+# This task list installs the fail2ban service on an Nginx host.
+
+---
+
 - block:
 
     - name: Install fail2ban
@@ -11,22 +19,30 @@
         dest: /etc/fail2ban/jail.local
       notify: Fail2Ban configuration changed
 
-    - name: Template the varilink-wordpress jail configuration file
-      ansible.builtin.template:
-        src: varilink-wordpress-jail.conf.j2
-        dest: /etc/fail2ban/jail.d/varilink-wordpress.conf
+    - name: Copy the default filter configuration file
+      ansible.builtin.copy:
+        src: default-filter.conf
+        dest: /etc/fail2ban/filter.d/varilink-default.conf
       notify: Fail2Ban configuration changed
 
-    - name: Copy varilink-noop.conf action configuration file
+    - name: Copy the noop action configuration file
       ansible.builtin.copy:
-        src: varilink-noop-action.conf
+        src: noop-action.conf
         dest: /etc/fail2ban/action.d/varilink-noop.conf
       notify: Fail2Ban configuration changed
 
-    - name: Copy varilink-wordpress-filter filter configuration file
+    - name: Copy the default jail configuration file
       ansible.builtin.copy:
-        src: varilink-wordpress-filter.conf
-        dest: /etc/fail2ban/filter.d/varilink-wordpress.conf
+        src: default-jail.conf
+        dest: /etc/fail2ban/jail.d/varilink-default.conf
       notify: Fail2Ban configuration changed
+
+    - name: Copy the WordPress red and amber filter configuration files
+      ansible.builtin.copy:
+        src: "wordpress-{{ item }}-filter.conf"
+        dest: "/etc/fail2ban/filter.d/varilink-wordpress-{{ item }}.conf"
+      loop:
+        - red
+        - amber
 
   become: yes
