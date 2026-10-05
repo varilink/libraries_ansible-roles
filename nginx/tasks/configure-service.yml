@@ -44,6 +44,19 @@
             group: root
             mode: '755'
 
+        - name: Enable SSL for the Nginx default site
+          notify: Nginx configuration changed
+          ansible.builtin.lineinfile:
+            path: /etc/nginx/sites-available/default
+            regexp: '^\t(?:{{ regex }}|# {{ regex }})$'
+            line: "\t{{ item }}"
+          vars:
+            regex: "{{ item | regex_escape }}"
+          loop:
+            - listen 443 ssl default_server;
+            - listen [::]:443 ssl default_server;
+            - include snippets/snakeoil.conf;
+
       when: host_enabled_for_ssl
 
   become: yes
