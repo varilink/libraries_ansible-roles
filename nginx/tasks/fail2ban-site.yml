@@ -1,6 +1,10 @@
-- name: Template the varilink-wordpress jail configuration file
+- name: Template the varilink-wordpress jail configuration files
   ansible.builtin.template:
-    src: varilink-wordpress-jail.conf.j2
-    dest: /etc/fail2ban/jail.d/varilink-wordpress_{{ wp_server_name }}.conf
+    src: "wordpress-{{ item }}-jail.conf.j2"
+    dest: "/etc/fail2ban/jail.d/\
+      varilink-wordpress-{{ item }}_{{ wp_server_name }}.conf"
+  loop:
+    - red
+    - amber
   notify: Fail2Ban configuration changed
   become: yes

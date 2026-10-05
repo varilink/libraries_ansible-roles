@@ -1,0 +1,12 @@
+[varilink-wordpress-amber_{{ wp_server_name }}]
+
+enabled  = true
+filter   = varilink-wordpress-amber
+
+logpath  = /var/log/nginx/{{ wp_server_name }}-access.log
+
+maxretry = 20
+findtime = 10m
+bantime  = 1h
+
+action   = varilink-noop
