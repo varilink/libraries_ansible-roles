@@ -86,16 +86,34 @@ server {
 
 {% endif %}
 
-  location = /xmlrpc.php {
-    access_log off;
-    log_not_found off;
-    return 444;
+  location ~* ^/xmlrpc\.php(?:/.*)?$ {
+      log_not_found off;
+      return 444;
   }
 
-  location ~* ^/(wp-config\.php|readme\.html|license\.txt)$ {
-    access_log off;
-    log_not_found off;
-    return 404;
+  location ~* ^/\.env(?:/.*)?$ {
+      log_not_found off;
+      return 404;
+  }
+
+  location ~* ^/wp-config\.php(?:/.*)?$ {
+      log_not_found off;
+      return 404;
+  }
+
+  location ~* ^/phpmyadmin(?:/.*)?$ {
+      log_not_found off;
+      return 404;
+  }
+
+  location ~* ^/readme\.html(?:/.*)?$ {
+      log_not_found off;
+      return 404;
+  }
+
+  location ~* ^/license\.txt(?:/.*)?$ {
+      log_not_found off;
+      return 404;
   }
 
   location / {
