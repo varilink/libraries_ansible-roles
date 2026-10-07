@@ -25,11 +25,14 @@
         dest: /etc/fail2ban/filter.d/varilink-default.conf
       notify: Fail2Ban configuration changed
 
-    - name: Copy the noop action configuration file
+    - name: Copy the http and noop action configuration files
       ansible.builtin.copy:
-        src: noop-action.conf
-        dest: /etc/fail2ban/action.d/varilink-noop.conf
+        src: "{{ item }}-action.conf"
+        dest: "/etc/fail2ban/action.d/varilink-{{ item }}.conf"
       notify: Fail2Ban configuration changed
+      loop:
+        - http
+        - noop
 
     - name: Copy the default jail configuration file
       ansible.builtin.copy:
