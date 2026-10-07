@@ -1,2 +1,8 @@
 [DEFAULT]
-ignoreip = {{ ignoreip }}
+{% for address in ignoreip_addresses %}
+{% if loop.index == 1 %}
+ignoreip = {{ address }}
+{% else %}
+           {{ address }}
+{% endif %}
+{% endfor %}
