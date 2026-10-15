@@ -25,6 +25,21 @@
 
 ---
 
+- name: >-
+    Gather the IPv4 and IPv6 addresses for the target host if they're not
+    already known
+  ansible.builtin.setup:
+    gather_subset:
+      - "{{ item }}"
+  delegate_to: "{{ dns_record_inventory_host | default(inventory_hostname) }}"
+  delegate_facts: true
+  when:
+    - dns_record_inventory_host is defined
+    - hostvars[dns_record_inventory_host][ 'ansible_' ~ item ] is not defined
+  loop:
+    - default_ipv4
+    - default_ipv6
+
 - ansible.builtin.include_tasks: create-or-update-record.yml
   vars:
     dns_record_type: "{{ item.type }}"
