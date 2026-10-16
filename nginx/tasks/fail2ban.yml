@@ -47,5 +47,6 @@
       loop:
         - red
         - amber
+      notify: Fail2Ban configuration changed
 
   become: yes
