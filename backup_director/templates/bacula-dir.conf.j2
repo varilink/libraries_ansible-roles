@@ -133,6 +133,28 @@ both on the office network.
   {%- endif %}
 
 }
+
+{%-
+if backup_director_schedules_active and
+hostvars[ hostname ].backup_client_schedule is defined and
+not hostvars[ hostname ].backup_client_schedule
+%}
+
+
+#
+# A special job for archiving clients that are being decommissioned.
+#
+
+Job {
+  Name = {{ hostname }}-archive
+  JobDefs = BackupJob
+  Client = {{ hostname }}
+  FileSet = {{ hostname }}
+  Level = Full
+  Pool = Archive
+}
+{%- endif %}
+
 {% endfor %}{# hostname in hostnames #}
 
 Job {
@@ -837,6 +859,20 @@ Pool {
   Storage = FileCopy
 }
 {% endif %}
+
+Pool {
+  # Pool for archive backups of clients that are being decommissioned
+  Name = Archive
+  Pool Type = Backup
+  Label Format = Archive
+  Maximum Volume Bytes = 5G
+  Maximum Volume Jobs = 1
+  File Retention = 10 years
+  Job Retention = 10 years
+  Volume Retention = 10 years
+  AutoPrune = no
+  Recycle = no
+}
 
 #-------------------------------------------------------------------------------
 # Console
